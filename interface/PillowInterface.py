@@ -2,7 +2,7 @@ from interface.BaseInterface import BaseInterface
 from PIL import Image
 
 
-class DevInterface(BaseInterface):
+class PillowInterface(BaseInterface):
 
     def __init__(self, width=480, height=320):
         self.__width = width

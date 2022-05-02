@@ -1,5 +1,5 @@
 from app.BaseApp import BaseApp
-from PIL import Image
+from PIL import ImageDraw
 
 
 class FileManagerApp(BaseApp):
@@ -11,5 +11,5 @@ class FileManagerApp(BaseApp):
     def title(self) -> str:
         return "INV"
 
-    def draw(self, image: Image) -> Image:
+    def draw(self, image: ImageDraw) -> ImageDraw:
         pass

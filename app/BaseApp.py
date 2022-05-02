@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from PIL import Image
+from PIL import ImageDraw
 
 
 class BaseApp(ABC):
@@ -10,5 +10,5 @@ class BaseApp(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def draw(self, image: Image) -> Image:
+    def draw(self, draw: ImageDraw) -> ImageDraw:
         raise NotImplementedError
