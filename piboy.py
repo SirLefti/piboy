@@ -5,10 +5,6 @@ import config
 import time
 from datetime import datetime
 
-BACKGROUND = (0, 0, 0)
-ACCENT = (27, 251, 30)
-ACCENT_INACTIVE = (9, 64, 9)
-
 
 def watch_function():
     while True:
@@ -21,7 +17,7 @@ def watch_function():
 
 def update_display(resolution: Tuple[int, int], apps: List[BaseApp], active_app, date_str):
     """Draw call than handles the complete cycle of drawing a new image to the display."""
-    image = Image.new('RGB', resolution, BACKGROUND)
+    image = Image.new('RGB', resolution, config.BACKGROUND)
     draw_buffer = ImageDraw.Draw(image)
     draw_base(draw_buffer, resolution, apps, active_app=active_app, date_str=date_str)
     apps[active_app].draw(draw_buffer)
@@ -40,27 +36,27 @@ def draw_base(draw: ImageDraw, resolution: Tuple[int, int], apps: List[BaseApp],
     foot_h_offset = head_h_offset  # spacing to the sides
 
     # draw base header lines
-    draw.line((head_h_offset, head_v_offset, w - head_h_offset, head_v_offset), fill=ACCENT)
-    draw.line((head_h_offset, head_v_offset, head_h_offset, head_v_offset + v_limit), fill=ACCENT)
-    draw.line((w - head_h_offset, head_v_offset, w - head_h_offset, head_v_offset + v_limit), fill=ACCENT)
+    draw.line((head_h_offset, head_v_offset, w - head_h_offset, head_v_offset), fill=config.ACCENT)
+    draw.line((head_h_offset, head_v_offset, head_h_offset, head_v_offset + v_limit), fill=config.ACCENT)
+    draw.line((w - head_h_offset, head_v_offset, w - head_h_offset, head_v_offset + v_limit), fill=config.ACCENT)
 
     # draw app short name header
     font = ImageFont.truetype(config.FONT, 16)
     cursor = head_h_offset + app_space
     for index, app in enumerate(apps):
         t_w, t_h = font.getsize(app.title)
-        draw.text((cursor, head_v_offset - t_h - app_pad), app.title, ACCENT, font=font)
+        draw.text((cursor, head_v_offset - t_h - app_pad), app.title, config.ACCENT, font=font)
         if index == active_app:
-            draw.line((cursor - app_pad, head_v_offset, cursor + t_w + app_pad, head_v_offset), fill=BACKGROUND)
-            draw.line((cursor - app_pad, head_v_offset, cursor - app_pad, head_v_offset - v_limit), fill=ACCENT)
-            draw.line((cursor + t_w + app_pad, head_v_offset, cursor + t_w + app_pad, head_v_offset - v_limit), fill=ACCENT)
+            draw.line((cursor - app_pad, head_v_offset, cursor + t_w + app_pad, head_v_offset), fill=config.BACKGROUND)
+            draw.line((cursor - app_pad, head_v_offset, cursor - app_pad, head_v_offset - v_limit), fill=config.ACCENT)
+            draw.line((cursor + t_w + app_pad, head_v_offset, cursor + t_w + app_pad, head_v_offset - v_limit), fill=config.ACCENT)
         cursor = cursor + t_w + app_space
 
     # draw footer
-    draw.rectangle((foot_h_offset, h - foot_height - foot_v_offset, w - foot_h_offset, h - foot_v_offset), fill=ACCENT_INACTIVE)
+    draw.rectangle((foot_h_offset, h - foot_height - foot_v_offset, w - foot_h_offset, h - foot_v_offset), fill=config.ACCENT_INACTIVE)
     t_w, t_h = font.getsize(date_str)
     t_pad = (foot_height - t_h) / 2
-    draw.text((w - foot_h_offset - t_pad - t_w, h - foot_height - foot_v_offset + t_pad), date_str, ACCENT, font=font)
+    draw.text((w - foot_h_offset - t_pad - t_w, h - foot_height - foot_v_offset + t_pad), date_str, config.ACCENT, font=font)
     return draw
 
 

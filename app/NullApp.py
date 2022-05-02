@@ -12,5 +12,5 @@ class NullApp(BaseApp):
     def title(self) -> str:
         return self.__title
 
-    def draw(self, image: ImageDraw) -> ImageDraw:
+    def draw(self, draw: ImageDraw) -> ImageDraw:
         pass

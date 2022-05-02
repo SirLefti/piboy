@@ -1,9 +1,8 @@
-import time
-
 from interface.BaseInterface import BaseInterface
 from PIL import Image, ImageTk
 from tkinter import Tk, Canvas, constants
 import threading
+import time
 
 
 class TkInterface(BaseInterface):
@@ -36,6 +35,7 @@ def _tk_thread(tk_interface: TkInterface):
     while True:
         image = tk_interface.take_image()
         if image is not None:
+            # doing this to avoid the image being garbage-collected
             image_tk = ImageTk.PhotoImage(image)
             canvas.create_image(0, 0, anchor=constants.NW, image=image_tk)
             root.update()
