@@ -70,41 +70,53 @@ def update_display():
 
 
 def draw_base(draw: ImageDraw, resolution: Tuple[int, int], apps: List[BaseApp], active_app, date_str) -> ImageDraw:
-    w, h = resolution
-    head_v_offset = 26  # base line for header
-    head_h_offset = 50  # spacing to the sides
-    v_limit = 5  # vertical limiter line
-    app_space = 20  # space between app headers
-    app_pad = 5  # space around app header
+    width, height = resolution
+    header_top_offset = 26  # base line for header
+    header_side_offset = 50  # spacing to the sides
+    vertical_line = 5  # vertical limiter line
+    app_spacing = 20  # space between app headers
+    app_padding = 5  # space around app header
     foot_height = 20  # height of the footer
-    foot_v_offset = 3  # spacing to the bottom
-    foot_h_offset = head_h_offset  # spacing to the sides
+    footer_bottom_offset = 3  # spacing to the bottom
+    footer_side_offset = header_side_offset  # spacing to the sides
 
     # draw base header lines
-    draw.line((head_h_offset, head_v_offset, w - head_h_offset, head_v_offset), fill=config.ACCENT)
-    draw.line((head_h_offset, head_v_offset, head_h_offset, head_v_offset + v_limit), fill=config.ACCENT)
-    draw.line((w - head_h_offset, head_v_offset, w - head_h_offset, head_v_offset + v_limit), fill=config.ACCENT)
+    start = (header_side_offset, header_top_offset + vertical_line)
+    end = (header_side_offset, header_top_offset)
+    draw.line(start + end, fill=config.ACCENT)
+    start = end
+    end = (width - header_side_offset, header_top_offset)
+    draw.line(start + end, fill=config.ACCENT)
+    start = end
+    end = (width - header_side_offset, header_top_offset + vertical_line)
+    draw.line(start + end, fill=config.ACCENT)
 
     # draw app short name header
     font = ImageFont.truetype(config.FONT, 16)
-    cursor = head_h_offset + app_space
+    cursor = header_side_offset + app_spacing
     for index, app in enumerate(apps):
-        t_w, t_h = font.getsize(app.title)
-        draw.text((cursor, head_v_offset - t_h - app_pad), app.title, config.ACCENT, font=font)
+        text_width, text_height = font.getsize(app.title)
+        draw.text((cursor, header_top_offset - text_height - app_padding), app.title, config.ACCENT, font=font)
         if index == active_app:
-            draw.line((cursor - app_pad, head_v_offset, cursor + t_w + app_pad, head_v_offset), fill=config.BACKGROUND)
-            draw.line((cursor - app_pad, head_v_offset, cursor - app_pad, head_v_offset - v_limit), fill=config.ACCENT)
-            draw.line((cursor + t_w + app_pad, head_v_offset, cursor + t_w + app_pad, head_v_offset - v_limit),
-                      fill=config.ACCENT)
-        cursor = cursor + t_w + app_space
+            start = (cursor - app_padding, header_top_offset - vertical_line)
+            end = (cursor - app_padding, header_top_offset)
+            draw.line(start + end, fill=config.ACCENT)
+            start = end
+            end = (cursor + text_width + app_padding, header_top_offset)
+            draw.line(start + end, fill=config.BACKGROUND)
+            start = end
+            end = (cursor + text_width + app_padding, header_top_offset - vertical_line)
+            draw.line(start + end, fill=config.ACCENT)
+        cursor = cursor + text_width + app_spacing
 
     # draw footer
-    draw.rectangle((foot_h_offset, h - foot_height - foot_v_offset, w - foot_h_offset, h - foot_v_offset),
-                   fill=config.ACCENT_INACTIVE)
-    t_w, t_h = font.getsize(date_str)
-    t_pad = (foot_height - t_h) / 2
-    draw.text((w - foot_h_offset - t_pad - t_w, h - foot_height - foot_v_offset + t_pad), date_str, config.ACCENT,
-              font=font)
+    start = (footer_side_offset, height - foot_height - footer_bottom_offset)
+    end = (width - footer_side_offset, height - footer_bottom_offset)
+    draw.rectangle(start + end, fill=config.ACCENT_DARK)
+    text_width, text_height = font.getsize(date_str)
+    text_padding = (foot_height - text_height) / 2
+    draw.text((width - footer_side_offset - text_padding - text_width, height - foot_height - footer_bottom_offset +
+               text_padding), date_str, config.ACCENT, font=font)
     return draw
 
 

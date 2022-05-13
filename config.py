@@ -25,7 +25,7 @@ INPUT: BaseInput = __tk
 FONT = 'FreeSansBold.ttf'
 BACKGROUND = (0, 0, 0)
 ACCENT = (27, 251, 30)
-ACCENT_INACTIVE = (9, 64, 9)
+ACCENT_DARK = (9, 64, 9)
 # Pin definition
 RST_PIN = 25
 DC_PIN = 24

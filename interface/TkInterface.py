@@ -2,7 +2,7 @@ import config
 from interface.BaseInterface import BaseInterface
 from interface.BaseInput import BaseInput
 from PIL import Image, ImageTk
-from tkinter import Tk, Canvas, Button, constants, TclError
+from tkinter import Tk, Canvas, Button, constants, TclError, Event
 import threading
 import time
 
@@ -67,11 +67,13 @@ BUTTON_H = 6
 def _tk_thread(tk_interface: TkInterface):
     root = Tk()
     root.title('PiBoy Simulator - Tkinter')
-    bg_color_hex = '#%02x%02x%02x' % config.ACCENT_INACTIVE
+    bg_color_hex = '#%02x%02x%02x' % config.ACCENT_DARK
     root.configure(bg=bg_color_hex)
     w, h = tk_interface.resolution
     canvas = Canvas(root, width=w, height=h)
     canvas.grid(row=1, column=1, rowspan=4)
+
+    # buttons
     button_left = Button(root, text='left', width=BUTTON_W, height=BUTTON_H, command=tk_interface.on_key_left)
     button_left.grid(row=2, column=2)
     button_up = Button(root, text='up', width=BUTTON_W, height=BUTTON_H, command=tk_interface.on_key_up)
