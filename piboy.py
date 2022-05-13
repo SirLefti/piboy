@@ -6,22 +6,67 @@ import time
 from datetime import datetime
 
 
+ACTIVE_APP = 0
+
+
+def on_key_left():
+    print('left')
+
+
+def on_key_up():
+    print('up')
+
+
+def on_key_right():
+    print('right')
+
+
+def on_key_down():
+    print('down')
+
+
+def on_key_a():
+    print('key a')
+
+
+def on_key_b():
+    print('key b')
+
+
+def on_rotary_increase():
+    global ACTIVE_APP
+    ACTIVE_APP += 1
+    # go to first app if last was selected
+    if not ACTIVE_APP < len(config.APPS):
+        ACTIVE_APP = 0
+    update_display()
+
+
+def on_rotary_decrease():
+    global ACTIVE_APP
+    ACTIVE_APP -= 1
+    # go to last app if first was selected
+    if ACTIVE_APP < 0:
+        ACTIVE_APP = len(config.APPS) - 1
+    update_display()
+
+
 def watch_function():
     while True:
         now = datetime.now()
         # wait for next minute
         time.sleep(60 - now.second - now.microsecond / 1000000.0)
-        date_str = datetime.now().strftime('%d-%m-%Y %H:%M')
-        update_display(config.INTERFACE.resolution, config.APPS, 0, date_str)
+        update_display()
 
 
-def update_display(resolution: Tuple[int, int], apps: List[BaseApp], active_app, date_str):
+def update_display():
     """Draw call than handles the complete cycle of drawing a new image to the display."""
-    image = Image.new('RGB', resolution, config.BACKGROUND)
+    image = Image.new('RGB', config.INTERFACE.resolution, config.BACKGROUND)
     draw_buffer = ImageDraw.Draw(image)
-    draw_base(draw_buffer, resolution, apps, active_app=active_app, date_str=date_str)
-    apps[active_app].draw(draw_buffer)
-    interface.show(image)
+    date_str = datetime.now().strftime('%d-%m-%Y %H:%M')
+    draw_base(draw_buffer, config.INTERFACE.resolution, config.APPS, active_app=ACTIVE_APP, date_str=date_str)
+    config.APPS[ACTIVE_APP].draw(draw_buffer)
+    config.INTERFACE.show(image)
 
 
 def draw_base(draw: ImageDraw, resolution: Tuple[int, int], apps: List[BaseApp], active_app, date_str) -> ImageDraw:
@@ -49,14 +94,17 @@ def draw_base(draw: ImageDraw, resolution: Tuple[int, int], apps: List[BaseApp],
         if index == active_app:
             draw.line((cursor - app_pad, head_v_offset, cursor + t_w + app_pad, head_v_offset), fill=config.BACKGROUND)
             draw.line((cursor - app_pad, head_v_offset, cursor - app_pad, head_v_offset - v_limit), fill=config.ACCENT)
-            draw.line((cursor + t_w + app_pad, head_v_offset, cursor + t_w + app_pad, head_v_offset - v_limit), fill=config.ACCENT)
+            draw.line((cursor + t_w + app_pad, head_v_offset, cursor + t_w + app_pad, head_v_offset - v_limit),
+                      fill=config.ACCENT)
         cursor = cursor + t_w + app_space
 
     # draw footer
-    draw.rectangle((foot_h_offset, h - foot_height - foot_v_offset, w - foot_h_offset, h - foot_v_offset), fill=config.ACCENT_INACTIVE)
+    draw.rectangle((foot_h_offset, h - foot_height - foot_v_offset, w - foot_h_offset, h - foot_v_offset),
+                   fill=config.ACCENT_INACTIVE)
     t_w, t_h = font.getsize(date_str)
     t_pad = (foot_height - t_h) / 2
-    draw.text((w - foot_h_offset - t_pad - t_w, h - foot_height - foot_v_offset + t_pad), date_str, config.ACCENT, font=font)
+    draw.text((w - foot_h_offset - t_pad - t_w, h - foot_height - foot_v_offset + t_pad), date_str, config.ACCENT,
+              font=font)
     return draw
 
 
@@ -65,8 +113,7 @@ if __name__ == '__main__':
 
     # initial draw
     last_date_str = datetime.now().strftime('%d-%m-%Y %H:%M')
-    last_active_app = 0
-    update_display(interface.resolution, config.APPS, active_app=last_active_app, date_str=last_date_str)
+    update_display()
 
     # blocking function that updates the clock
     watch_function()
