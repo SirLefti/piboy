@@ -26,11 +26,16 @@ FONT = 'FreeSansBold.ttf'
 BACKGROUND = (0, 0, 0)
 ACCENT = (27, 251, 30)
 ACCENT_DARK = (9, 64, 9)
+
 # Pin definition
 RST_PIN = 25
 DC_PIN = 24
 # SPI definition
 SPI_BUS = 0
 SPI_DEVICE = 0
+
 # App definition
 APPS: List[BaseApp] = [FileManagerApp(), NullApp('DATA'), NullApp('STATS'), NullApp('RADIO'), NullApp('MAP')]
+APP_SIDE_OFFSET = 20
+APP_TOP_OFFSET = 30
+APP_BOTTOM_OFFSET = 20

@@ -71,9 +71,9 @@ def update_display():
 
 def draw_base(draw: ImageDraw, resolution: Tuple[int, int], apps: List[BaseApp], active_app, date_str) -> ImageDraw:
     width, height = resolution
-    header_top_offset = 26  # base line for header
-    header_side_offset = 50  # spacing to the sides
     vertical_line = 5  # vertical limiter line
+    header_top_offset = config.APP_TOP_OFFSET - vertical_line  # base for header
+    header_side_offset = config.APP_SIDE_OFFSET  # spacing to the sides
     app_spacing = 20  # space between app headers
     app_padding = 5  # space around app header
     foot_height = 20  # height of the footer
@@ -93,7 +93,9 @@ def draw_base(draw: ImageDraw, resolution: Tuple[int, int], apps: List[BaseApp],
 
     # draw app short name header
     font = ImageFont.truetype(config.FONT, 16)
-    cursor = header_side_offset + app_spacing
+    max_text_width = width - (2 * header_side_offset)
+    app_text_width = sum(font.getsize(app.title)[0] for app in apps) + (len(apps) - 1) * app_spacing
+    cursor = header_side_offset + (max_text_width - app_text_width) / 2
     for index, app in enumerate(apps):
         text_width, text_height = font.getsize(app.title)
         draw.text((cursor, header_top_offset - text_height - app_padding), app.title, config.ACCENT, font=font)
