@@ -5,7 +5,6 @@ from app.FileManagerApp import FileManagerApp
 from app.NullApp import NullApp
 from interface.BaseInterface import BaseInterface
 from interface.BaseInput import BaseInput
-from interface.PillowInterface import PillowInterface
 from interface.TkInterface import TkInterface
 
 # General definition
@@ -19,7 +18,6 @@ ON_ROTARY_INCREASE: Callable = piboy.on_rotary_increase
 ON_ROTARY_DECREASE: Callable = piboy.on_rotary_decrease
 
 __tk = TkInterface()
-# INTERFACE: BaseInterface = PillowInterface()
 INTERFACE: BaseInterface = __tk
 INPUT: BaseInput = __tk
 FONT = 'FreeSansBold.ttf'

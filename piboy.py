@@ -129,10 +129,7 @@ def draw_base(draw: ImageDraw, resolution: Tuple[int, int], apps: List[BaseApp],
 
 
 if __name__ == '__main__':
-    interface = config.INTERFACE
-
     # initial draw
-    last_date_str = datetime.now().strftime('%d-%m-%Y %H:%M')
     update_display()
 
     # blocking function that updates the clock
