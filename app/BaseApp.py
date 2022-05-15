@@ -12,3 +12,27 @@ class BaseApp(ABC):
     @abstractmethod
     def draw(self, draw: ImageDraw) -> ImageDraw:
         raise NotImplementedError
+
+    @abstractmethod
+    def on_key_left(self):
+        raise NotImplementedError
+
+    @abstractmethod
+    def on_key_up(self):
+        raise NotImplementedError
+
+    @abstractmethod
+    def on_key_right(self):
+        raise NotImplementedError
+
+    @abstractmethod
+    def on_key_down(self):
+        raise NotImplementedError
+
+    @abstractmethod
+    def on_key_a(self):
+        raise NotImplementedError
+
+    @abstractmethod
+    def on_key_b(self):
+        raise NotImplementedError

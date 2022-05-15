@@ -36,6 +36,6 @@ SPI_DEVICE = 0
 
 # App definition
 APPS: List[BaseApp] = [FileManagerApp(), NullApp('DATA'), NullApp('STATS'), NullApp('RADIO'), NullApp('MAP')]
-APP_SIDE_OFFSET = 20
-APP_TOP_OFFSET = 30
-APP_BOTTOM_OFFSET = 20
+APP_SIDE_OFFSET: int = 20
+APP_TOP_OFFSET: int = 30
+APP_BOTTOM_OFFSET: int = 25

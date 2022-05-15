@@ -14,3 +14,21 @@ class NullApp(BaseApp):
 
     def draw(self, draw: ImageDraw) -> ImageDraw:
         pass
+
+    def on_key_left(self):
+        pass
+
+    def on_key_up(self):
+        pass
+
+    def on_key_right(self):
+        pass
+
+    def on_key_down(self):
+        pass
+
+    def on_key_a(self):
+        pass
+
+    def on_key_b(self):
+        pass

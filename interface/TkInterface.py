@@ -1,3 +1,4 @@
+from typing import Tuple
 import config
 from interface.BaseInterface import BaseInterface
 from interface.BaseInput import BaseInput
@@ -9,7 +10,7 @@ import time
 
 class TkInterface(BaseInterface, BaseInput):
 
-    def __init__(self, width=480, height=320):
+    def __init__(self, width: int = 480, height: int = 320):
         self.__on_key_left = config.ON_KEY_LEFT
         self.__on_key_up = config.ON_KEY_UP
         self.__on_key_right = config.ON_KEY_RIGHT
@@ -24,7 +25,7 @@ class TkInterface(BaseInterface, BaseInput):
         threading.Thread(target=_tk_thread, args=(self,), daemon=True).start()
 
     @property
-    def resolution(self) -> tuple:
+    def resolution(self) -> Tuple[int, int]:
         return self.__width, self.__height
 
     def take_image(self) -> Image:

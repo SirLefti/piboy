@@ -1,3 +1,4 @@
+from typing import Tuple
 from interface.BaseInterface import BaseInterface
 from PIL import Image
 import RPi.GPIO as GPIO
@@ -17,7 +18,7 @@ class ILI9486Interface(BaseInterface):
         self.__display = lcd
 
     @property
-    def resolution(self) -> tuple:
+    def resolution(self) -> Tuple[int, int]:
         return self.__display.dimensions()
 
     def show(self, image: Image):

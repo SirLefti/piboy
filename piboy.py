@@ -10,27 +10,33 @@ ACTIVE_APP = 0
 
 
 def on_key_left():
-    print('left')
+    config.APPS[ACTIVE_APP].on_key_left()
+    update_display()
 
 
 def on_key_up():
-    print('up')
+    config.APPS[ACTIVE_APP].on_key_up()
+    update_display()
 
 
 def on_key_right():
-    print('right')
+    config.APPS[ACTIVE_APP].on_key_right()
+    update_display()
 
 
 def on_key_down():
-    print('down')
+    config.APPS[ACTIVE_APP].on_key_down()
+    update_display()
 
 
 def on_key_a():
-    print('key a')
+    config.APPS[ACTIVE_APP].on_key_a()
+    update_display()
 
 
 def on_key_b():
-    print('key b')
+    config.APPS[ACTIVE_APP].on_key_b()
+    update_display()
 
 
 def on_rotary_increase():
@@ -76,7 +82,7 @@ def draw_base(draw: ImageDraw, resolution: Tuple[int, int], apps: List[BaseApp],
     header_side_offset = config.APP_SIDE_OFFSET  # spacing to the sides
     app_spacing = 20  # space between app headers
     app_padding = 5  # space around app header
-    foot_height = 20  # height of the footer
+    footer_height = 20  # height of the footer
     footer_bottom_offset = 3  # spacing to the bottom
     footer_side_offset = header_side_offset  # spacing to the sides
 
@@ -112,12 +118,12 @@ def draw_base(draw: ImageDraw, resolution: Tuple[int, int], apps: List[BaseApp],
         cursor = cursor + text_width + app_spacing
 
     # draw footer
-    start = (footer_side_offset, height - foot_height - footer_bottom_offset)
+    start = (footer_side_offset, height - footer_height - footer_bottom_offset)
     end = (width - footer_side_offset, height - footer_bottom_offset)
     draw.rectangle(start + end, fill=config.ACCENT_DARK)
     text_width, text_height = font.getsize(date_str)
-    text_padding = (foot_height - text_height) / 2
-    draw.text((width - footer_side_offset - text_padding - text_width, height - foot_height - footer_bottom_offset +
+    text_padding = (footer_height - text_height) / 2
+    draw.text((width - footer_side_offset - text_padding - text_width, height - footer_height - footer_bottom_offset +
                text_padding), date_str, config.ACCENT, font=font)
     return draw
 
