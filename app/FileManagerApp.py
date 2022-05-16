@@ -147,7 +147,23 @@ class FileManagerApp(BaseApp):
                                                        self.__left_directory.entries - 1)
 
     def on_key_a(self):
-        pass
+        if self.__selected_tab:
+            path = os.path.join(self.__right_directory.directory, self.__right_directory.files[self.__right_directory
+                                .selected_index])
+            if os.path.isdir(path):
+                self.__right_directory.directory = path
+        else:
+            path = os.path.join(self.__left_directory.directory, self.__left_directory.files[self.__left_directory
+                                .selected_index])
+            if os.path.isdir(path):
+                self.__left_directory.directory = path
 
     def on_key_b(self):
-        pass
+        if self.__selected_tab:
+            path = os.path.abspath(os.path.join(self.__right_directory.directory, '..'))
+            if os.path.isdir(path):
+                self.__right_directory.directory = path
+        else:
+            path = os.path.abspath(os.path.join(self.__left_directory.directory, '..'))
+            if os.path.isdir(path):
+                self.__left_directory.directory = path
