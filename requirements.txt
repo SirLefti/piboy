@@ -1,4 +1,4 @@
-RPi.GPIO
-spidev
-Pillow
-numpy
+RPi.GPIO >= 0.7.1; sys_platform == 'linux' and ('arm' in platform_machine or 'aarch' in platform_machine)
+spidev >= 3.5; sys_platform == 'linux' and ('arm' in platform_machine or 'aarch' in platform_machine)
+Pillow >= 9.1.0
+numpy >= 1.22.3
