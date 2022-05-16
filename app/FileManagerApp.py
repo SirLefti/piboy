@@ -74,39 +74,55 @@ class FileManagerApp(BaseApp):
         draw.text((left + side_padding, top), state.directory, config.ACCENT, font=font)
 
         cursor = (left, top + line_height)
-        content = os.listdir(state.directory)
-        entries = len(content)
-        max_entries = int((bottom - cursor[1]) / line_height)
-        max_entries -= 1 if entries > max_entries else 0  # reduce max shown entries to show the ... line if needed
-        if entries > max_entries:  # not all entries will fit in the view
-            if state.selected_index < state.top_index:
-                state.top_index = state.selected_index
-            elif state.selected_index not in range(state.top_index, state.top_index + max_entries):
-                state.top_index = state.selected_index - max_entries + 1
-        else:  # all entries will fit, set top_index to 0
-            state.top_index = 0
+        try:
+            content = state.files
+            entries = state.entries
+            max_entries = int((bottom - cursor[1]) / line_height)
+            max_entries -= 1 if entries > max_entries else 0  # reduce max shown entries to show the ... line if needed
+            if entries > max_entries:  # not all entries will fit in the view
+                if state.selected_index < state.top_index:
+                    state.top_index = state.selected_index
+                elif state.selected_index not in range(state.top_index, state.top_index + max_entries):
+                    state.top_index = state.selected_index - max_entries + 1
+            else:  # all entries will fit, set top_index to 0
+                state.top_index = 0
 
-        for index, file in enumerate(state.files[state.top_index:]):
-            cursor_x, cursor_y = cursor
-            index += state.top_index  # pad index if entries are skipped
-            if state.selected_index == index and is_selected:
-                draw.rectangle((left, cursor_y, right, cursor_y + line_height), fill=config.BACKGROUND)
+            for index, file in enumerate(content[state.top_index:]):
+                cursor_x, cursor_y = cursor
+                index += state.top_index  # pad index if entries are skipped
+                if state.selected_index == index and is_selected:
+                    draw.rectangle((left, cursor_y, right, cursor_y + line_height), fill=config.BACKGROUND)
 
-            start = (left + symbol_padding, cursor_y + symbol_padding)
-            end = (left + symbol_padding + symbol_dimensions, cursor_y + symbol_padding + symbol_dimensions)
-            if end[1] > bottom - line_height:
-                draw.text((cursor_x + side_padding, cursor_y), '...', config.ACCENT, font=font)
-                break
+                start = (left + symbol_padding, cursor_y + symbol_padding)
+                end = (left + symbol_padding + symbol_dimensions, cursor_y + symbol_padding + symbol_dimensions)
+                if end[1] > bottom - line_height:
+                    draw.text((cursor_x + side_padding, cursor_y), '...', config.ACCENT, font=font)
+                    break
 
-            if os.path.isfile(os.path.join(state.directory, file)):
-                draw.ellipse(start + end, fill=config.ACCENT)  # draw circle for file
-            else:
-                draw.rectangle(start + end, fill=config.ACCENT)  # draw square for directory
+                if os.path.isfile(os.path.join(state.directory, file)):
+                    draw.ellipse(start + end, fill=config.ACCENT)  # draw circle for file
+                else:
+                    draw.rectangle(start + end, fill=config.ACCENT)  # draw square for directory
 
-            while draw.textsize(file, font=font)[0] > right - left - symbol_dimensions - 2 * symbol_padding:
-                file = file[:-1]  # cut off last char until it fits
-            draw.text((cursor_x + symbol_dimensions + 2 * symbol_padding, cursor_y), file, config.ACCENT, font=font)
-            cursor = (cursor_x, cursor_y + line_height)
+                while draw.textsize(file, font=font)[0] > right - left - symbol_dimensions - 2 * symbol_padding:
+                    file = file[:-1]  # cut off last char until it fits
+                draw.text((cursor_x + symbol_dimensions + 2 * symbol_padding, cursor_y), file, config.ACCENT, font=font)
+                cursor = (cursor_x, cursor_y + line_height)
+        except PermissionError:
+            text = 'Permission denied'
+            text_width, text_height = font.getsize(text)
+            popup_width = text_width + 10
+            popup_height = text_height * 3
+            popup_border = 3
+            center = int((right_bottom[0] - left_top[0]) / 2), int((right_bottom[1] - left_top[1]) / 2)
+
+            start = center[0] - int(popup_width / 2) - popup_border, center[1] - int(popup_height / 2) - popup_border
+            end = center[0] + int(popup_width / 2) + popup_border, center[1] + int(popup_height / 2) + popup_border
+            draw.rectangle(start + end, fill=config.ACCENT)
+            start = start[0] + popup_border, start[1] + popup_border
+            end = end[0] - popup_border, end[1] - popup_border
+            draw.rectangle(start + end, fill=config.BACKGROUND)
+            draw.text((center[0] - int(text_width / 2), center[1] - int(text_height / 2)), text, config.ACCENT, font=font)
 
     def draw(self, draw: ImageDraw) -> ImageDraw:
         width, height = config.RESOLUTION
@@ -152,18 +168,22 @@ class FileManagerApp(BaseApp):
                                 .selected_index])
             if os.path.isdir(path):
                 self.__right_directory.directory = path
+                self.__right_directory.selected_index = 0
         else:
             path = os.path.join(self.__left_directory.directory, self.__left_directory.files[self.__left_directory
                                 .selected_index])
             if os.path.isdir(path):
                 self.__left_directory.directory = path
+                self.__left_directory.selected_index = 0
 
     def on_key_b(self):
         if self.__selected_tab:
             path = os.path.abspath(os.path.join(self.__right_directory.directory, '..'))
             if os.path.isdir(path):
                 self.__right_directory.directory = path
+                self.__right_directory.selected_index = 0
         else:
             path = os.path.abspath(os.path.join(self.__left_directory.directory, '..'))
             if os.path.isdir(path):
                 self.__left_directory.directory = path
+                self.__left_directory.selected_index = 0
