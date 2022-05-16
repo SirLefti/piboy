@@ -12,6 +12,12 @@ class GPIOInput(BaseInput):
         super().__init__(on_key_left, on_key_right, on_key_up, on_key_down, on_key_a, on_key_b, on_rotary_increase,
                          on_rotary_decrease)
         GPIO.setmode(GPIO.BCM)
+        GPIO.setup(key_left, GPIO.IN)
+        GPIO.setup(key_right, GPIO.IN)
+        GPIO.setup(key_up, GPIO.IN)
+        GPIO.setup(key_down, GPIO.IN)
+        GPIO.setup(key_a, GPIO.IN)
+        GPIO.setup(key_b, GPIO.IN)
         GPIO.add_event_detect(key_left, GPIO.RISING, callback=on_key_left, bouncetime=bouncetime)
         GPIO.add_event_detect(key_up, GPIO.RISING, callback=on_key_up, bouncetime=bouncetime)
         GPIO.add_event_detect(key_right, GPIO.RISING, callback=on_key_right, bouncetime=bouncetime)
