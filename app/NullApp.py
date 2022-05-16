@@ -18,10 +18,10 @@ class NullApp(BaseApp):
     def on_key_left(self):
         pass
 
-    def on_key_up(self):
+    def on_key_right(self):
         pass
 
-    def on_key_right(self):
+    def on_key_up(self):
         pass
 
     def on_key_down(self):

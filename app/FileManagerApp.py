@@ -1,8 +1,8 @@
-import os
-from typing import Tuple, List
-from PIL import ImageDraw, ImageFont
-import config
 from app.BaseApp import BaseApp
+from PIL import ImageDraw
+from typing import Tuple, List
+import config
+import os
 
 
 class FileManagerApp(BaseApp):
@@ -66,7 +66,7 @@ class FileManagerApp(BaseApp):
         symbol_padding = (line_height - symbol_dimensions) / 2  # space around symbol
         left, top = left_top  # unpacking top left anchor point
         right, bottom = right_bottom  # unpacking bottom right anchor point
-        font = ImageFont.truetype(config.FONT, 14)
+        font = config.FONT_STANDARD
 
         # draw background if this directory is selected
         if is_selected:
@@ -109,8 +109,7 @@ class FileManagerApp(BaseApp):
             cursor = (cursor_x, cursor_y + line_height)
 
     def draw(self, draw: ImageDraw) -> ImageDraw:
-        width, height = config.INTERFACE.resolution
-        # font = ImageFont.truetype(config.FONT, 14)
+        width, height = config.RESOLUTION
 
         left_top = (config.APP_SIDE_OFFSET, config.APP_TOP_OFFSET)
         right_bottom = (int(width / 2), height - config.APP_BOTTOM_OFFSET)
@@ -130,14 +129,14 @@ class FileManagerApp(BaseApp):
     def on_key_left(self):
         self.__selected_tab ^= 1  # flip bit to change tab
 
+    def on_key_right(self):
+        self.__selected_tab ^= 1  # flip bit to change tab
+
     def on_key_up(self):
         if self.__selected_tab:
             self.__right_directory.selected_index = max(self.__right_directory.selected_index - 1, 0)
         else:
             self.__left_directory.selected_index = max(self.__left_directory.selected_index - 1, 0)
-
-    def on_key_right(self):
-        self.__selected_tab ^= 1  # flip bit to change tab
 
     def on_key_down(self):
         if self.__selected_tab:

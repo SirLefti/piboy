@@ -1,26 +1,17 @@
-import piboy
-from typing import List, Callable
-from app.BaseApp import BaseApp
-from app.FileManagerApp import FileManagerApp
-from app.NullApp import NullApp
-from interface.BaseInterface import BaseInterface
-from interface.BaseInput import BaseInput
-from interface.TkInterface import TkInterface
+from PIL import ImageFont
 
-# General definition
-ON_KEY_LEFT: Callable = piboy.on_key_left
-ON_KEY_UP: Callable = piboy.on_key_up
-ON_KEY_RIGHT: Callable = piboy.on_key_right
-ON_KEY_DOWN: Callable = piboy.on_key_down
-ON_KEY_A: Callable = piboy.on_key_a
-ON_KEY_B: Callable = piboy.on_key_b
-ON_ROTARY_INCREASE: Callable = piboy.on_rotary_increase
-ON_ROTARY_DECREASE: Callable = piboy.on_rotary_decrease
 
-__tk = TkInterface()
-INTERFACE: BaseInterface = __tk
-INPUT: BaseInput = __tk
-FONT = 'FreeSansBold.ttf'
+# Display definition (SPI display module ignores this, it supports only its own resolution)
+WIDTH = 480
+HEIGHT = 320
+RESOLUTION = WIDTH, HEIGHT
+
+# Fonts
+FONT_NAME = 'FreeSansBold.ttf'
+FONT_HEADER = ImageFont.truetype(FONT_NAME, 16)
+FONT_STANDARD = ImageFont.truetype(FONT_NAME, 14)
+
+# Colors
 BACKGROUND = (0, 0, 0)
 ACCENT = (27, 251, 30)
 ACCENT_DARK = (9, 64, 9)
@@ -33,7 +24,6 @@ SPI_BUS = 0
 SPI_DEVICE = 0
 
 # App definition
-APPS: List[BaseApp] = [FileManagerApp(), NullApp('DATA'), NullApp('STATS'), NullApp('RADIO'), NullApp('MAP')]
 APP_SIDE_OFFSET: int = 20
 APP_TOP_OFFSET: int = 30
 APP_BOTTOM_OFFSET: int = 25

@@ -1,10 +1,9 @@
-from typing import Tuple
 from interface.BaseInterface import BaseInterface
 from PIL import Image
+import config
+from driver.ILI9486 import ILI9486
 import RPi.GPIO as GPIO
 from spidev import SpiDev
-from driver.ILI9486 import ILI9486
-import config
 
 
 class ILI9486Interface(BaseInterface):
@@ -16,10 +15,6 @@ class ILI9486Interface(BaseInterface):
         spi.max_speed_hz = 64000000
         lcd = ILI9486(dc=config.DC_PIN, rst=config.DC_PIN, spi=spi)
         self.__display = lcd
-
-    @property
-    def resolution(self) -> Tuple[int, int]:
-        return self.__display.dimensions()
 
     def show(self, image: Image):
         self.__display.display(image)

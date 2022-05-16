@@ -1,32 +1,22 @@
-from typing import Tuple
-import config
 from interface.BaseInterface import BaseInterface
 from interface.BaseInput import BaseInput
+from typing import Callable
 from PIL import Image, ImageTk
-from tkinter import Tk, Canvas, Button, constants, TclError, Event
+import config
+from tkinter import Tk, Canvas, Button, constants, TclError
 import threading
 import time
 
 
 class TkInterface(BaseInterface, BaseInput):
 
-    def __init__(self, width: int = 480, height: int = 320):
-        self.__on_key_left = config.ON_KEY_LEFT
-        self.__on_key_up = config.ON_KEY_UP
-        self.__on_key_right = config.ON_KEY_RIGHT
-        self.__on_key_down = config.ON_KEY_DOWN
-        self.__on_key_a = config.ON_KEY_A
-        self.__on_key_b = config.ON_KEY_B
-        self.__on_rotary_increase = config.ON_ROTARY_INCREASE
-        self.__on_rotary_decrease = config.ON_ROTARY_DECREASE
-        self.__width = width
-        self.__height = height
+    def __init__(self, on_key_left: Callable, on_key_right: Callable,
+                 on_key_up: Callable, on_key_down: Callable, on_key_a: Callable, on_key_b: Callable,
+                 on_rotary_increase: Callable, on_rotary_decrease: Callable):
+        BaseInput.__init__(self, on_key_left, on_key_right, on_key_up, on_key_down, on_key_a, on_key_b,
+                           on_rotary_increase, on_rotary_decrease)
         self.__image = None
         threading.Thread(target=_tk_thread, args=(self,), daemon=True).start()
-
-    @property
-    def resolution(self) -> Tuple[int, int]:
-        return self.__width, self.__height
 
     def take_image(self) -> Image:
         image = self.__image
@@ -35,30 +25,6 @@ class TkInterface(BaseInterface, BaseInput):
 
     def show(self, image: Image):
         self.__image = image
-
-    def on_key_left(self):
-        self.__on_key_left()
-
-    def on_key_up(self):
-        self.__on_key_up()
-
-    def on_key_right(self):
-        self.__on_key_right()
-
-    def on_key_down(self):
-        self.__on_key_down()
-
-    def on_key_a(self):
-        self.__on_key_a()
-
-    def on_key_b(self):
-        self.__on_key_b()
-
-    def on_rotary_increase(self):
-        self.__on_rotary_increase()
-
-    def on_rotary_decrease(self):
-        self.__on_rotary_decrease()
 
 
 BUTTON_W = 15
@@ -70,7 +36,7 @@ def _tk_thread(tk_interface: TkInterface):
     root.title('PiBoy Simulator - Tkinter')
     bg_color_hex = '#%02x%02x%02x' % config.ACCENT_DARK
     root.configure(bg=bg_color_hex)
-    w, h = tk_interface.resolution
+    w, h = config.RESOLUTION
     canvas = Canvas(root, width=w, height=h)
     canvas.grid(row=1, column=1, rowspan=4)
 

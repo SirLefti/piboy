@@ -1,41 +1,47 @@
-from typing import List, Tuple
-from PIL import Image, ImageDraw, ImageFont
 from app.BaseApp import BaseApp
+from app.FileManagerApp import FileManagerApp
+from app.NullApp import NullApp
+from interface.BaseInterface import BaseInterface
+from interface.BaseInput import BaseInput
+from interface.TkInterface import TkInterface
 import config
+from typing import List, Tuple
+from PIL import Image, ImageDraw
 import time
 from datetime import datetime
 
 
 ACTIVE_APP = 0
+APPS: List[BaseApp] = [FileManagerApp(), NullApp('DATA'), NullApp('STATS'), NullApp('RADIO'), NullApp('MAP')]
 
 
 def on_key_left():
-    config.APPS[ACTIVE_APP].on_key_left()
-    update_display()
-
-
-def on_key_up():
-    config.APPS[ACTIVE_APP].on_key_up()
+    APPS[ACTIVE_APP].on_key_left()
     update_display()
 
 
 def on_key_right():
-    config.APPS[ACTIVE_APP].on_key_right()
+    APPS[ACTIVE_APP].on_key_right()
+    update_display()
+
+
+def on_key_up():
+    APPS[ACTIVE_APP].on_key_up()
     update_display()
 
 
 def on_key_down():
-    config.APPS[ACTIVE_APP].on_key_down()
+    APPS[ACTIVE_APP].on_key_down()
     update_display()
 
 
 def on_key_a():
-    config.APPS[ACTIVE_APP].on_key_a()
+    APPS[ACTIVE_APP].on_key_a()
     update_display()
 
 
 def on_key_b():
-    config.APPS[ACTIVE_APP].on_key_b()
+    APPS[ACTIVE_APP].on_key_b()
     update_display()
 
 
@@ -43,7 +49,7 @@ def on_rotary_increase():
     global ACTIVE_APP
     ACTIVE_APP += 1
     # go to first app if last was selected
-    if not ACTIVE_APP < len(config.APPS):
+    if not ACTIVE_APP < len(APPS):
         ACTIVE_APP = 0
     update_display()
 
@@ -53,8 +59,14 @@ def on_rotary_decrease():
     ACTIVE_APP -= 1
     # go to last app if first was selected
     if ACTIVE_APP < 0:
-        ACTIVE_APP = len(config.APPS) - 1
+        ACTIVE_APP = len(APPS) - 1
     update_display()
+
+
+__tk = TkInterface(on_key_left, on_key_right, on_key_up, on_key_down, on_key_a, on_key_b,
+                   on_rotary_increase, on_rotary_decrease)
+INTERFACE: BaseInterface = __tk
+INPUT: BaseInput = __tk
 
 
 def watch_function():
@@ -67,12 +79,12 @@ def watch_function():
 
 def update_display():
     """Draw call than handles the complete cycle of drawing a new image to the display."""
-    image = Image.new('RGB', config.INTERFACE.resolution, config.BACKGROUND)
+    image = Image.new('RGB', config.RESOLUTION, config.BACKGROUND)
     draw_buffer = ImageDraw.Draw(image)
     date_str = datetime.now().strftime('%d-%m-%Y %H:%M')
-    draw_base(draw_buffer, config.INTERFACE.resolution, config.APPS, active_app=ACTIVE_APP, date_str=date_str)
-    config.APPS[ACTIVE_APP].draw(draw_buffer)
-    config.INTERFACE.show(image)
+    draw_base(draw_buffer, config.RESOLUTION, APPS, active_app=ACTIVE_APP, date_str=date_str)
+    APPS[ACTIVE_APP].draw(draw_buffer)
+    INTERFACE.show(image)
 
 
 def draw_base(draw: ImageDraw, resolution: Tuple[int, int], apps: List[BaseApp], active_app, date_str) -> ImageDraw:
@@ -98,7 +110,7 @@ def draw_base(draw: ImageDraw, resolution: Tuple[int, int], apps: List[BaseApp],
     draw.line(start + end, fill=config.ACCENT)
 
     # draw app short name header
-    font = ImageFont.truetype(config.FONT, 16)
+    font = config.FONT_HEADER
     max_text_width = width - (2 * header_side_offset)
     app_text_width = sum(font.getsize(app.title)[0] for app in apps) + (len(apps) - 1) * app_spacing
     cursor = header_side_offset + (max_text_width - app_text_width) / 2

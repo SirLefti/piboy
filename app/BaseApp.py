@@ -18,11 +18,11 @@ class BaseApp(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def on_key_up(self):
+    def on_key_right(self):
         raise NotImplementedError
 
     @abstractmethod
-    def on_key_right(self):
+    def on_key_up(self):
         raise NotImplementedError
 
     @abstractmethod

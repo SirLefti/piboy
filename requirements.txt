@@ -1,4 +1,6 @@
+Pillow >= 9.1.0
+
+# The following requirements are used by only the hardware modules for Raspberry Pi.
 RPi.GPIO >= 0.7.1; sys_platform == 'linux' and ('arm' in platform_machine or 'aarch' in platform_machine)
 spidev >= 3.5; sys_platform == 'linux' and ('arm' in platform_machine or 'aarch' in platform_machine)
-Pillow >= 9.1.0
-numpy >= 1.22.3
+numpy >= 1.22.3; sys_platform == 'linux' and ('arm' in platform_machine or 'aarch' in platform_machine)
