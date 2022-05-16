@@ -11,55 +11,89 @@ import time
 from datetime import datetime
 
 
-ACTIVE_APP = 0
-APPS: List[BaseApp] = [FileManagerApp(), NullApp('DATA'), NullApp('STATS'), NullApp('RADIO'), NullApp('MAP')]
+class AppState:
+
+    def __init__(self, resolution: Tuple[int, int], background: Tuple[int, int, int], apps: List[BaseApp]):
+        self.__resolution = resolution
+        self.__background = background
+        self.__image_buffer = self.__init_buffer()
+        self.__apps = apps
+        self.__active_app = 0
+
+    def __init_buffer(self) -> Image:
+        return Image.new('RGB', self.__resolution, self.__background)
+
+    def clear_buffer(self):
+        self.__image_buffer = self.__init_buffer()
+
+    @property
+    def image_buffer(self) -> Image:
+        return self.__image_buffer
+
+    @property
+    def apps(self) -> List[BaseApp]:
+        return self.__apps
+
+    @property
+    def active_app(self) -> BaseApp:
+        return self.__apps[self.__active_app]
+
+    @property
+    def active_app_index(self) -> int:
+        return self.__active_app
+
+    def next_app(self):
+        self.__active_app += 1
+        if not self.__active_app < len(self.__apps):
+            self.__active_app = 0
+
+    def previous_app(self):
+        self.__active_app -= 1
+        if self.__active_app < 0:
+            self.__active_app = len(self.__apps) - 1
+
+
+__APPS: List[BaseApp] = [FileManagerApp(), NullApp('DATA'), NullApp('STATS'), NullApp('RADIO'), NullApp('MAP')]
+STATE = AppState(config.RESOLUTION, config.BACKGROUND, __APPS)
 
 
 def on_key_left():
-    APPS[ACTIVE_APP].on_key_left()
+    STATE.active_app.on_key_left()
     update_display()
 
 
 def on_key_right():
-    APPS[ACTIVE_APP].on_key_right()
+    STATE.active_app.on_key_right()
     update_display()
 
 
 def on_key_up():
-    APPS[ACTIVE_APP].on_key_up()
+    STATE.active_app.on_key_up()
     update_display()
 
 
 def on_key_down():
-    APPS[ACTIVE_APP].on_key_down()
+    STATE.active_app.on_key_down()
     update_display()
 
 
 def on_key_a():
-    APPS[ACTIVE_APP].on_key_a()
+    STATE.active_app.on_key_a()
     update_display()
 
 
 def on_key_b():
-    APPS[ACTIVE_APP].on_key_b()
+    STATE.active_app.on_key_b()
     update_display()
 
 
 def on_rotary_increase():
-    global ACTIVE_APP
-    ACTIVE_APP += 1
-    # go to first app if last was selected
-    if not ACTIVE_APP < len(APPS):
-        ACTIVE_APP = 0
+    STATE.next_app()
     update_display()
 
 
 def on_rotary_decrease():
-    global ACTIVE_APP
-    ACTIVE_APP -= 1
-    # go to last app if first was selected
-    if ACTIVE_APP < 0:
-        ACTIVE_APP = len(APPS) - 1
+    STATE.previous_app()
     update_display()
 
 
@@ -72,31 +106,51 @@ INPUT: BaseInput = __tk
 def watch_function():
     while True:
         now = datetime.now()
-        # wait for next minute
-        time.sleep(60 - now.second - now.microsecond / 1000000.0)
-        update_display()
+        # wait for next second
+        time.sleep(1.0 - now.microsecond / 1000000.0)
+
+        draw = ImageDraw.Draw(STATE.image_buffer)
+        # draw the complete footer to remove existing clock display
+        draw_footer(draw)
+        INTERFACE.show(STATE.image_buffer)
 
 
 def update_display():
     """Draw call than handles the complete cycle of drawing a new image to the display."""
-    image = Image.new('RGB', config.RESOLUTION, config.BACKGROUND)
+    STATE.clear_buffer()
+    image = STATE.image_buffer
+    # image = Image.new('RGB', config.RESOLUTION, config.BACKGROUND)
     draw_buffer = ImageDraw.Draw(image)
-    date_str = datetime.now().strftime('%d-%m-%Y %H:%M')
-    draw_base(draw_buffer, config.RESOLUTION, APPS, active_app=ACTIVE_APP, date_str=date_str)
-    APPS[ACTIVE_APP].draw(draw_buffer)
+    draw_base(draw_buffer, config.RESOLUTION)
+    STATE.active_app.draw(draw_buffer)
     INTERFACE.show(image)
 
 
-def draw_base(draw: ImageDraw, resolution: Tuple[int, int], apps: List[BaseApp], active_app, date_str) -> ImageDraw:
+def draw_footer(draw: ImageDraw) -> ImageDraw:
+    width, height = config.RESOLUTION
+    footer_height = 20  # height of the footer
+    footer_bottom_offset = 3  # spacing to the bottom
+    footer_side_offset = config.APP_SIDE_OFFSET  # spacing to the sides
+    font = config.FONT_HEADER
+
+    date_str = datetime.now().strftime('%d-%m-%Y %H:%M:%S')
+
+    start = (footer_side_offset, height - footer_height - footer_bottom_offset)
+    end = (width - footer_side_offset, height - footer_bottom_offset)
+    draw.rectangle(start + end, fill=config.ACCENT_DARK)
+    text_width, text_height = font.getsize(date_str)
+    text_padding = (footer_height - text_height) / 2
+    draw.text((width - footer_side_offset - text_padding - text_width, height - footer_height - footer_bottom_offset +
+               text_padding), date_str, config.ACCENT, font=font)
+
+
+def draw_base(draw: ImageDraw, resolution: Tuple[int, int]) -> ImageDraw:
     width, height = resolution
     vertical_line = 5  # vertical limiter line
     header_top_offset = config.APP_TOP_OFFSET - vertical_line  # base for header
     header_side_offset = config.APP_SIDE_OFFSET  # spacing to the sides
     app_spacing = 20  # space between app headers
     app_padding = 5  # space around app header
-    footer_height = 20  # height of the footer
-    footer_bottom_offset = 3  # spacing to the bottom
-    footer_side_offset = header_side_offset  # spacing to the sides
 
     # draw base header lines
     start = (header_side_offset, header_top_offset + vertical_line)
@@ -112,12 +166,12 @@ def draw_base(draw: ImageDraw, resolution: Tuple[int, int], apps: List[BaseApp],
     # draw app short name header
     font = config.FONT_HEADER
     max_text_width = width - (2 * header_side_offset)
-    app_text_width = sum(font.getsize(app.title)[0] for app in apps) + (len(apps) - 1) * app_spacing
+    app_text_width = sum(font.getsize(app.title)[0] for app in STATE.apps) + (len(STATE.apps) - 1) * app_spacing
     cursor = header_side_offset + (max_text_width - app_text_width) / 2
-    for index, app in enumerate(apps):
+    for app in STATE.apps:
         text_width, text_height = font.getsize(app.title)
         draw.text((cursor, header_top_offset - text_height - app_padding), app.title, config.ACCENT, font=font)
-        if index == active_app:
+        if app is STATE.active_app:
             start = (cursor - app_padding, header_top_offset - vertical_line)
             end = (cursor - app_padding, header_top_offset)
             draw.line(start + end, fill=config.ACCENT)
@@ -130,13 +184,7 @@ def draw_base(draw: ImageDraw, resolution: Tuple[int, int], apps: List[BaseApp],
         cursor = cursor + text_width + app_spacing
 
     # draw footer
-    start = (footer_side_offset, height - footer_height - footer_bottom_offset)
-    end = (width - footer_side_offset, height - footer_bottom_offset)
-    draw.rectangle(start + end, fill=config.ACCENT_DARK)
-    text_width, text_height = font.getsize(date_str)
-    text_padding = (footer_height - text_height) / 2
-    draw.text((width - footer_side_offset - text_padding - text_width, height - footer_height - footer_bottom_offset +
-               text_padding), date_str, config.ACCENT, font=font)
+    draw_footer(draw)
     return draw
 
 
