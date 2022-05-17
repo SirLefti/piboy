@@ -1,7 +1,7 @@
 from PIL import ImageFont
 
 
-class SpiConfig:
+class SPIConfig:
     """Representation of an SPI device configuration"""
     def __init__(self, bus: int, device: int):
         self.__bus = bus
@@ -39,9 +39,9 @@ ACCENT_DARK = (9, 64, 9)
 # Display module definition
 RST_PIN = 25
 DC_PIN = 24
-DISPLAY_CONFIG = SpiConfig(0, 0)
+DISPLAY_CONFIG = SPIConfig(0, 0)
 
 # Touch module definition
 CS_PIN = 7
 IRQ_PIN = 17
-TOUCH_CONFIG = SpiConfig(0, 1)
+TOUCH_CONFIG = SPIConfig(0, 1)

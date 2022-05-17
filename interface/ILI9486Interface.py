@@ -10,7 +10,7 @@ class ILI9486Interface(BaseInterface):
 
     def __init__(self):
         GPIO.setmode(GPIO.BCM)
-        spi = SpiDev(config.SPI_BUS, config.SPI_DEVICE)
+        spi = SpiDev(config.DISPLAY_CONFIG.bus, config.DISPLAY_CONFIG.device)
         spi.mode = 0b10  # [CPOL|CPHA] -> polarity 1, phase 0
         spi.max_speed_hz = 64000000
         lcd = ILI9486(dc=config.DC_PIN, rst=config.DC_PIN, spi=spi)
