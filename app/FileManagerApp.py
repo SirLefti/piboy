@@ -44,7 +44,7 @@ class FileManagerApp(BaseApp):
 
         @property
         def files(self) -> List[str]:
-            return sorted([f for f in os.listdir(self.__directory) if not f.startswith('.')], key=str.lower)
+            return sorted([f for f in os.listdir(self.__directory)], key=str.lower)
 
     def __init__(self):
         self.__left_directory = self.DirectoryState()
@@ -180,10 +180,14 @@ class FileManagerApp(BaseApp):
         if self.__selected_tab:
             path = os.path.abspath(os.path.join(self.__right_directory.directory, '..'))
             if os.path.isdir(path):
+                old_path = self.__right_directory.directory
                 self.__right_directory.directory = path
-                self.__right_directory.selected_index = 0
+                index = next(i for i, f in enumerate(self.__right_directory.files) if os.path.join(path, f) == old_path)
+                self.__right_directory.selected_index = index
         else:
             path = os.path.abspath(os.path.join(self.__left_directory.directory, '..'))
             if os.path.isdir(path):
+                old_path = self.__left_directory.directory
                 self.__left_directory.directory = path
-                self.__left_directory.selected_index = 0
+                index = next(i for i, f in enumerate(self.__left_directory.files) if os.path.join(path, f) == old_path)
+                self.__left_directory.selected_index = index
