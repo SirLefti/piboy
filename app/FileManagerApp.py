@@ -114,7 +114,7 @@ class FileManagerApp(BaseApp):
             popup_width = text_width + 10
             popup_height = text_height * 3
             popup_border = 3
-            center = int((right_bottom[0] - left_top[0]) / 2), int((right_bottom[1] - left_top[1]) / 2)
+            center = left + int((right - left) / 2), top + int((bottom - top) / 2)
 
             start = center[0] - int(popup_width / 2) - popup_border, center[1] - int(popup_height / 2) - popup_border
             end = center[0] + int(popup_width / 2) + popup_border, center[1] + int(popup_height / 2) + popup_border
