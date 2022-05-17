@@ -1,5 +1,5 @@
 from app.BaseApp import BaseApp
-from PIL import ImageDraw
+from PIL import Image, ImageDraw, ImageOps
 from typing import Tuple, List
 import config
 import os
@@ -68,6 +68,10 @@ class FileManagerApp(BaseApp):
         right, bottom = right_bottom  # unpacking bottom right anchor point
         font = config.FONT_STANDARD
 
+        resources_path = 'resources'
+        file_icon = 'file.png'
+        directory_icon = 'directory.png'
+
         # draw background if this directory is selected
         if is_selected:
             draw.rectangle(left_top + right_bottom, fill=config.ACCENT_DARK)
@@ -100,9 +104,11 @@ class FileManagerApp(BaseApp):
                     break
 
                 if os.path.isfile(os.path.join(state.directory, file)):
-                    draw.ellipse(start + end, fill=config.ACCENT)  # draw circle for file
+                    icon = Image.open(os.path.join(resources_path, file_icon)).convert('1')
+                    draw.bitmap(start, ImageOps.invert(icon), fill=config.ACCENT)
                 else:
-                    draw.rectangle(start + end, fill=config.ACCENT)  # draw square for directory
+                    icon = Image.open(os.path.join(resources_path, directory_icon)).convert('1')
+                    draw.bitmap(start, ImageOps.invert(icon), fill=config.ACCENT)
 
                 while draw.textsize(file, font=font)[0] > right - left - symbol_dimensions - 2 * symbol_padding:
                     file = file[:-1]  # cut off last char until it fits
