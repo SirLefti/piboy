@@ -18,9 +18,27 @@ class GPIOInput(BaseInput):
         GPIO.setup(key_down, GPIO.IN)
         GPIO.setup(key_a, GPIO.IN)
         GPIO.setup(key_b, GPIO.IN)
-        GPIO.add_event_detect(key_left, GPIO.RISING, callback=on_key_left, bouncetime=bouncetime)
-        GPIO.add_event_detect(key_up, GPIO.RISING, callback=on_key_up, bouncetime=bouncetime)
-        GPIO.add_event_detect(key_right, GPIO.RISING, callback=on_key_right, bouncetime=bouncetime)
-        GPIO.add_event_detect(key_down, GPIO.RISING, callback=on_key_down, bouncetime=bouncetime)
-        GPIO.add_event_detect(key_a, GPIO.RISING, callback=on_key_a, bouncetime=bouncetime)
-        GPIO.add_event_detect(key_b, GPIO.RISING, callback=on_key_b, bouncetime=bouncetime)
+        GPIO.add_event_detect(key_left, GPIO.RISING, callback=self.__gpio_left, bouncetime=bouncetime)
+        GPIO.add_event_detect(key_right, GPIO.RISING, callback=self.__gpio_right, bouncetime=bouncetime)
+        GPIO.add_event_detect(key_up, GPIO.RISING, callback=self.__gpio_up, bouncetime=bouncetime)
+        GPIO.add_event_detect(key_down, GPIO.RISING, callback=self.__gpio_down, bouncetime=bouncetime)
+        GPIO.add_event_detect(key_a, GPIO.RISING, callback=self.__gpio_a, bouncetime=bouncetime)
+        GPIO.add_event_detect(key_b, GPIO.RISING, callback=self.__gpio_b, bouncetime=bouncetime)
+
+    def __gpio_left(self, pin):
+        self.on_key_left()
+
+    def __gpio_right(self, pin):
+        self.on_key_right()
+
+    def __gpio_up(self, pin):
+        self.on_key_up()
+
+    def __gpio_down(self, pin):
+        self.on_key_down()
+
+    def __gpio_a(self, pin):
+        self.on_key_a()
+
+    def __gpio_b(self, pin):
+        self.on_key_b()
