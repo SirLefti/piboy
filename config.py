@@ -32,9 +32,14 @@ FONT_HEADER = ImageFont.truetype(FONT_NAME, 16)
 FONT_STANDARD = ImageFont.truetype(FONT_NAME, 14)
 
 # Colors
+COLOR_MODE = 0  # 0 for standard mode, 1 for power armor mode
 BACKGROUND = (0, 0, 0)
-ACCENT = (27, 251, 30)
-ACCENT_DARK = (9, 64, 9)
+if COLOR_MODE == 0:
+    ACCENT = (27, 251, 30)
+    ACCENT_DARK = (9, 64, 9)
+else:
+    ACCENT = (255, 246, 101)
+    ACCENT_DARK = (59, 45, 25)
 
 # Display module definition
 RST_PIN = 25
