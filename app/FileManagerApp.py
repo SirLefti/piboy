@@ -56,8 +56,41 @@ class FileManagerApp(BaseApp):
     def title(self) -> str:
         return "INV"
 
-    @staticmethod
-    def __draw_directory(draw: ImageDraw, left_top: Tuple[int, int], right_bottom: Tuple[int, int],
+    @classmethod
+    def __next_even(cls, value: int):
+        """Returns the next even number, if the number is not even."""
+        if value % 2:
+            return value + 1
+        else:
+            return value
+
+    @classmethod
+    def __draw_popup(cls, draw: ImageDraw, center: Tuple[int, int], options: List[str], selected_option: int):
+        """Draws a popup with the given options."""
+        line_height = 20
+        popup_border = 3
+        popup_min_width = 150
+        font = config.FONT_STANDARD
+        sizes = [font.getsize(text) for text in options]
+        popup_width = cls.__next_even(max(max(e[0] for e in sizes), popup_min_width)) # require at least popup_min_width
+        popup_height = line_height * len(options)
+
+        start = center[0] - int(popup_width / 2) - popup_border, center[1] - int(popup_height / 2) - popup_border
+        end = center[0] + int(popup_width / 2) + popup_border, center[1] + int(popup_height / 2) + popup_border
+        draw.rectangle(start + end, fill=config.ACCENT)
+        start = center[0] - int(popup_width / 2), center[1] - int(popup_height / 2)
+        end = center[0] + int(popup_width / 2), center[1] + int(popup_height / 2)
+        draw.rectangle(start + end, fill=config.BACKGROUND)
+
+        cursor = start
+        for index, text in enumerate(options):
+            if index == selected_option:
+                draw.rectangle(cursor + (cursor[0] + popup_width, cursor[1] + line_height), fill=config.ACCENT_DARK)
+            draw.text(cursor, text, config.ACCENT, font=font)
+            cursor = cursor[0], cursor[1] + line_height
+
+    @classmethod
+    def __draw_directory(cls, draw: ImageDraw, left_top: Tuple[int, int], right_bottom: Tuple[int, int],
                          state: DirectoryState, is_selected: bool) -> None:
         """Draws the given directory to the given ImageDraw and returns the new top_index."""
         line_height = 20  # height of a line entry in the directory
