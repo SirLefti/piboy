@@ -1,18 +1,42 @@
 from app.BaseApp import BaseApp
 from PIL import Image, ImageDraw, ImageOps
-from typing import Tuple, List
+from typing import Tuple, List, Callable, Optional
 import config
 import os
 
 
 class FileManagerApp(BaseApp):
+    POPUP_BORDER = 3
+    LINE_HEIGHT = 20
 
     class DirectoryState:
+
+        class Popup:
+
+            def __init__(self, options: List[str], actions: List[Callable]):
+                if len(options) != len(actions):
+                    raise ValueError(
+                        'There must be as many options as actions ({0}, {1})'.format(len(options), len(actions)))
+                self.__options = options
+                self.__selected_index = 0
+                self.__actions = actions
+
+            @property
+            def options(self) -> List[str]:
+                return self.__options
+
+            @property
+            def selected_index(self) -> int:
+                return self.__selected_index
+
+            def action(self):
+                self.__actions[self.__selected_index]()
 
         def __init__(self):
             self.__directory = os.path.expanduser('~')
             self.__top_index = 0
             self.__selected_index = 0
+            self.__popup = None
 
         @property
         def directory(self) -> str:
@@ -39,6 +63,17 @@ class FileManagerApp(BaseApp):
             self.__selected_index = value
 
         @property
+        def popup(self) -> Optional[Popup]:
+            return self.__popup
+
+        @popup.setter
+        def popup(self, value: Popup):
+            self.__popup = value
+
+        def remove_popup(self):
+            self.__popup = None
+
+        @property
         def entries(self) -> int:
             return len(self.files)
 
@@ -51,6 +86,16 @@ class FileManagerApp(BaseApp):
         self.__right_directory = self.DirectoryState()
         self.__selected_tab = 0  # 0 for left, 1 for right
         pass
+
+    def __change_tab(self):
+        self.__selected_tab ^= 1
+
+    @property
+    def __active_directory(self) -> DirectoryState:
+        if self.__selected_tab:
+            return self.__right_directory
+        else:
+            return self.__left_directory
 
     @property
     def title(self) -> str:
@@ -65,15 +110,16 @@ class FileManagerApp(BaseApp):
             return value
 
     @classmethod
-    def __draw_popup(cls, draw: ImageDraw, center: Tuple[int, int], options: List[str], selected_option: int):
+    def __draw_popup(cls, draw: ImageDraw, center: Tuple[int, int], popup: DirectoryState.Popup):
         """Draws a popup with the given options."""
-        line_height = 20
-        popup_border = 3
+        line_height = cls.LINE_HEIGHT
+        popup_border = cls.POPUP_BORDER
         popup_min_width = 150
         font = config.FONT_STANDARD
-        sizes = [font.getsize(text) for text in options]
-        popup_width = cls.__next_even(max(max(e[0] for e in sizes), popup_min_width)) # require at least popup_min_width
-        popup_height = line_height * len(options)
+        sizes = [font.getsize(text) for text in popup.options]
+        popup_width = cls.__next_even(
+            max(max(e[0] for e in sizes), popup_min_width))  # require at least popup_min_width
+        popup_height = line_height * len(popup.options)
 
         start = center[0] - int(popup_width / 2) - popup_border, center[1] - int(popup_height / 2) - popup_border
         end = center[0] + int(popup_width / 2) + popup_border, center[1] + int(popup_height / 2) + popup_border
@@ -83,8 +129,8 @@ class FileManagerApp(BaseApp):
         draw.rectangle(start + end, fill=config.BACKGROUND)
 
         cursor = start
-        for index, text in enumerate(options):
-            if index == selected_option:
+        for index, text in enumerate(popup.options):
+            if index == popup.selected_index:
                 draw.rectangle(cursor + (cursor[0] + popup_width, cursor[1] + line_height), fill=config.ACCENT_DARK)
             draw.text(cursor, text, config.ACCENT, font=font)
             cursor = cursor[0], cursor[1] + line_height
@@ -93,8 +139,8 @@ class FileManagerApp(BaseApp):
     def __draw_directory(cls, draw: ImageDraw, left_top: Tuple[int, int], right_bottom: Tuple[int, int],
                          state: DirectoryState, is_selected: bool) -> None:
         """Draws the given directory to the given ImageDraw and returns the new top_index."""
-        line_height = 20  # height of a line entry in the directory
-        side_padding = 3  # padding to the side of the directory background
+        line_height = cls.LINE_HEIGHT  # height of a line entry in the directory
+        side_padding = cls.POPUP_BORDER  # padding to the side of the directory background
         symbol_dimensions = 10  # size of symbol entry
         symbol_padding = (line_height - symbol_dimensions) / 2  # space around symbol
         left, top = left_top  # unpacking top left anchor point
@@ -181,52 +227,46 @@ class FileManagerApp(BaseApp):
 
         return draw
 
+    def _enter(self, path):
+        pass
+
+    def _copy(self, path):
+        pass
+
+    def _move(self, path):
+        pass
+
+    def _delete(self, path):
+        pass
+
     def on_key_left(self):
-        self.__selected_tab ^= 1  # flip bit to change tab
+        self.__change_tab()
 
     def on_key_right(self):
-        self.__selected_tab ^= 1  # flip bit to change tab
+        self.__change_tab()
 
     def on_key_up(self):
-        if self.__selected_tab:
-            self.__right_directory.selected_index = max(self.__right_directory.selected_index - 1, 0)
-        else:
-            self.__left_directory.selected_index = max(self.__left_directory.selected_index - 1, 0)
+        self.__active_directory.selected_index = max(self.__active_directory.selected_index - 1, 0)
 
     def on_key_down(self):
-        if self.__selected_tab:
-            self.__right_directory.selected_index = min(self.__right_directory.selected_index + 1,
-                                                        self.__right_directory.entries - 1)
-        else:
-            self.__left_directory.selected_index = min(self.__left_directory.selected_index + 1,
-                                                       self.__left_directory.entries - 1)
+        self.__active_directory.selected_index = min(self.__active_directory.selected_index + 1,
+                                                     self.__active_directory.entries - 1)
 
     def on_key_a(self):
-        if self.__selected_tab:
-            path = os.path.join(self.__right_directory.directory, self.__right_directory.files[self.__right_directory
-                                .selected_index])
-            if os.path.isdir(path):
-                self.__right_directory.directory = path
-                self.__right_directory.selected_index = 0
-        else:
-            path = os.path.join(self.__left_directory.directory, self.__left_directory.files[self.__left_directory
-                                .selected_index])
-            if os.path.isdir(path):
-                self.__left_directory.directory = path
-                self.__left_directory.selected_index = 0
+        path = os.path.join(self.__active_directory.directory, self.__active_directory.files[self.__active_directory
+                            .selected_index])
+        if os.path.isdir(path):
+            self.__active_directory.directory = path
+            self.__active_directory.selected_index = 0
 
     def on_key_b(self):
-        if self.__selected_tab:
-            path = os.path.abspath(os.path.join(self.__right_directory.directory, '..'))
+        if self.__active_directory.popup is None:
+            path = os.path.abspath(os.path.join(self.__active_directory.directory, '..'))
             if os.path.isdir(path):
-                old_path = self.__right_directory.directory
-                self.__right_directory.directory = path
-                index = next(i for i, f in enumerate(self.__right_directory.files) if os.path.join(path, f) == old_path)
-                self.__right_directory.selected_index = index
+                old_path = self.__active_directory.directory
+                self.__active_directory.directory = path
+                index = next(
+                    i for i, f in enumerate(self.__active_directory.files) if os.path.join(path, f) == old_path)
+                self.__active_directory.selected_index = index
         else:
-            path = os.path.abspath(os.path.join(self.__left_directory.directory, '..'))
-            if os.path.isdir(path):
-                old_path = self.__left_directory.directory
-                self.__left_directory.directory = path
-                index = next(i for i, f in enumerate(self.__left_directory.files) if os.path.join(path, f) == old_path)
-                self.__left_directory.selected_index = index
+            self.__active_directory.remove_popup()
