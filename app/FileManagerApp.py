@@ -3,6 +3,7 @@ from PIL import Image, ImageDraw, ImageOps
 from typing import Tuple, List, Callable, Optional
 import config
 import os
+import shutil
 
 
 class FileManagerApp(BaseApp):
@@ -28,6 +29,12 @@ class FileManagerApp(BaseApp):
             @property
             def selected_index(self) -> int:
                 return self.__selected_index
+
+            def increase_index(self):
+                self.__selected_index = min(self.__selected_index + 1, len(self.__options) - 1)
+
+            def decrease_index(self):
+                self.__selected_index = max(self.__selected_index - 1, 0)
 
             def action(self):
                 self.__actions[self.__selected_index]()
@@ -61,6 +68,12 @@ class FileManagerApp(BaseApp):
         @selected_index.setter
         def selected_index(self, value: int):
             self.__selected_index = value
+
+        def increase_index(self):
+            self.__selected_index = min(self.__selected_index + 1, self.entries - 1)
+
+        def decrease_index(self):
+            self.__selected_index = max(self.__selected_index - 1, 0)
 
         @property
         def popup(self) -> Optional[Popup]:
@@ -98,6 +111,13 @@ class FileManagerApp(BaseApp):
             return self.__left_directory
 
     @property
+    def __other_directory(self) -> DirectoryState:
+        if self.__selected_tab:
+            return self.__left_directory
+        else:
+            return self.__right_directory
+
+    @property
     def title(self) -> str:
         return "INV"
 
@@ -110,16 +130,22 @@ class FileManagerApp(BaseApp):
             return value
 
     @classmethod
-    def __draw_popup(cls, draw: ImageDraw, center: Tuple[int, int], popup: DirectoryState.Popup):
+    def __draw_popup(cls, draw: ImageDraw, left_top: Tuple[int, int], right_bottom: Tuple[int, int],
+                     popup: DirectoryState.Popup):
         """Draws a popup with the given options."""
         line_height = cls.LINE_HEIGHT
         popup_border = cls.POPUP_BORDER
         popup_min_width = 150
         font = config.FONT_STANDARD
+        left, top = left_top
+        right, bottom = right_bottom
+
         sizes = [font.getsize(text) for text in popup.options]
         popup_width = cls.__next_even(
             max(max(e[0] for e in sizes), popup_min_width))  # require at least popup_min_width
         popup_height = line_height * len(popup.options)
+
+        center = left + int((right - left) / 2), top + int((bottom - top) / 2)
 
         start = center[0] - int(popup_width / 2) - popup_border, center[1] - int(popup_height / 2) - popup_border
         end = center[0] + int(popup_width / 2) + popup_border, center[1] + int(popup_height / 2) + popup_border
@@ -136,11 +162,31 @@ class FileManagerApp(BaseApp):
             cursor = cursor[0], cursor[1] + line_height
 
     @classmethod
+    def __draw_permission_denied(cls, draw: ImageDraw, left_top: Tuple[int, int], right_bottom: Tuple[int, int]):
+        left, top = left_top  # unpacking top left anchor point
+        right, bottom = right_bottom  # unpacking bottom right anchor point
+        font = config.FONT_STANDARD
+        text = 'Permission denied'
+        text_width, text_height = font.getsize(text)
+        popup_width = text_width + 10
+        popup_height = text_height * 3
+        popup_border = cls.POPUP_BORDER
+        center = left + int((right - left) / 2), top + int((bottom - top) / 2)
+
+        start = center[0] - int(popup_width / 2) - popup_border, center[1] - int(popup_height / 2) - popup_border
+        end = center[0] + int(popup_width / 2) + popup_border, center[1] + int(popup_height / 2) + popup_border
+        draw.rectangle(start + end, fill=config.ACCENT)
+        start = start[0] + popup_border, start[1] + popup_border
+        end = end[0] - popup_border, end[1] - popup_border
+        draw.rectangle(start + end, fill=config.BACKGROUND)
+        draw.text((center[0] - int(text_width / 2), center[1] - int(text_height / 2)), text, config.ACCENT, font=font)
+
+    @classmethod
     def __draw_directory(cls, draw: ImageDraw, left_top: Tuple[int, int], right_bottom: Tuple[int, int],
                          state: DirectoryState, is_selected: bool) -> None:
         """Draws the given directory to the given ImageDraw and returns the new top_index."""
         line_height = cls.LINE_HEIGHT  # height of a line entry in the directory
-        side_padding = cls.POPUP_BORDER  # padding to the side of the directory background
+        side_padding = 3  # padding to the side of the directory background
         symbol_dimensions = 10  # size of symbol entry
         symbol_padding = (line_height - symbol_dimensions) / 2  # space around symbol
         left, top = left_top  # unpacking top left anchor point
@@ -193,32 +239,25 @@ class FileManagerApp(BaseApp):
                     file = file[:-1]  # cut off last char until it fits
                 draw.text((cursor_x + symbol_dimensions + 2 * symbol_padding, cursor_y), file, config.ACCENT, font=font)
                 cursor = (cursor_x, cursor_y + line_height)
-        except PermissionError:
-            text = 'Permission denied'
-            text_width, text_height = font.getsize(text)
-            popup_width = text_width + 10
-            popup_height = text_height * 3
-            popup_border = 3
-            center = left + int((right - left) / 2), top + int((bottom - top) / 2)
 
-            start = center[0] - int(popup_width / 2) - popup_border, center[1] - int(popup_height / 2) - popup_border
-            end = center[0] + int(popup_width / 2) + popup_border, center[1] + int(popup_height / 2) + popup_border
-            draw.rectangle(start + end, fill=config.ACCENT)
-            start = start[0] + popup_border, start[1] + popup_border
-            end = end[0] - popup_border, end[1] - popup_border
-            draw.rectangle(start + end, fill=config.BACKGROUND)
-            draw.text((center[0] - int(text_width / 2), center[1] - int(text_height / 2)), text, config.ACCENT, font=font)
+            if state.popup is not None:
+                cls.__draw_popup(draw, left_top, right_bottom, state.popup)
+
+        except PermissionError:
+            cls.__draw_permission_denied(draw, left_top, right_bottom)
 
     def draw(self, draw: ImageDraw) -> ImageDraw:
         width, height = config.RESOLUTION
+        is_left_tab = self.__selected_tab == 0
+        is_right_tab = self.__selected_tab == 1
 
         left_top = (config.APP_SIDE_OFFSET, config.APP_TOP_OFFSET)
         right_bottom = (int(width / 2), height - config.APP_BOTTOM_OFFSET)
-        self.__draw_directory(draw, left_top, right_bottom, self.__left_directory, is_selected=self.__selected_tab == 0)
+        self.__draw_directory(draw, left_top, right_bottom, self.__left_directory, is_selected=is_left_tab)
 
         left_top = (int(width / 2), config.APP_TOP_OFFSET)
         right_bottom = (width - config.APP_SIDE_OFFSET, height - config.APP_BOTTOM_OFFSET)
-        self.__draw_directory(draw, left_top, right_bottom, self.__right_directory, is_selected=self.__selected_tab == 1)
+        self.__draw_directory(draw, left_top, right_bottom, self.__right_directory, is_selected=is_right_tab)
 
         # split line
         start = (width / 2 - 1, config.APP_TOP_OFFSET)
@@ -227,37 +266,73 @@ class FileManagerApp(BaseApp):
 
         return draw
 
-    def _enter(self, path):
-        pass
+    def _enter(self):
+        path = os.path.join(self.__active_directory.directory, self.__active_directory.files[self.__active_directory
+                            .selected_index])
+        self.__active_directory.directory = path
+        self.__active_directory.selected_index = 0
+        self.__active_directory.remove_popup()
 
-    def _copy(self, path):
-        pass
+    def _copy(self):
+        path = os.path.join(self.__active_directory.directory, self.__active_directory.files[
+            self.__active_directory.selected_index])
+        source_path = self.__active_directory.directory
+        target_path = self.__other_directory.directory
+        if source_path != target_path:
+            if os.path.isdir(path):
+                shutil.copytree(path, target_path)
+            else:
+                shutil.copy(path, target_path)
+        self.__active_directory.remove_popup()
 
-    def _move(self, path):
-        pass
+    def _move(self):
+        path = os.path.join(self.__active_directory.directory, self.__active_directory.files[
+            self.__active_directory.selected_index])
+        source_path = self.__active_directory.directory
+        target_path = self.__other_directory.directory
+        if source_path != target_path:
+            shutil.move(path, target_path)
+        self.__active_directory.remove_popup()
 
-    def _delete(self, path):
-        pass
+    def _delete(self):
+        path = os.path.join(self.__active_directory.directory, self.__active_directory.files[self.__active_directory
+                            .selected_index])
+        os.remove(path)
+        self.__active_directory.remove_popup()
 
     def on_key_left(self):
-        self.__change_tab()
+        if self.__active_directory.popup is None:
+            self.__change_tab()
 
     def on_key_right(self):
-        self.__change_tab()
+        if self.__active_directory.popup is None:
+            self.__change_tab()
 
     def on_key_up(self):
-        self.__active_directory.selected_index = max(self.__active_directory.selected_index - 1, 0)
+        if self.__active_directory.popup is None:
+            self.__active_directory.decrease_index()
+        else:
+            self.__active_directory.popup.decrease_index()
 
     def on_key_down(self):
-        self.__active_directory.selected_index = min(self.__active_directory.selected_index + 1,
-                                                     self.__active_directory.entries - 1)
+        if self.__active_directory.popup is None:
+            self.__active_directory.increase_index()
+        else:
+            self.__active_directory.popup.increase_index()
 
     def on_key_a(self):
         path = os.path.join(self.__active_directory.directory, self.__active_directory.files[self.__active_directory
                             .selected_index])
-        if os.path.isdir(path):
-            self.__active_directory.directory = path
-            self.__active_directory.selected_index = 0
+        if self.__active_directory.popup is None:
+            if os.path.isdir(path):
+                self.__active_directory.popup = self.DirectoryState.Popup(['Enter', 'Copy', 'Move', 'Delete'],
+                                                                          [self._enter, self._copy, self._move,
+                                                                           self._delete])
+            else:
+                self.__active_directory.popup = self.DirectoryState.Popup(['Copy', 'Move', 'Delete'],
+                                                                          [self._copy, self._move, self._delete])
+        else:
+            self.__active_directory.popup.action()
 
     def on_key_b(self):
         if self.__active_directory.popup is None:
