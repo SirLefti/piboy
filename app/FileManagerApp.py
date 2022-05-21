@@ -12,6 +12,15 @@ class FileManagerApp(BaseApp):
 
     class DirectoryState:
 
+        class ErrorMessage:
+
+            def __init__(self, message: str):
+                self.__message = message
+
+            @property
+            def message(self) -> str:
+                return self.__message
+
         class Popup:
 
             def __init__(self, options: List[str], actions: List[Callable]):
@@ -44,6 +53,7 @@ class FileManagerApp(BaseApp):
             self.__top_index = 0
             self.__selected_index = 0
             self.__popup = None
+            self.__error_message = None
 
         @property
         def directory(self) -> str:
@@ -85,6 +95,17 @@ class FileManagerApp(BaseApp):
 
         def remove_popup(self):
             self.__popup = None
+
+        @property
+        def error_message(self) -> Optional[ErrorMessage]:
+            return self.__error_message
+
+        @error_message.setter
+        def error_message(self, value: ErrorMessage):
+            self.__error_message = value
+
+        def remove_error_message(self):
+            self.__error_message = None
 
         @property
         def entries(self) -> int:
@@ -162,11 +183,10 @@ class FileManagerApp(BaseApp):
             cursor = cursor[0], cursor[1] + line_height
 
     @classmethod
-    def __draw_permission_denied(cls, draw: ImageDraw, left_top: Tuple[int, int], right_bottom: Tuple[int, int]):
+    def __draw_error(cls, draw: ImageDraw, left_top: Tuple[int, int], right_bottom: Tuple[int, int], text: str):
         left, top = left_top  # unpacking top left anchor point
         right, bottom = right_bottom  # unpacking bottom right anchor point
         font = config.FONT_STANDARD
-        text = 'Permission denied'
         text_width, text_height = font.getsize(text)
         popup_width = text_width + 10
         popup_height = text_height * 3
@@ -240,11 +260,13 @@ class FileManagerApp(BaseApp):
                 draw.text((cursor_x + symbol_dimensions + 2 * symbol_padding, cursor_y), file, config.ACCENT, font=font)
                 cursor = (cursor_x, cursor_y + line_height)
 
-            if state.popup is not None:
+            if state.error_message is not None:
+                cls.__draw_error(draw, left_top, right_bottom, state.error_message.message)
+            elif state.popup is not None:
                 cls.__draw_popup(draw, left_top, right_bottom, state.popup)
 
         except PermissionError:
-            cls.__draw_permission_denied(draw, left_top, right_bottom)
+            cls.__draw_error(draw, left_top, right_bottom, 'Permission denied')
 
     def draw(self, draw: ImageDraw) -> ImageDraw:
         width, height = config.RESOLUTION
@@ -274,56 +296,80 @@ class FileManagerApp(BaseApp):
         self.__active_directory.remove_popup()
 
     def _copy(self):
-        path = os.path.join(self.__active_directory.directory, self.__active_directory.files[
+        source_path = os.path.join(self.__active_directory.directory, self.__active_directory.files[
             self.__active_directory.selected_index])
-        source_path = self.__active_directory.directory
-        target_path = self.__other_directory.directory
+        target_path = os.path.join(self.__other_directory.directory, self.__active_directory.files[
+            self.__active_directory.selected_index])
         if source_path != target_path:
-            if os.path.isdir(path):
-                shutil.copytree(path, target_path)
-            else:
-                shutil.copy(path, target_path)
+            try:
+                if os.path.isdir(source_path):
+                    shutil.copytree(source_path, target_path, dirs_exist_ok=True)
+                else:
+                    shutil.copy(source_path, target_path)
+            except PermissionError:
+                self.__active_directory.error_message = self.DirectoryState.ErrorMessage('Permission denied')
+            except FileExistsError:
+                self.__active_directory.error_message = self.DirectoryState.ErrorMessage('File already exists')
         self.__active_directory.remove_popup()
 
     def _move(self):
-        path = os.path.join(self.__active_directory.directory, self.__active_directory.files[
+        source_path = os.path.join(self.__active_directory.directory, self.__active_directory.files[
             self.__active_directory.selected_index])
-        source_path = self.__active_directory.directory
-        target_path = self.__other_directory.directory
+        target_path = os.path.join(self.__other_directory.directory, self.__active_directory.files[
+            self.__active_directory.selected_index])
         if source_path != target_path:
-            shutil.move(path, target_path)
+            try:
+                shutil.move(source_path, target_path)
+            except PermissionError:
+                self.__active_directory.error_message = self.DirectoryState.ErrorMessage('Permission denied')
+            except FileExistsError:
+                self.__active_directory.error_message = self.DirectoryState.ErrorMessage('File already exists')
         self.__active_directory.remove_popup()
 
     def _delete(self):
         path = os.path.join(self.__active_directory.directory, self.__active_directory.files[self.__active_directory
                             .selected_index])
-        os.remove(path)
+        try:
+            if os.path.isdir(path):
+                shutil.rmtree(path)
+            else:
+                os.remove(path)
+        except PermissionError:
+            self.__active_directory.error_message = self.DirectoryState.ErrorMessage('Permission denied')
         self.__active_directory.remove_popup()
 
     def on_key_left(self):
-        if self.__active_directory.popup is None:
+        if self.__active_directory.popup is None and self.__active_directory.error_message is None:
             self.__change_tab()
 
     def on_key_right(self):
-        if self.__active_directory.popup is None:
+        if self.__active_directory.popup is None and self.__active_directory.error_message is None:
             self.__change_tab()
 
     def on_key_up(self):
-        if self.__active_directory.popup is None:
-            self.__active_directory.decrease_index()
-        else:
+        if self.__active_directory.error_message is not None:
+            pass
+        elif self.__active_directory.popup is not None:
             self.__active_directory.popup.decrease_index()
+        else:
+            self.__active_directory.decrease_index()
 
     def on_key_down(self):
-        if self.__active_directory.popup is None:
-            self.__active_directory.increase_index()
-        else:
+        if self.__active_directory.error_message is not None:
+            pass
+        elif self.__active_directory.popup is not None:
             self.__active_directory.popup.increase_index()
+        else:
+            self.__active_directory.increase_index()
 
     def on_key_a(self):
         path = os.path.join(self.__active_directory.directory, self.__active_directory.files[self.__active_directory
                             .selected_index])
-        if self.__active_directory.popup is None:
+        if self.__active_directory.error_message is not None:
+            pass
+        elif self.__active_directory.popup is not None:
+            self.__active_directory.popup.action()
+        else:
             if os.path.isdir(path):
                 self.__active_directory.popup = self.DirectoryState.Popup(['Enter', 'Copy', 'Move', 'Delete'],
                                                                           [self._enter, self._copy, self._move,
@@ -331,11 +377,13 @@ class FileManagerApp(BaseApp):
             else:
                 self.__active_directory.popup = self.DirectoryState.Popup(['Copy', 'Move', 'Delete'],
                                                                           [self._copy, self._move, self._delete])
-        else:
-            self.__active_directory.popup.action()
 
     def on_key_b(self):
-        if self.__active_directory.popup is None:
+        if self.__active_directory.error_message is not None:
+            self.__active_directory.remove_error_message()
+        elif self.__active_directory.popup is not None:
+            self.__active_directory.remove_popup()
+        else:
             path = os.path.abspath(os.path.join(self.__active_directory.directory, '..'))
             if os.path.isdir(path):
                 old_path = self.__active_directory.directory
@@ -343,5 +391,3 @@ class FileManagerApp(BaseApp):
                 index = next(
                     i for i, f in enumerate(self.__active_directory.files) if os.path.join(path, f) == old_path)
                 self.__active_directory.selected_index = index
-        else:
-            self.__active_directory.remove_popup()
