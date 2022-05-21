@@ -18,6 +18,9 @@ class TkInterface(BaseInterface, BaseInput):
         self.__image = None
         threading.Thread(target=_tk_thread, args=(self,), daemon=True).start()
 
+    def close(self):
+        pass
+
     def take_image(self) -> Image:
         image = self.__image
         self.__image = None

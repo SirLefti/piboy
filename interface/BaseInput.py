@@ -1,4 +1,4 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 from typing import Callable
 
 
@@ -14,6 +14,10 @@ class BaseInput(ABC):
         self.__on_key_b = on_key_b
         self.__on_rotary_increase = on_rotary_increase
         self.__on_rotary_decrease = on_rotary_decrease
+
+    @abstractmethod
+    def close(self):
+        raise NotImplementedError
 
     def on_key_left(self):
         self.__on_key_left()

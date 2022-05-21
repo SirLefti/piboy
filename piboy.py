@@ -192,5 +192,11 @@ if __name__ == '__main__':
     # initial draw
     update_display()
 
-    # blocking function that updates the clock
-    watch_function()
+    try:
+        # blocking function that updates the clock
+        watch_function()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        INTERFACE.close()
+        INPUT.close()
