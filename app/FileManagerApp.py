@@ -220,7 +220,10 @@ class FileManagerApp(BaseApp):
         # draw background if this directory is selected
         if is_selected:
             draw.rectangle(left_top + right_bottom, fill=config.ACCENT_DARK)
-        draw.text((left + side_padding, top), state.directory, config.ACCENT, font=font)
+        text = state.directory
+        while font.getsize(text)[0] > right - left - side_padding:
+            text = text[:-1]  # cut off last char until it fits
+        draw.text((left + side_padding, top), text, config.ACCENT, font=font)
 
         cursor = (left, top + line_height)
         try:
