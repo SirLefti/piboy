@@ -40,3 +40,11 @@ Edit the crontab with ``crontab -e`` and add the following:
 ````bash
 @reboot cd /home/pi/piboy && .venv/bin/python piboy.py &
 ````
+
+## Configuration
+
+Most config stuff is defined in the equally named file ``config.py``. However, the apps are configured in ``piboy.py``
+to avoid circular imports. The same applies to the interface (the way how the Pi-Boy shows the UI) and input
+configuration (the way how the Pi-Boy reads the user input). ``TkInterface`` can be used for development and simulation
+purposes without a Raspberry Pi. It implements both ``BaseInterface`` and ``BaseInput`` and thus should be used as
+interface and input. On a Raspberry Pi use ``ILI9486Interface`` and ``GPIOInput``.
