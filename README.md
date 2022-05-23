@@ -1,7 +1,7 @@
 PiBoy
 =========================
-![commit activity](https://img.shields.io/github/commit-activity/m/SirLefti/piboy)
-![last commit](https://img.shields.io/github/last-commit/SirLefti/piboy)
+[![commit activity](https://img.shields.io/github/commit-activity/m/SirLefti/piboy)](https://github.com/SirLefti/piboy)
+[![last commit](https://img.shields.io/github/last-commit/SirLefti/piboy)](https://github.com/SirLefti/piboy)
 ![image](./docs/piboy.jpg)
 Build your own Pip-Boy with some useful features for real-life using your Raspberry Pi.
 
@@ -58,3 +58,15 @@ interface and input. On a Raspberry Pi use ``ILI9486Interface`` and ``GPIOInput`
 
 This project uses FreeSansBold as default font. If the font cannot be found despite being installed, or you do not want
 to install it, place the ``FreeSanBold.ttf`` in the root directory as a workaround.
+
+## Roadmap
+
+* [x] display driver
+* [x] project base
+* [ ] build documentation / guide
+* [ ] case
+* [x] file manager app
+* [ ] map app
+* [ ] radio app
+* [ ] other apps (?)
+* [ ] utilities
