@@ -41,6 +41,11 @@ Edit the crontab with ``crontab -e`` and add the following:
 @reboot cd /home/pi/piboy && .venv/bin/python piboy.py &
 ````
 
+To enable logging, use the following instead:
+````bash
+@reboot cd /home/pi/piboy && (.venv/bin/python -u piboy.py >log 2>err) &
+````
+
 ## Configuration
 
 Most config stuff is defined in the equally named file ``config.py``. However, the apps are configured in ``piboy.py``
@@ -48,3 +53,6 @@ to avoid circular imports. The same applies to the interface (the way how the Pi
 configuration (the way how the Pi-Boy reads the user input). ``TkInterface`` can be used for development and simulation
 purposes without a Raspberry Pi. It implements both ``BaseInterface`` and ``BaseInput`` and thus should be used as
 interface and input. On a Raspberry Pi use ``ILI9486Interface`` and ``GPIOInput``.
+
+This project uses FreeSansBold as default font. If the font cannot be found despite being installed, or you do not want
+to install it, place the ``FreeSanBold.ttf`` in the root directory as a workaround.
