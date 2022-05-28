@@ -271,10 +271,11 @@ class FileManagerApp(BaseApp):
         except PermissionError:
             cls.__draw_error(draw, left_top, right_bottom, 'Permission denied')
 
-    def draw(self, draw: ImageDraw) -> ImageDraw:
+    def draw(self, image: Image) -> Image:
         width, height = config.RESOLUTION
         is_left_tab = self.__selected_tab == 0
         is_right_tab = self.__selected_tab == 1
+        draw = ImageDraw.Draw(image)
 
         left_top = (config.APP_SIDE_OFFSET, config.APP_TOP_OFFSET)
         right_bottom = (int(width / 2), height - config.APP_BOTTOM_OFFSET)
