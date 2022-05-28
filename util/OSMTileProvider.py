@@ -1,5 +1,5 @@
 from util.BaseTileProvider import BaseTileProvider, TileInfo
-from typing import Tuple
+from typing import Tuple, Iterable
 from PIL import Image
 import os
 import requests
@@ -7,6 +7,10 @@ import math
 
 
 class OSMTileProvider(BaseTileProvider):
+
+    @property
+    def zoom_range(self) -> Iterable[int]:
+        return range(0, 20)
 
     def get_tile(self, lat: float, lon: float, zoom: int, size: Tuple[int, int] = (256, 256)) -> TileInfo:
         tile_cache = '.tiles'

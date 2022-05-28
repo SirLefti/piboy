@@ -20,9 +20,13 @@ class MapApp(BaseApp):
         draw = ImageDraw.Draw(image)
         left_top = (config.APP_SIDE_OFFSET, config.APP_TOP_OFFSET)
         width, height = config.RESOLUTION
+        side_tab_width = 120
+        side_tab_padding = 5
+        line_height = 20
         font = config.FONT_STANDARD
+
         lat, lon = self.__location_provider.get_location()
-        size = (width - 2 * config.APP_SIDE_OFFSET, height - config.APP_TOP_OFFSET - config.APP_BOTTOM_OFFSET)
+        size = (width - 2 * config.APP_SIDE_OFFSET - side_tab_width, height - config.APP_TOP_OFFSET - config.APP_BOTTOM_OFFSET)
         tile = self.__tile_provider.get_tile(lat, lon, self.__zoom, size=size)
         image.paste(tile.image, left_top)
 
@@ -39,7 +43,13 @@ class MapApp(BaseApp):
                       (marker_center[0] + int(marker_size / 2), marker_center[1] - marker_size)],
                      fill=config.ACCENT_DARK)
 
-        draw.text(left_top, f'lat: {lat}°, lon: {lon}°', config.BACKGROUND, font=font)
+        # draw.text(left_top, f'lat: {lat}°, lon: {lon}°', config.BACKGROUND, font=font)
+        cursor = (left_top[0] + size[0] + side_tab_padding, left_top[1])
+        draw.text(cursor, f'lat: {lat}°', config.ACCENT, font=font)
+        cursor = (cursor[0], cursor[1] + line_height)
+        draw.text(cursor, f'lon: {lon}°', config.ACCENT, font=font)
+        cursor = (cursor[0], cursor[1] + line_height)
+        draw.text(cursor, f'zoom: {self.__zoom}x', config.ACCENT, font=font)
         return image
 
     def on_key_left(self):
@@ -55,7 +65,9 @@ class MapApp(BaseApp):
         pass
 
     def on_key_a(self):
-        pass
+        if self.__zoom + 1 in self.__tile_provider.zoom_range:
+            self.__zoom = self.__zoom + 1
 
     def on_key_b(self):
-        pass
+        if self.__zoom - 1 in self.__tile_provider.zoom_range:
+            self.__zoom = self.__zoom - 1
