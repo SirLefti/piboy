@@ -13,26 +13,66 @@ class OSMTileProvider(BaseTileProvider):
         return range(0, 20)
 
     def get_tile(self, lat: float, lon: float, zoom: int, size: Tuple[int, int] = (256, 256)) -> TileInfo:
+        x_tile, y_tile = self._deg_to_num(lat, lon, zoom)
+        tile = self._fetch_tile(zoom, x_tile, y_tile)
+        tile_width, tile_height = tile.size
+        target_width, target_height = size
+
+        # calculate the relative position of the current location on the tile, because the tile is not centered around
+        # the given location.
+        tile_top_deg, tile_left_deg = self._num_to_deg(x_tile, y_tile, zoom)
+        tile_bottom_deg, tile_right_deg = self._num_to_deg(x_tile + 1, y_tile + 1, zoom)
+        x_position = int((lon - tile_left_deg) / (tile_right_deg - tile_left_deg) * tile_width)
+        y_position = int((lat - tile_top_deg) / (tile_bottom_deg - tile_top_deg) * tile_height)
+
+        # calculate the total tiles to be fetched
+        left_tiles = int((target_width / 2 - x_position + tile_width) / tile_width)
+        right_tiles = int((target_width / 2 - (tile_width - x_position) + tile_width) / tile_width)
+        top_tiles = int((target_height / 2 - y_position + tile_height) / tile_height)
+        bottom_tiles = int((target_height / 2 - (tile_height - y_position) + tile_height) / tile_height)
+
+        grid: list[list[Image]] = [
+            [None for _ in range(top_tiles + 1 + bottom_tiles)] for _ in range(left_tiles + 1 + right_tiles)
+        ]
+        grid[left_tiles][top_tiles] = tile
+
+        for x, row in enumerate(grid):
+            for y, _ in enumerate(row):
+                grid[x][y] = self._fetch_tile(zoom, x_tile - left_tiles + x, y_tile - top_tiles + y)
+
+        merged_tile = Image.new('RGB', (len(grid) * tile_width, len(grid[0]) * tile_height), (255, 255, 255))
+        for row_index, row in enumerate(grid):
+            for patch_index, patch in enumerate(row):
+                merged_tile.paste(patch, (row_index * tile_width, patch_index * tile_height))
+
+        center_x = int(tile_width * left_tiles + x_position)
+        center_y = int(tile_height * top_tiles + y_position)
+        cropped_left = center_x - int(target_width / 2)
+        cropped_top = center_y - int(target_height / 2)
+        cropped_tile = merged_tile.crop((cropped_left, cropped_top,
+                                         cropped_left + target_width, cropped_top + target_height))
+        width_deg = (tile_right_deg - tile_left_deg) * (tile_width / target_width)
+        height_deg = (tile_bottom_deg - tile_top_deg) * (tile_height / target_height)
+        top_left = lat - (height_deg / 2), lon - (width_deg / 2)
+        bottom_right = lat + (height_deg / 2), lon + (width_deg / 2)
+        return TileInfo(top_left, bottom_right, cropped_tile)
+
+    @classmethod
+    def _fetch_tile(cls, zoom: int, x_tile: int, y_tile: int) -> Image:
+        """Fetches the requested tile either from cache or from OSM tile API"""
         tile_cache = '.tiles'
         cache_template = '{zoom}-{x}-{y}.png'
-        x_tile, y_tile = self._deg_to_num(lat, lon, zoom)
-
         if not os.path.exists(tile_cache):
             os.mkdir(tile_cache)
-
         tile_path = os.path.join(tile_cache, cache_template.format(zoom=zoom, x=x_tile, y=y_tile))
         if os.path.exists(tile_path):
-            img = Image.open(tile_path)
-            return TileInfo(self._num_to_deg(x_tile, y_tile, zoom), self._num_to_deg(x_tile + 1, y_tile + 1, zoom),
-                            self._resize(img, size))
+            return Image.open(tile_path)
         else:
             response = requests.get(f'https://tile.openstreetmap.org/{zoom}/{x_tile}/{y_tile}.png')
             if response.status_code == 200:
                 with open(tile_path, 'wb') as f:
                     f.write(response.content)
-                img = Image.open(tile_path)
-                return TileInfo(self._num_to_deg(x_tile, y_tile, zoom), self._num_to_deg(x_tile + 1, y_tile + 1, zoom),
-                                self._resize(img, size))
+                return Image.open(tile_path)
             else:
                 raise ValueError(f'Fetching OSM tile failed ({response.status_code})')
 
