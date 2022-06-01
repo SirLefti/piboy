@@ -1,4 +1,4 @@
-Pillow >= 9.1.0
+Pillow >= 9.1.1
 requests >= 2.27.1
 
 # The following requirements are used by only the hardware modules for Raspberry Pi.

@@ -25,7 +25,8 @@ class TileInfo:
 
 class BaseTileProvider(ABC):
 
-    def get_tile(self, lat: float, lon: float, zoom: int, size: Tuple[int, int] = (256, 256)) -> TileInfo:
+    def get_tile(self, lat: float, lon: float, zoom: int, size: Tuple[int, int] = (256, 256), x_offset: int = 0,
+                 y_offset: int = 0) -> TileInfo:
         raise NotImplementedError
 
     @property

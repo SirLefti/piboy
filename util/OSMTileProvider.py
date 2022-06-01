@@ -4,6 +4,7 @@ from PIL import Image
 import os
 import requests
 import math
+import config
 
 
 class OSMTileProvider(BaseTileProvider):
@@ -12,7 +13,8 @@ class OSMTileProvider(BaseTileProvider):
     def zoom_range(self) -> Iterable[int]:
         return range(0, 20)
 
-    def get_tile(self, lat: float, lon: float, zoom: int, size: Tuple[int, int] = (256, 256)) -> TileInfo:
+    def get_tile(self, lat: float, lon: float, zoom: int, size: Tuple[int, int] = (256, 256), x_offset: int = 0,
+                 y_offset: int = 0) -> TileInfo:
         x_tile, y_tile = self._deg_to_num(lat, lon, zoom)
         tile = self._fetch_tile(zoom, x_tile, y_tile)
         tile_width, tile_height = tile.size
@@ -22,8 +24,8 @@ class OSMTileProvider(BaseTileProvider):
         # the given location.
         tile_top_deg, tile_left_deg = self._num_to_deg(x_tile, y_tile, zoom)
         tile_bottom_deg, tile_right_deg = self._num_to_deg(x_tile + 1, y_tile + 1, zoom)
-        x_position = int((lon - tile_left_deg) / (tile_right_deg - tile_left_deg) * tile_width)
-        y_position = int((lat - tile_top_deg) / (tile_bottom_deg - tile_top_deg) * tile_height)
+        x_position = int((lon - tile_left_deg) / (tile_right_deg - tile_left_deg) * tile_width) + x_offset
+        y_position = int((lat - tile_top_deg) / (tile_bottom_deg - tile_top_deg) * tile_height) + y_offset
 
         # calculate the total tiles to be fetched
         left_tiles = int((target_width / 2 - x_position + tile_width) / tile_width)
@@ -38,7 +40,12 @@ class OSMTileProvider(BaseTileProvider):
 
         for x, row in enumerate(grid):
             for y, _ in enumerate(row):
-                grid[x][y] = self._fetch_tile(zoom, x_tile - left_tiles + x, y_tile - top_tiles + y)
+                if y_tile - top_tiles + y < 0 or y_tile - top_tiles + y == math.pow(2, zoom):
+                    # empty image if tile ends on top or bottom and there is no further tile
+                    grid[x][y] = Image.new('RGB', size, config.BACKGROUND)
+                else:
+                    grid[x][y] = self._fetch_tile(zoom, (x_tile - left_tiles + x) % int(math.pow(2, zoom)),
+                                                  (y_tile - top_tiles + y) % int(math.pow(2, zoom)))
 
         merged_tile = Image.new('RGB', (len(grid) * tile_width, len(grid[0]) * tile_height), (255, 255, 255))
         for row_index, row in enumerate(grid):
