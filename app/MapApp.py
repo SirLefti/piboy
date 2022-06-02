@@ -1,15 +1,19 @@
-from app.BaseApp import BaseApp
+from typing import Callable
+
+from app.BaseApp import SelfUpdatingApp
+from interface.BaseInterface import BaseInterface
 from util.BaseLocationProvider import BaseLocationProvider
 from util.BaseTileProvider import BaseTileProvider
 from PIL import Image, ImageDraw
 import config
 
 
-class MapApp(BaseApp):
-
+class MapApp(SelfUpdatingApp):
     __SCROLL_FACTOR = 10
 
-    def __init__(self, location_provider: BaseLocationProvider, tile_provider: BaseTileProvider):
+    def __init__(self, interface: BaseInterface, draw_callback: Callable[[], None],
+                 location_provider: BaseLocationProvider, tile_provider: BaseTileProvider):
+        super().__init__(interface, draw_callback)
         self.__location_provider = location_provider
         self.__tile_provider = tile_provider
         self.__zoom = 15
@@ -20,6 +24,10 @@ class MapApp(BaseApp):
     @property
     def title(self) -> str:
         return 'MAP'
+
+    @property
+    def refresh_time(self) -> float:
+        return 10.0
 
     def draw(self, image: Image) -> Image:
         draw = ImageDraw.Draw(image)
@@ -57,9 +65,9 @@ class MapApp(BaseApp):
                          fill=config.ACCENT_DARK)
 
         cursor = (left_top[0] + size[0] + side_tab_padding, left_top[1])
-        draw.text(cursor, f'lat: {lat}°', config.ACCENT, font=font)
+        draw.text(cursor, 'lat: {:.4f}°'.format(lat), config.ACCENT, font=font)
         cursor = (cursor[0], cursor[1] + line_height)
-        draw.text(cursor, f'lon: {lon}°', config.ACCENT, font=font)
+        draw.text(cursor, 'lon: {:.4f}°'.format(lon), config.ACCENT, font=font)
         cursor = (cursor[0], cursor[1] + line_height)
         draw.text(cursor, f'zoom: {self.__zoom}x', config.ACCENT, font=font)
         if self.__x_offset != 0 or self.__y_offset != 0:

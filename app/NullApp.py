@@ -32,3 +32,9 @@ class NullApp(BaseApp):
 
     def on_key_b(self):
         pass
+
+    def on_app_enter(self):
+        pass
+
+    def on_app_leave(self):
+        pass

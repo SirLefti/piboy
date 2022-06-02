@@ -2,9 +2,15 @@ from util.BaseLocationProvider import BaseLocationProvider
 from typing import Tuple
 import requests
 import json
+import random
 
 
 class IPLocationProvider(BaseLocationProvider):
+
+    def __init__(self, apply_inaccuracy: bool = False):
+        """Creates a location provider using the public IP. Set 'apply_inaccuracy' to 'True' to add a random variation
+        to the returned values to emulate a real GPS device."""
+        self.__apply_inaccuracy = apply_inaccuracy
 
     def get_location(self) -> Tuple[float, float]:
         response = requests.get('https://ipinfo.io/json')
@@ -14,7 +20,12 @@ class IPLocationProvider(BaseLocationProvider):
             if loc in data.keys():
                 values = str.split(data[loc], ',')
                 if len(values) == 2:
-                    return float(values[0]), float(values[1])
+                    if self.__apply_inaccuracy:
+                        lat_offset = random.randint(-100, 100)
+                        lon_offset = random.randint(-100, 100)
+                        return float(values[0]) + lat_offset / 1000000, float(values[1]) + lon_offset / 10000000
+                    else:
+                        return float(values[0]), float(values[1])
                 else:
                     raise ValueError('Response data does not contain two coordinates')
             else:

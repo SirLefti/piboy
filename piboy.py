@@ -16,11 +16,11 @@ from datetime import datetime
 
 class AppState:
 
-    def __init__(self, resolution: Tuple[int, int], background: Tuple[int, int, int], apps: List[BaseApp]):
+    def __init__(self, resolution: Tuple[int, int], background: Tuple[int, int, int]):
         self.__resolution = resolution
         self.__background = background
         self.__image_buffer = self.__init_buffer()
-        self.__apps = apps
+        self.__apps = []
         self.__active_app = 0
 
     def __init_buffer(self) -> Image:
@@ -28,6 +28,10 @@ class AppState:
 
     def clear_buffer(self):
         self.__image_buffer = self.__init_buffer()
+
+    def add_app(self, app: BaseApp):
+        self.__apps.append(app)
+        return self
 
     @property
     def image_buffer(self) -> Image:
@@ -56,9 +60,7 @@ class AppState:
             self.__active_app = len(self.__apps) - 1
 
 
-__APPS: List[BaseApp] = [FileManagerApp(), NullApp('DATA'), NullApp('STATS'), NullApp('RADIO'),
-                         MapApp(IPLocationProvider(), OSMTileProvider())]
-STATE = AppState(config.RESOLUTION, config.BACKGROUND, __APPS)
+STATE = AppState(config.RESOLUTION, config.BACKGROUND)
 
 
 def on_key_left():
@@ -92,13 +94,17 @@ def on_key_b():
 
 
 def on_rotary_increase():
+    STATE.active_app.on_app_leave()
     STATE.next_app()
     update_display()
+    STATE.active_app.on_app_enter()
 
 
 def on_rotary_decrease():
+    STATE.active_app.on_app_leave()
     STATE.previous_app()
     update_display()
+    STATE.active_app.on_app_enter()
 
 
 __tk = TkInterface(on_key_left, on_key_right, on_key_up, on_key_down, on_key_a, on_key_b,
@@ -126,6 +132,11 @@ def update_display():
     draw_base(image, config.RESOLUTION)
     STATE.active_app.draw(image)
     INTERFACE.show(image)
+
+
+STATE.add_app(FileManagerApp()).add_app(NullApp('DATA')).add_app(NullApp('STATS')).add_app(NullApp('RADIO')).add_app(
+    MapApp(INTERFACE, update_display, IPLocationProvider(apply_inaccuracy=True), OSMTileProvider())
+)
 
 
 def draw_footer(image: Image) -> Image:
@@ -196,6 +207,7 @@ def draw_base(image: Image, resolution: Tuple[int, int]) -> Image:
 if __name__ == '__main__':
     # initial draw
     update_display()
+    STATE.active_app.on_app_enter()
 
     try:
         # blocking function that updates the clock
