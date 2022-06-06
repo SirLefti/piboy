@@ -1,9 +1,12 @@
 from app.BaseApp import BaseApp
 from app.FileManagerApp import FileManagerApp
+from app.MapApp import MapApp
 from app.NullApp import NullApp
 from interface.BaseInterface import BaseInterface
 from interface.BaseInput import BaseInput
 from interface.TkInterface import TkInterface
+from util.IPLocationProvider import IPLocationProvider
+from util.OSMTileProvider import OSMTileProvider
 import config
 from typing import List, Tuple
 from PIL import Image, ImageDraw
@@ -13,11 +16,11 @@ from datetime import datetime
 
 class AppState:
 
-    def __init__(self, resolution: Tuple[int, int], background: Tuple[int, int, int], apps: List[BaseApp]):
+    def __init__(self, resolution: Tuple[int, int], background: Tuple[int, int, int]):
         self.__resolution = resolution
         self.__background = background
         self.__image_buffer = self.__init_buffer()
-        self.__apps = apps
+        self.__apps = []
         self.__active_app = 0
 
     def __init_buffer(self) -> Image:
@@ -25,6 +28,10 @@ class AppState:
 
     def clear_buffer(self):
         self.__image_buffer = self.__init_buffer()
+
+    def add_app(self, app: BaseApp):
+        self.__apps.append(app)
+        return self
 
     @property
     def image_buffer(self) -> Image:
@@ -53,8 +60,7 @@ class AppState:
             self.__active_app = len(self.__apps) - 1
 
 
-__APPS: List[BaseApp] = [FileManagerApp(), NullApp('DATA'), NullApp('STATS'), NullApp('RADIO'), NullApp('MAP')]
-STATE = AppState(config.RESOLUTION, config.BACKGROUND, __APPS)
+STATE = AppState(config.RESOLUTION, config.BACKGROUND)
 
 
 def on_key_left():
@@ -88,13 +94,17 @@ def on_key_b():
 
 
 def on_rotary_increase():
+    STATE.active_app.on_app_leave()
     STATE.next_app()
     update_display()
+    STATE.active_app.on_app_enter()
 
 
 def on_rotary_decrease():
+    STATE.active_app.on_app_leave()
     STATE.previous_app()
     update_display()
+    STATE.active_app.on_app_enter()
 
 
 __tk = TkInterface(on_key_left, on_key_right, on_key_up, on_key_down, on_key_a, on_key_b,
@@ -109,9 +119,8 @@ def watch_function():
         # wait for next second
         time.sleep(1.0 - now.microsecond / 1000000.0)
 
-        draw = ImageDraw.Draw(STATE.image_buffer)
         # draw the complete footer to remove existing clock display
-        draw_footer(draw)
+        draw_footer(STATE.image_buffer)
         INTERFACE.show(STATE.image_buffer)
 
 
@@ -120,18 +129,23 @@ def update_display():
     STATE.clear_buffer()
     image = STATE.image_buffer
     # image = Image.new('RGB', config.RESOLUTION, config.BACKGROUND)
-    draw_buffer = ImageDraw.Draw(image)
-    draw_base(draw_buffer, config.RESOLUTION)
-    STATE.active_app.draw(draw_buffer)
+    draw_base(image, config.RESOLUTION)
+    STATE.active_app.draw(image)
     INTERFACE.show(image)
 
 
-def draw_footer(draw: ImageDraw) -> ImageDraw:
+STATE.add_app(FileManagerApp()).add_app(NullApp('DATA')).add_app(NullApp('STATS')).add_app(NullApp('RADIO')).add_app(
+    MapApp(INTERFACE, update_display, IPLocationProvider(apply_inaccuracy=True), OSMTileProvider())
+)
+
+
+def draw_footer(image: Image) -> Image:
     width, height = config.RESOLUTION
     footer_height = 20  # height of the footer
     footer_bottom_offset = 3  # spacing to the bottom
     footer_side_offset = config.APP_SIDE_OFFSET  # spacing to the sides
     font = config.FONT_HEADER
+    draw = ImageDraw.Draw(image)
 
     date_str = datetime.now().strftime('%d-%m-%Y %H:%M:%S')
 
@@ -142,15 +156,17 @@ def draw_footer(draw: ImageDraw) -> ImageDraw:
     text_padding = (footer_height - text_height) / 2
     draw.text((width - footer_side_offset - text_padding - text_width, height - footer_height - footer_bottom_offset +
                text_padding), date_str, config.ACCENT, font=font)
+    return image
 
 
-def draw_base(draw: ImageDraw, resolution: Tuple[int, int]) -> ImageDraw:
+def draw_base(image: Image, resolution: Tuple[int, int]) -> Image:
     width, height = resolution
     vertical_line = 5  # vertical limiter line
     header_top_offset = config.APP_TOP_OFFSET - vertical_line  # base for header
     header_side_offset = config.APP_SIDE_OFFSET  # spacing to the sides
     app_spacing = 20  # space between app headers
     app_padding = 5  # space around app header
+    draw = ImageDraw.Draw(image)
 
     # draw base header lines
     start = (header_side_offset, header_top_offset + vertical_line)
@@ -184,13 +200,14 @@ def draw_base(draw: ImageDraw, resolution: Tuple[int, int]) -> ImageDraw:
         cursor = cursor + text_width + app_spacing
 
     # draw footer
-    draw_footer(draw)
-    return draw
+    draw_footer(image)
+    return image
 
 
 if __name__ == '__main__':
     # initial draw
     update_display()
+    STATE.active_app.on_app_enter()
 
     try:
         # blocking function that updates the clock

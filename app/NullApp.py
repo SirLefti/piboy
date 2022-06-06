@@ -1,5 +1,5 @@
 from app.BaseApp import BaseApp
-from PIL import ImageDraw
+from PIL import Image
 
 
 class NullApp(BaseApp):
@@ -12,7 +12,7 @@ class NullApp(BaseApp):
     def title(self) -> str:
         return self.__title
 
-    def draw(self, draw: ImageDraw) -> ImageDraw:
+    def draw(self, image: Image) -> Image:
         pass
 
     def on_key_left(self):
@@ -31,4 +31,10 @@ class NullApp(BaseApp):
         pass
 
     def on_key_b(self):
+        pass
+
+    def on_app_enter(self):
+        pass
+
+    def on_app_leave(self):
         pass
