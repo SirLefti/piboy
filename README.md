@@ -5,6 +5,18 @@ PiBoy
 ![image](./docs/piboy.jpg)
 Build your own Pip-Boy with some useful features for real-life using your Raspberry Pi.
 
+## Features
+
+#### File Manager App
+Provides basic functions for moving, copying and deleting files and directories. Plug in a USB drive as a holo tape.
+
+![inv](./docs/inv.png)
+
+#### Map App
+Supports zooming and moving the map around. Don't get lost in the wasteland.
+
+![map](./docs/map.png)
+
 ## Hardware
 
  - Raspberry Pi (any full size board should work)
@@ -66,7 +78,7 @@ to install it, place the ``FreeSanBold.ttf`` in the root directory as a workarou
 * [ ] build documentation / guide
 * [ ] case
 * [x] file manager app
-* [ ] map app
+* [x] map app
 * [ ] radio app
 * [ ] other apps (?)
 * [ ] utilities
