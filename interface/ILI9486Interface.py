@@ -1,7 +1,7 @@
 from interface.BaseInterface import BaseInterface
 from PIL import Image
 import config
-from driver.ILI9486 import ILI9486
+from driver.ILI9486 import ILI9486, Origin
 import RPi.GPIO as GPIO
 from spidev import SpiDev
 
@@ -13,7 +13,8 @@ class ILI9486Interface(BaseInterface):
         spi = SpiDev(config.DISPLAY_CONFIG.bus, config.DISPLAY_CONFIG.device)
         spi.mode = 0b10  # [CPOL|CPHA] -> polarity 1, phase 0
         spi.max_speed_hz = 64000000
-        lcd = ILI9486(dc=config.DC_PIN, rst=config.RST_PIN, spi=spi).begin()
+        origin = Origin.LOWER_RIGHT if config.FLIP_DISPLAY else Origin.UPPER_LEFT
+        lcd = ILI9486(dc=config.DC_PIN, rst=config.RST_PIN, spi=spi, origin=origin).begin()
         self.__spi = spi
         self.__display = lcd
 

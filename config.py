@@ -20,6 +20,8 @@ class SPIConfig:
 WIDTH: int = 480
 HEIGHT: int = 320
 RESOLUTION = WIDTH, HEIGHT
+# flip display by 180° (SPI display module only)
+FLIP_DISPLAY = False
 
 # App definition
 APP_SIDE_OFFSET: int = 20
