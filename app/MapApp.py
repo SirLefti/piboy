@@ -195,6 +195,9 @@ class MapApp(SelfUpdatingApp):
                           (marker_center[0] - int(marker_size / 2), marker_center[1] - marker_size),
                           (marker_center[0] + int(marker_size / 2), marker_center[1] - marker_size)],
                          fill=config.ACCENT_DARK)
+        else:
+            # TODO draw marker/arrow where location is
+            pass
 
         # draw location info
         cursor = (left_top[0] + size[0] + side_tab_padding, left_top[1])
