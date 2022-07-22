@@ -111,6 +111,7 @@ INPUT: BaseInput
 
 if config.DEV_MODE:
     from interface.TkInterface import TkInterface
+
     __tk = TkInterface(on_key_left, on_key_right, on_key_up, on_key_down, on_key_a, on_key_b,
                        on_rotary_increase, on_rotary_decrease)
     INTERFACE = __tk
@@ -118,6 +119,7 @@ if config.DEV_MODE:
 else:
     from interface.ILI9486Interface import ILI9486Interface
     from interface.GPIOInput import GPIOInput
+
     INTERFACE = ILI9486Interface(config.FLIP_DISPLAY)
     INPUT = GPIOInput(config.LEFT_PIN, config.UP_PIN, config.RIGHT_PIN, config.DOWN_PIN, config.A_PIN, config.B_PIN,
                       on_key_left, on_key_right, on_key_up, on_key_down, on_key_a, on_key_b,
@@ -145,9 +147,11 @@ def update_display():
     INTERFACE.show(image)
 
 
-STATE.add_app(FileManagerApp()).add_app(NullApp('DATA')).add_app(NullApp('STATS')).add_app(NullApp('RADIO')).add_app(
-    MapApp(INTERFACE, update_display, IPLocationProvider(apply_inaccuracy=True), OSMTileProvider())
-)
+STATE.add_app(FileManagerApp()) \
+    .add_app(NullApp('DATA')) \
+    .add_app(NullApp('STATS')) \
+    .add_app(NullApp('RADIO')) \
+    .add_app(MapApp(INTERFACE, update_display, IPLocationProvider(apply_inaccuracy=True), OSMTileProvider()))
 
 
 def draw_footer(image: Image) -> Image:
