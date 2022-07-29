@@ -202,18 +202,7 @@ class MapApp(SelfUpdatingApp):
                          fill=config.ACCENT_DARK)
         else:
             # TODO draw marker/arrow where location is
-            ratio = 0 if self.__y_offset == 0 else (self.__x_offset / self.__y_offset)
-            if ratio > 1:
-                pass
-            elif ratio > 0:
-                pass
-            elif ratio == 0:
-                pass
-            elif ratio > -1:
-                pass
-            else:
-                pass
-            print(ratio)
+            pass
 
         # draw location info
         cursor = (left_top[0] + size[0] + side_tab_padding, left_top[1])
