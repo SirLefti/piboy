@@ -16,6 +16,8 @@ class SPIConfig:
         return self.__device
 
 
+DEV_MODE = 1
+
 # Interface definition (SPI display module ignores this, it supports only its own resolution)
 WIDTH: int = 480
 HEIGHT: int = 320
@@ -52,3 +54,16 @@ DISPLAY_CONFIG = SPIConfig(0, 0)
 CS_PIN = 7
 IRQ_PIN = 17
 TOUCH_CONFIG = SPIConfig(0, 1)
+
+# Buttons definition
+UP_PIN = 5
+DOWN_PIN = 6
+LEFT_PIN = 12
+RIGHT_PIN = 13
+A_PIN = 16
+B_PIN = 26
+
+# Rotary encoder definition
+CLK_PIN = 22
+DT_PIN = 23
+SW_PIN = 27  # pressing the encoder switch, unused so far

@@ -75,13 +75,16 @@ class OSMTileProvider(BaseTileProvider):
         if os.path.exists(tile_path):
             return Image.open(tile_path)
         else:
-            response = requests.get(f'https://tile.openstreetmap.org/{zoom}/{x_tile}/{y_tile}.png')
+            headers = {
+                'User-Agent': 'piboy'
+            }
+            response = requests.get(f'https://tile.openstreetmap.org/{zoom}/{x_tile}/{y_tile}.png', headers=headers)
             if response.status_code == 200:
                 with open(tile_path, 'wb') as f:
                     f.write(response.content)
                 return Image.open(tile_path)
             else:
-                raise ValueError(f'Fetching OSM tile failed ({response.status_code})')
+                raise ValueError(f'Fetching OSM tile ({zoom}-{x_tile}-{y_tile}) failed ({response.status_code})')
 
     @classmethod
     def _resize(cls, img: Image, size: Tuple[int, int]) -> Image:

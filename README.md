@@ -19,7 +19,7 @@ Supports zooming and moving the map around. Don't get lost in the wasteland.
 
 ## Hardware
 
- - Raspberry Pi (any full size board should work)
+ - Raspberry Pi (full size board with all 40 pins recommended)
  - 3.5" SPI display module (with an ILI9486 display driver chip)
 
 ## Installation

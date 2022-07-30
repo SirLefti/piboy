@@ -105,13 +105,14 @@ class MapApp(SelfUpdatingApp):
 
     def __init__(self, interface: BaseInterface, draw_callback: Callable[[], None],
                  location_provider: BaseLocationProvider, tile_provider: BaseTileProvider):
-        super().__init__(interface, draw_callback)
+        super().__init__(interface, self.__update_location)
+        self.__draw_callback = draw_callback
         self.__location_provider = location_provider
         self.__tile_provider = tile_provider
         self.__zoom = 15
         self.__x_offset = 0
         self.__y_offset = 0
-        self.__position = (0.0, 0.0)
+        self.__position = self.__location_provider.get_location()
 
         resources_path = 'resources'
         minus_icon = Image.open(os.path.join(resources_path, 'minus.png')).convert('1')
@@ -148,7 +149,8 @@ class MapApp(SelfUpdatingApp):
                          initial_state=self.Control.SelectionState.FOCUSSED),
             self.Control(ImageOps.invert(plus_icon), on_select=zoom_in, instant_action=True),
             self.Control(ImageOps.invert(move_icon), on_key_left=move_left, on_key_right=move_right,
-                         on_key_up=move_up, on_key_down=move_down),
+                         on_key_up=move_up, on_key_down=move_down,
+                         on_select=self.stop_updating, on_deselect=self.start_updating),
             self.Control(ImageOps.invert(focus_icon), on_select=reset_offset, instant_action=True)
         ]
         self.__focussed_control = 0
@@ -161,6 +163,11 @@ class MapApp(SelfUpdatingApp):
     def refresh_time(self) -> float:
         return 10.0
 
+    def __update_location(self):
+        if self.__x_offset == 0 and self.__y_offset == 0:
+            self.__position = self.__location_provider.get_location()
+            self.__draw_callback()
+
     def draw(self, image: Image) -> Image:
         draw = ImageDraw.Draw(image)
         left_top = (config.APP_SIDE_OFFSET, config.APP_TOP_OFFSET)
@@ -170,8 +177,6 @@ class MapApp(SelfUpdatingApp):
         line_height = 20
         font = config.FONT_STANDARD
 
-        if self.__x_offset == 0 and self.__y_offset == 0:
-            self.__position = self.__location_provider.get_location()
         lat, lon = self.__position
         size = (width - 2 * config.APP_SIDE_OFFSET - side_tab_width,
                 height - config.APP_TOP_OFFSET - config.APP_BOTTOM_OFFSET)
@@ -195,6 +200,9 @@ class MapApp(SelfUpdatingApp):
                           (marker_center[0] - int(marker_size / 2), marker_center[1] - marker_size),
                           (marker_center[0] + int(marker_size / 2), marker_center[1] - marker_size)],
                          fill=config.ACCENT_DARK)
+        else:
+            # TODO draw marker/arrow where location is
+            pass
 
         # draw location info
         cursor = (left_top[0] + size[0] + side_tab_padding, left_top[1])

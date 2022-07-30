@@ -74,9 +74,9 @@ class SelfUpdatingApp(BaseApp, ABC):
         def stop(self):
             self.__alive = False
 
-    def __init__(self, interface: BaseInterface, draw_callback: Callable[[], None]):
+    def __init__(self, interface: BaseInterface, update_callback: Callable[[], None]):
         self.__interface = interface
-        self.__draw_callback = draw_callback
+        self.__update_callback = update_callback
         self.__update_thread: Optional[SelfUpdatingApp.UpdateThread] = None
 
     @property
@@ -85,8 +85,14 @@ class SelfUpdatingApp(BaseApp, ABC):
         raise NotImplementedError
 
     def on_app_enter(self):
-        self.__update_thread = self.UpdateThread(callback=self.__draw_callback, sleep_time=self.refresh_time)
-        self.__update_thread.start()
+        self.start_updating()
 
     def on_app_leave(self):
+        self.stop_updating()
+
+    def start_updating(self):
+        self.__update_thread = self.UpdateThread(callback=self.__update_callback, sleep_time=self.refresh_time)
+        self.__update_thread.start()
+
+    def stop_updating(self):
         self.__update_thread.stop()
