@@ -185,8 +185,10 @@ class MapApp(SelfUpdatingApp):
                                              y_offset=self.__y_offset * self.__SCROLL_FACTOR)
         image.paste(tile.image, left_top)
 
-        # calculate the relative position of the current location on the tile, because the tile is not centered around
-        # the given location. It even works with resized and cropped tiles, as long as the center stays the center
+        # Calculate the relative position of the current location on the tile, because the tile is not centered around
+        # the given location. It even works with resized and cropped tiles, as long as the center stays the center.
+        # Otherwise, calculate the position where a virtual line from the center to the marker would cross the edge
+        # to draw a different marker that indicates where the location would be.
         if self.__x_offset * self.__SCROLL_FACTOR + int(size[0] / 2) in range(size[0]) \
                 and self.__y_offset * self.__SCROLL_FACTOR + int(size[1] / 2) in range(size[1]):
             tile_top, tile_left = tile.top_left
@@ -201,8 +203,57 @@ class MapApp(SelfUpdatingApp):
                           (marker_center[0] + int(marker_size / 2), marker_center[1] - marker_size)],
                          fill=config.ACCENT_DARK)
         else:
-            # TODO draw marker/arrow where location is
-            pass
+            def draw_outside_marker(edge_position: Tuple[int, int], center_position: Tuple[int, int]):
+                marker_length_percentage = .2
+                diff_x = edge_position[0] - center_position[0]
+                diff_y = edge_position[1] - center_position[1]
+                draw.line((edge_position[0] - diff_x * marker_length_percentage,
+                           edge_position[1] - diff_y * marker_length_percentage) +
+                          edge_position, fill=config.ACCENT, width=3)  # line towards center
+
+            # exclude cases where x_offset or y_offset are zero, division is not possible, but marker is straight anyway
+            map_center = (left_top[0] + size[0] / 2, left_top[1] + size[1] / 2)
+            if self.__x_offset == 0:
+                if self.__y_offset > 0:
+                    edge_center = (left_top[0] + size[0] / 2, left_top[1])
+                    draw_outside_marker(edge_center, map_center)
+                else:
+                    edge_center = (left_top[0] + size[0] / 2, left_top[1] + size[1])
+                    draw_outside_marker(edge_center, map_center)
+            elif self.__y_offset == 0:
+                if self.__x_offset > 0:
+                    edge_center = (left_top[0], left_top[1] + size[1] / 2)
+                    draw_outside_marker(edge_center, map_center)
+                else:
+                    edge_center = (left_top[0] + size[0], left_top[1] + size[1] / 2)
+                    draw_outside_marker(edge_center, map_center)
+            else:
+                # neither x nor y are zero, division possible
+                # positive ratio means top-left or bottom-right sector, negativ means others
+                vertical_limit = size[0] / size[1]  # x / y
+                horizontal_limit = size[1] / size[0]  # y / x
+                vertical_ratio = self.__x_offset / self.__y_offset
+                horizontal_ratio = self.__y_offset / self.__x_offset
+                # calculate edge_center by taking the center of the edge and adding or subtracting the product of the
+                # other edge's half-length and the ratio
+                if -vertical_limit <= vertical_ratio <= vertical_limit:
+                    if self.__y_offset > 0:
+                        edge_center = (left_top[0] + size[0] / 2 - (size[1] / 2) * vertical_ratio,
+                                       left_top[1])
+                        draw_outside_marker(edge_center, map_center)
+                    else:
+                        edge_center = (left_top[0] + size[0] / 2 + (size[1] / 2) * vertical_ratio,
+                                       left_top[1] + size[1])
+                        draw_outside_marker(edge_center, map_center)
+                elif -horizontal_limit <= horizontal_ratio <= horizontal_limit:
+                    if self.__x_offset > 0:
+                        edge_center = (left_top[0],
+                                       left_top[1] + size[1] / 2 - (size[0] / 2) * horizontal_ratio)
+                        draw_outside_marker(edge_center, map_center)
+                    else:
+                        edge_center = (left_top[0] + size[0],
+                                       left_top[1] + size[1] / 2 + (size[0] / 2) * horizontal_ratio)
+                        draw_outside_marker(edge_center, map_center)
 
         # draw location info
         cursor = (left_top[0] + size[0] + side_tab_padding, left_top[1])
