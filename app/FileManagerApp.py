@@ -161,7 +161,7 @@ class FileManagerApp(BaseApp):
         left, top = left_top
         right, bottom = right_bottom
 
-        sizes = [font.getsize(text) for text in popup.options]
+        sizes = [font.getbbox(text)[2:] for text in popup.options]
         popup_width = cls.__next_even(
             max(max(e[0] for e in sizes), popup_min_width))  # require at least popup_min_width
         popup_height = line_height * len(popup.options)
@@ -187,7 +187,7 @@ class FileManagerApp(BaseApp):
         left, top = left_top  # unpacking top left anchor point
         right, bottom = right_bottom  # unpacking bottom right anchor point
         font = config.FONT_STANDARD
-        text_width, text_height = font.getsize(text)
+        _, _, text_width, text_height = font.getbbox(text)
         popup_width = text_width + 10
         popup_height = text_height * 3
         popup_border = cls.POPUP_BORDER
@@ -221,7 +221,7 @@ class FileManagerApp(BaseApp):
         if is_selected:
             draw.rectangle(left_top + right_bottom, fill=config.ACCENT_DARK)
         text = state.directory
-        while font.getsize(text)[0] > right - left - side_padding:
+        while font.getbbox(text)[3] > right - left - side_padding:
             text = text[:-1]  # cut off last char until it fits
         draw.text((left + side_padding, top), text, config.ACCENT, font=font)
 

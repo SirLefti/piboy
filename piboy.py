@@ -167,7 +167,7 @@ def draw_footer(image: Image) -> Image:
     start = (footer_side_offset, height - footer_height - footer_bottom_offset)
     end = (width - footer_side_offset, height - footer_bottom_offset)
     draw.rectangle(start + end, fill=config.ACCENT_DARK)
-    text_width, text_height = font.getsize(date_str)
+    _, _, text_width, text_height = font.getbbox(date_str)
     text_padding = (footer_height - text_height) / 2
     draw.text((width - footer_side_offset - text_padding - text_width, height - footer_height - footer_bottom_offset +
                text_padding), date_str, config.ACCENT, font=font)
@@ -197,10 +197,10 @@ def draw_base(image: Image, resolution: Tuple[int, int]) -> Image:
     # draw app short name header
     font = config.FONT_HEADER
     max_text_width = width - (2 * header_side_offset)
-    app_text_width = sum(font.getsize(app.title)[0] for app in STATE.apps) + (len(STATE.apps) - 1) * app_spacing
+    app_text_width = sum(font.getbbox(app.title)[2] for app in STATE.apps) + (len(STATE.apps) - 1) * app_spacing
     cursor = header_side_offset + (max_text_width - app_text_width) / 2
     for app in STATE.apps:
-        text_width, text_height = font.getsize(app.title)
+        _, _, text_width, text_height = font.getbbox(app.title)
         draw.text((cursor, header_top_offset - text_height - app_padding), app.title, config.ACCENT, font=font)
         if app is STATE.active_app:
             start = (cursor - app_padding, header_top_offset - vertical_line)
