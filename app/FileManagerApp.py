@@ -392,9 +392,12 @@ class FileManagerApp(BaseApp):
             if os.path.isdir(path):
                 old_path = self.__active_directory.directory
                 self.__active_directory.directory = path
-                index = next(
-                    i for i, f in enumerate(self.__active_directory.files) if os.path.join(path, f) == old_path)
-                self.__active_directory.selected_index = index
+                try:
+                    index = next(
+                        i for i, f in enumerate(self.__active_directory.files) if os.path.join(path, f) == old_path)
+                    self.__active_directory.selected_index = index
+                except StopIteration:
+                    pass
 
     def on_app_enter(self):
         pass
