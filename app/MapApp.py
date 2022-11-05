@@ -7,6 +7,7 @@ from abc import ABC
 from typing import Callable, Tuple, List
 from PIL import Image, ImageDraw, ImageOps
 import os.path
+import math
 import config
 
 
@@ -204,12 +205,44 @@ class MapApp(SelfUpdatingApp):
                          fill=config.ACCENT_DARK)
         else:
             def draw_outside_marker(edge_position: Tuple[int, int], center_position: Tuple[int, int]):
+                marker_width = 3
                 marker_length_percentage = .2
+                tip_length_percentage = marker_length_percentage * .75
+                tip_angle = 30
                 diff_x = edge_position[0] - center_position[0]
                 diff_y = edge_position[1] - center_position[1]
                 draw.line((edge_position[0] - diff_x * marker_length_percentage,
                            edge_position[1] - diff_y * marker_length_percentage) +
-                          edge_position, fill=config.ACCENT, width=3)  # line towards center
+                          edge_position, fill=config.ACCENT, width=marker_width)  # line towards center
+
+                def dot(v1: Tuple[float, float], v2: Tuple[float, float]) -> float:
+                    """ vector dot product """
+                    return sum([i * j for (i, j) in zip(v1, v2)])
+
+                def mag(v: Tuple[float, float]) -> float:
+                    """ vector magnitude/length """
+                    return math.sqrt(dot(v, v))
+
+                v_diff = (diff_x, diff_y)  # line vector with reference point at (0, 0)
+                v_ref = (0, 1)  # vector that goes straight up or down
+                adjust_left = 1 if v_diff[0] > v_ref[0] else -1  # adjust the angle if is located left from ref point
+                dot_prod = dot(v_diff, v_ref)
+                mag_diff = mag(v_diff)
+                mag_ref = mag(v_ref)
+                radians = math.acos(dot_prod / (mag_diff * mag_ref))  # calculate angle in radians
+                angle = math.degrees(radians) * adjust_left  # convert to angle and adjust
+
+                tip_length = mag_diff * tip_length_percentage
+                # add 180 to flip and apply tip angle, convert back to radians
+                tip_1_x = tip_length * math.sin(math.radians(angle + tip_angle + 180))
+                tip_1_y = tip_length * math.cos(math.radians(angle + tip_angle + 180))
+                tip_2_x = tip_length * math.sin(math.radians(angle - tip_angle + 180))
+                tip_2_y = tip_length * math.cos(math.radians(angle - tip_angle + 180))
+
+                draw.line((edge_position[0] + tip_1_x, edge_position[1] + tip_1_y) +
+                          edge_position, fill=config.ACCENT, width=marker_width)  # first tip
+                draw.line((edge_position[0] + tip_2_x, edge_position[1] + tip_2_y) +
+                          edge_position, fill=config.ACCENT, width=marker_width)  # second tip
 
             # exclude cases where x_offset or y_offset are zero, division is not possible, but marker is straight anyway
             map_center = (left_top[0] + size[0] / 2, left_top[1] + size[1] / 2)
