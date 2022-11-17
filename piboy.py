@@ -122,6 +122,7 @@ else:
 
     INTERFACE = ILI9486Interface(config.FLIP_DISPLAY)
     INPUT = GPIOInput(config.LEFT_PIN, config.UP_PIN, config.RIGHT_PIN, config.DOWN_PIN, config.A_PIN, config.B_PIN,
+                      config.CLK_PIN, config.DT_PIN, config.SW_PIN,
                       on_key_left, on_key_right, on_key_up, on_key_down, on_key_a, on_key_b,
                       on_rotary_increase, on_rotary_decrease)
 
