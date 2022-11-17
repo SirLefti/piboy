@@ -17,6 +17,7 @@ class ILI9486Interface(BaseInterface):
         lcd = ILI9486(dc=config.DC_PIN, rst=config.RST_PIN, spi=spi, origin=origin).begin()
         self.__spi = spi
         self.__display = lcd
+        self.__blocked = False  # Flag to block new draw calls while still drawing (takes around 333 ms)
 
     def close(self):
         self.__display.reset()
@@ -24,4 +25,7 @@ class ILI9486Interface(BaseInterface):
         GPIO.cleanup()
 
     def show(self, image: Image):
-        self.__display.display(image)
+        if not self.__blocked:
+            self.__blocked = True
+            self.__display.display(image)
+            self.__blocked = False
