@@ -152,7 +152,7 @@ STATE.add_app(FileManagerApp()) \
     .add_app(NullApp('DATA')) \
     .add_app(NullApp('STATS')) \
     .add_app(NullApp('RADIO')) \
-    .add_app(MapApp(INTERFACE, update_display, IPLocationProvider(apply_inaccuracy=True), OSMTileProvider()))
+    .add_app(MapApp(update_display, IPLocationProvider(apply_inaccuracy=True), OSMTileProvider()))
 
 
 def draw_footer(image: Image) -> Image:

@@ -104,9 +104,9 @@ class MapApp(SelfUpdatingApp):
         def is_selected(self) -> bool:
             return self.__selection_state == self.SelectionState.SELECTED
 
-    def __init__(self, interface: BaseInterface, draw_callback: Callable[[], None],
+    def __init__(self, draw_callback: Callable[[], None],
                  location_provider: BaseLocationProvider, tile_provider: BaseTileProvider):
-        super().__init__(interface, self.__update_location)
+        super().__init__(self.__update_location)
         self.__draw_callback = draw_callback
         self.__location_provider = location_provider
         self.__tile_provider = tile_provider
