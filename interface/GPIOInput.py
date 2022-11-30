@@ -1,9 +1,9 @@
-from interface.BaseInput import BaseInput
+from interface.Input import Input
 from typing import Callable
 import RPi.GPIO as GPIO
 
 
-class GPIOInput(BaseInput):
+class GPIOInput(Input):
 
     def __init__(self, key_left: int, key_up: int, key_right: int, key_down: int, key_a: int, key_b: int,
                  rotary_clock: int, rotary_data: int, rotary_switch: int,

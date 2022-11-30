@@ -1,11 +1,11 @@
-from util.BaseLocationProvider import BaseLocationProvider
+from provider.LocationProvider import LocationProvider
 from typing import Tuple
 import requests
 import json
 import random
 
 
-class IPLocationProvider(BaseLocationProvider):
+class IPLocationProvider(LocationProvider):
 
     def __init__(self, apply_inaccuracy: bool = False):
         """Creates a location provider using the public IP. Set 'apply_inaccuracy' to 'True' to add a random variation

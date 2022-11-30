@@ -1,5 +1,5 @@
-from interface.BaseInterface import BaseInterface
-from interface.BaseInput import BaseInput
+from interface.Interface import Interface
+from interface.Input import Input
 from typing import Callable
 from PIL import Image, ImageTk
 import config
@@ -8,13 +8,13 @@ import threading
 import time
 
 
-class TkInterface(BaseInterface, BaseInput):
+class TkInterface(Interface, Input):
 
     def __init__(self, on_key_left: Callable, on_key_right: Callable,
                  on_key_up: Callable, on_key_down: Callable, on_key_a: Callable, on_key_b: Callable,
                  on_rotary_increase: Callable, on_rotary_decrease: Callable):
-        BaseInput.__init__(self, on_key_left, on_key_right, on_key_up, on_key_down, on_key_a, on_key_b,
-                           on_rotary_increase, on_rotary_decrease)
+        Input.__init__(self, on_key_left, on_key_right, on_key_up, on_key_down, on_key_a, on_key_b,
+                       on_rotary_increase, on_rotary_decrease)
         self.__image = None
         threading.Thread(target=_tk_thread, args=(self,), daemon=True).start()
 

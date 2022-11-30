@@ -1,4 +1,4 @@
-from util.BaseTileProvider import BaseTileProvider, TileInfo
+from provider.TileProvider import TileProvider, TileInfo
 from typing import Tuple, Iterable
 from PIL import Image
 import os
@@ -7,7 +7,7 @@ import math
 import config
 
 
-class OSMTileProvider(BaseTileProvider):
+class OSMTileProvider(TileProvider):
 
     @property
     def zoom_range(self) -> Iterable[int]:

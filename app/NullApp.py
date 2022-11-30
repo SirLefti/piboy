@@ -1,8 +1,8 @@
-from app.BaseApp import BaseApp
+from app.App import App
 from PIL import Image
 
 
-class NullApp(BaseApp):
+class NullApp(App):
     """Empty app to be used for testing purposes."""
 
     def __init__(self, title: str = 'NULL'):

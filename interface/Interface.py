@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from PIL import Image
 
 
-class BaseInterface(ABC):
+class Interface(ABC):
 
     @abstractmethod
     def close(self):

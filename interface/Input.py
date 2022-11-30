@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Callable
 
 
-class BaseInput(ABC):
+class Input(ABC):
 
     def __init__(self, on_key_left: Callable, on_key_right: Callable, on_key_up: Callable, on_key_down: Callable,
                  on_key_a: Callable, on_key_b: Callable, on_rotary_increase: Callable, on_rotary_decrease: Callable):

@@ -1,4 +1,4 @@
-from interface.BaseInterface import BaseInterface
+from interface.Interface import Interface
 from PIL import Image
 import config
 from driver.ILI9486 import ILI9486, Origin
@@ -6,7 +6,7 @@ import RPi.GPIO as GPIO
 from spidev import SpiDev
 
 
-class ILI9486Interface(BaseInterface):
+class ILI9486Interface(Interface):
 
     def __init__(self, flip_display: bool = False):
         GPIO.setmode(GPIO.BCM)
