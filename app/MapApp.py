@@ -1,6 +1,6 @@
 from app.App import SelfUpdatingApp
-from provider.LocationProvider import LocationProvider
-from provider.TileProvider import TileProvider
+from data.LocationProvider import LocationProvider
+from data.TileProvider import TileProvider
 from enum import Enum
 from abc import ABC
 from typing import Callable, Tuple, List

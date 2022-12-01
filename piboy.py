@@ -4,8 +4,8 @@ from app.MapApp import MapApp
 from app.NullApp import NullApp
 from interface.Interface import Interface
 from interface.Input import Input
-from provider.IPLocationProvider import IPLocationProvider
-from provider.OSMTileProvider import OSMTileProvider
+from data.IPLocationProvider import IPLocationProvider
+from data.OSMTileProvider import OSMTileProvider
 import config
 from typing import List, Tuple
 from PIL import Image, ImageDraw

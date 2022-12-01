@@ -1,4 +1,4 @@
-from provider.TileProvider import TileProvider, TileInfo
+from data.TileProvider import TileProvider, TileInfo
 from typing import Tuple, Iterable
 from PIL import Image
 import os

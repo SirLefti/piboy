@@ -1,4 +1,4 @@
-from provider.LocationProvider import LocationProvider
+from data.LocationProvider import LocationProvider
 from typing import Tuple
 import requests
 import json
