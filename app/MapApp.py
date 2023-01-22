@@ -1,7 +1,6 @@
-from app.BaseApp import SelfUpdatingApp
-from interface.BaseInterface import BaseInterface
-from util.BaseLocationProvider import BaseLocationProvider
-from util.BaseTileProvider import BaseTileProvider
+from app.App import SelfUpdatingApp
+from data.LocationProvider import LocationProvider
+from data.TileProvider import TileProvider
 from enum import Enum
 from abc import ABC
 from typing import Callable, Tuple, List
@@ -104,9 +103,9 @@ class MapApp(SelfUpdatingApp):
         def is_selected(self) -> bool:
             return self.__selection_state == self.SelectionState.SELECTED
 
-    def __init__(self, interface: BaseInterface, draw_callback: Callable[[], None],
-                 location_provider: BaseLocationProvider, tile_provider: BaseTileProvider):
-        super().__init__(interface, self.__update_location)
+    def __init__(self, draw_callback: Callable[[], None],
+                 location_provider: LocationProvider, tile_provider: TileProvider):
+        super().__init__(self.__update_location)
         self.__draw_callback = draw_callback
         self.__location_provider = location_provider
         self.__tile_provider = tile_provider

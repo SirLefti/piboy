@@ -1,8 +1,8 @@
-from interface.BaseInterface import BaseInterface
+from interface.Interface import Interface
 from PIL import Image
 
 
-class PillowInterface(BaseInterface):
+class PillowInterface(Interface):
 
     def close(self):
         pass

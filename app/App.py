@@ -2,12 +2,11 @@ from abc import ABC, abstractmethod
 from typing import Optional, Callable
 
 from PIL import Image
-from interface.BaseInterface import BaseInterface
 import threading
 import time
 
 
-class BaseApp(ABC):
+class App(ABC):
 
     @property
     @abstractmethod
@@ -51,7 +50,7 @@ class BaseApp(ABC):
         raise NotImplementedError
 
 
-class SelfUpdatingApp(BaseApp, ABC):
+class SelfUpdatingApp(App, ABC):
 
     class UpdateThread:
 
@@ -74,8 +73,7 @@ class SelfUpdatingApp(BaseApp, ABC):
         def stop(self):
             self.__alive = False
 
-    def __init__(self, interface: BaseInterface, update_callback: Callable[[], None]):
-        self.__interface = interface
+    def __init__(self, update_callback: Callable[[], None]):
         self.__update_callback = update_callback
         self.__update_thread: Optional[SelfUpdatingApp.UpdateThread] = None
 

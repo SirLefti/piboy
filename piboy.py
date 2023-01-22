@@ -1,11 +1,11 @@
-from app.BaseApp import BaseApp
+from app.App import App
 from app.FileManagerApp import FileManagerApp
 from app.MapApp import MapApp
 from app.NullApp import NullApp
-from interface.BaseInterface import BaseInterface
-from interface.BaseInput import BaseInput
-from util.IPLocationProvider import IPLocationProvider
-from util.OSMTileProvider import OSMTileProvider
+from interface.Interface import Interface
+from interface.Input import Input
+from data.IPLocationProvider import IPLocationProvider
+from data.OSMTileProvider import OSMTileProvider
 import config
 from typing import List, Tuple
 from PIL import Image, ImageDraw
@@ -28,7 +28,7 @@ class AppState:
     def clear_buffer(self):
         self.__image_buffer = self.__init_buffer()
 
-    def add_app(self, app: BaseApp):
+    def add_app(self, app: App):
         self.__apps.append(app)
         return self
 
@@ -37,11 +37,11 @@ class AppState:
         return self.__image_buffer
 
     @property
-    def apps(self) -> List[BaseApp]:
+    def apps(self) -> List[App]:
         return self.__apps
 
     @property
-    def active_app(self) -> BaseApp:
+    def active_app(self) -> App:
         return self.__apps[self.__active_app]
 
     @property
@@ -106,8 +106,8 @@ def on_rotary_decrease():
     STATE.active_app.on_app_enter()
 
 
-INTERFACE: BaseInterface
-INPUT: BaseInput
+INTERFACE: Interface
+INPUT: Input
 
 if config.DEV_MODE:
     from interface.TkInterface import TkInterface
@@ -122,6 +122,7 @@ else:
 
     INTERFACE = ILI9486Interface(config.FLIP_DISPLAY)
     INPUT = GPIOInput(config.LEFT_PIN, config.UP_PIN, config.RIGHT_PIN, config.DOWN_PIN, config.A_PIN, config.B_PIN,
+                      config.CLK_PIN, config.DT_PIN, config.SW_PIN,
                       on_key_left, on_key_right, on_key_up, on_key_down, on_key_a, on_key_b,
                       on_rotary_increase, on_rotary_decrease)
 
@@ -151,7 +152,7 @@ STATE.add_app(FileManagerApp()) \
     .add_app(NullApp('DATA')) \
     .add_app(NullApp('STATS')) \
     .add_app(NullApp('RADIO')) \
-    .add_app(MapApp(INTERFACE, update_display, IPLocationProvider(apply_inaccuracy=True), OSMTileProvider()))
+    .add_app(MapApp(update_display, IPLocationProvider(apply_inaccuracy=True), OSMTileProvider()))
 
 
 def draw_footer(image: Image) -> Image:

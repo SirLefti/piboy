@@ -1,4 +1,4 @@
-from app.BaseApp import BaseApp
+from app.App import App
 from PIL import Image, ImageDraw, ImageOps
 from typing import Tuple, List, Callable, Optional
 import config
@@ -6,7 +6,7 @@ import os
 import shutil
 
 
-class FileManagerApp(BaseApp):
+class FileManagerApp(App):
     POPUP_BORDER = 3
     LINE_HEIGHT = 20
 

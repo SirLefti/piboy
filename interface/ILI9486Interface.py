@@ -1,4 +1,4 @@
-from interface.BaseInterface import BaseInterface
+from interface.Interface import Interface
 from PIL import Image
 import config
 from driver.ILI9486 import ILI9486, Origin
@@ -6,7 +6,7 @@ import RPi.GPIO as GPIO
 from spidev import SpiDev
 
 
-class ILI9486Interface(BaseInterface):
+class ILI9486Interface(Interface):
 
     def __init__(self, flip_display: bool = False):
         GPIO.setmode(GPIO.BCM)
@@ -17,6 +17,7 @@ class ILI9486Interface(BaseInterface):
         lcd = ILI9486(dc=config.DC_PIN, rst=config.RST_PIN, spi=spi, origin=origin).begin()
         self.__spi = spi
         self.__display = lcd
+        self.__blocked = False  # Flag to block new draw calls while still drawing (takes around 333 ms)
 
     def close(self):
         self.__display.reset()
@@ -24,4 +25,7 @@ class ILI9486Interface(BaseInterface):
         GPIO.cleanup()
 
     def show(self, image: Image):
-        self.__display.display(image)
+        if not self.__blocked:
+            self.__blocked = True
+            self.__display.display(image)
+            self.__blocked = False
