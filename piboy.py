@@ -148,7 +148,7 @@ def update_display():
     STATE.clear_buffer()
     image = STATE.image_buffer
     # image = Image.new('RGB', config.RESOLUTION, config.BACKGROUND)
-    draw_base(image, config.RESOLUTION)
+    draw_base(image)
     STATE.active_app.draw(image)
     INTERFACE.show(image)
 
@@ -184,8 +184,8 @@ def draw_footer(image: Image, partial = False) -> (Image, int, int):
         return image, 0, 0
 
 
-def draw_base(image: Image, resolution: Tuple[int, int]) -> Image:
-    width, height = resolution
+def draw_header(image: Image, partial = False) -> (Image, int, int):
+    width, height = config.RESOLUTION
     vertical_line = 5  # vertical limiter line
     header_top_offset = config.APP_TOP_OFFSET - vertical_line  # base for header
     header_side_offset = config.APP_SIDE_OFFSET  # spacing to the sides
@@ -224,7 +224,17 @@ def draw_base(image: Image, resolution: Tuple[int, int]) -> Image:
             draw.line(start + end, fill=config.ACCENT)
         cursor = cursor + text_width + app_spacing
 
-    # draw footer
+    if partial:
+        partial_start = (header_side_offset, 0)
+        partial_end = (width - header_side_offset, header_top_offset + vertical_line)
+        x0, y0 = partial_start
+        return image.crop(partial_start + partial_end), x0, y0
+    else:
+        return image, 0, 0
+
+
+def draw_base(image: Image) -> Image:
+    draw_header(image)
     draw_footer(image)
     return image
 
