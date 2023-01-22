@@ -33,5 +33,5 @@ class ILI9486Interface(Interface):
     def show_partial(self, image: Image, x0, y0):
         if not self.__blocked:
             self.__blocked = True
-            self.__display.display_partial(image, x0, y0)
+            self.__display.display(image, x0, y0)
             self.__blocked = False
