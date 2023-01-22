@@ -29,6 +29,9 @@ class TkInterface(Interface, Input):
     def show(self, image: Image):
         self.__image = image
 
+    def show_partial(self, image: Image, x0, y0):
+        self.__image = self.__image.paste(image, (x0, y0))
+
 
 BUTTON_W = 15
 BUTTON_H = 6

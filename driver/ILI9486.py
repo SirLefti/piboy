@@ -215,6 +215,28 @@ class ILI9486:
         self.data(y1 & 0xFF)
         return self
 
+    def display_partial(self, image=None, x0 = 0, y0 = 0):
+        """Writes the display buffer or provided image to the display. If no
+        image is provided the display buffer will be written to the display.
+        If an image is provided, it should be in RGB format and the same
+        dimensions as the display."""
+        if image is None:
+            image = self.__buffer
+        width, height = image.size
+        x1 = x0 + width - 1
+        y1 = y0 + height - 1
+        if image.mode != 'RGB':
+            raise ValueError('Image must be in RGB format')
+        if x1 >= self.__width or y1 >= self.__height or x0 < 0 or y0 < 0:
+            raise ValueError(
+                'Image exceeds display bounds ({0}x{1})'.format(self.__width, self.__height))
+        self.set_window(x0, y0, x1, y1)
+        data = image_to_data(image)
+        self.command(CMD_WRMEM)
+        if isinstance(data, list):
+            self.data(list(data))
+        return self
+
     def display(self, image=None):
         """Writes the display buffer or provided image to the display. If no
         image is provided the display buffer will be written to the display.

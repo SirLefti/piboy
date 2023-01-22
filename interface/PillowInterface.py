@@ -9,3 +9,6 @@ class PillowInterface(Interface):
 
     def show(self, image: Image):
         image.show()
+
+    def show_partial(self, image: Image, x0, y0):
+        pass

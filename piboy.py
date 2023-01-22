@@ -134,8 +134,13 @@ def watch_function():
         time.sleep(1.0 - now.microsecond / 1000000.0)
 
         # draw the complete footer to remove existing clock display
-        draw_footer(STATE.image_buffer)
-        INTERFACE.show(STATE.image_buffer)
+        if config.PARTIAL_RENDER:
+            image, x0, y0 = draw_footer(STATE.image_buffer, partial=True)
+            INTERFACE.show_partial(image, x0, y0)
+        else:
+            draw_footer(STATE.image_buffer)
+            INTERFACE.show(STATE.image_buffer)
+
 
 
 def update_display():
@@ -155,7 +160,7 @@ STATE.add_app(FileManagerApp()) \
     .add_app(MapApp(update_display, IPLocationProvider(apply_inaccuracy=True), OSMTileProvider()))
 
 
-def draw_footer(image: Image) -> Image:
+def draw_footer(image: Image, partial = False) -> (Image, int, int):
     width, height = config.RESOLUTION
     footer_height = 20  # height of the footer
     footer_bottom_offset = 3  # spacing to the bottom
@@ -172,7 +177,11 @@ def draw_footer(image: Image) -> Image:
     text_padding = (footer_height - text_height) / 2
     draw.text((width - footer_side_offset - text_padding - text_width, height - footer_height - footer_bottom_offset +
                text_padding), date_str, config.ACCENT, font=font)
-    return image
+    if partial:
+        x0, y0 = start
+        return image.crop(start + end), x0, y0
+    else:
+        return image, 0, 0
 
 
 def draw_base(image: Image, resolution: Tuple[int, int]) -> Image:
