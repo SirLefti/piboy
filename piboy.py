@@ -25,8 +25,9 @@ class AppState:
     def __init_buffer(self) -> Image:
         return Image.new('RGB', self.__resolution, self.__background)
 
-    def clear_buffer(self):
+    def clear_buffer(self) -> Image:
         self.__image_buffer = self.__init_buffer()
+        return self.__image_buffer
 
     def add_app(self, app: App):
         self.__apps.append(app)
@@ -145,9 +146,7 @@ def watch_function():
 
 def update_display():
     """Draw call than handles the complete cycle of drawing a new image to the display."""
-    STATE.clear_buffer()
-    image = STATE.image_buffer
-    # image = Image.new('RGB', config.RESOLUTION, config.BACKGROUND)
+    image = STATE.clear_buffer()
     draw_base(image)
     STATE.active_app.draw(image)
     INTERFACE.show(image)
