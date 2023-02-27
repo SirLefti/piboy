@@ -7,8 +7,5 @@ class PillowInterface(Interface):
     def close(self):
         pass
 
-    def show(self, image: Image):
+    def show(self, image: Image, x0, y0):
         image.show()
-
-    def show_partial(self, image: Image, x0, y0):
-        pass

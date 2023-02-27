@@ -114,7 +114,7 @@ if config.DEV_MODE:
     from interface.TkInterface import TkInterface
 
     __tk = TkInterface(on_key_left, on_key_right, on_key_up, on_key_down, on_key_a, on_key_b,
-                       on_rotary_increase, on_rotary_decrease)
+                       on_rotary_increase, on_rotary_decrease, config.RESOLUTION, config.BACKGROUND)
     INTERFACE = __tk
     INPUT = __tk
 else:
@@ -135,21 +135,17 @@ def watch_function():
         time.sleep(1.0 - now.microsecond / 1000000.0)
 
         # draw the complete footer to remove existing clock display
-        if config.PARTIAL_RENDER:
-            image, x0, y0 = draw_footer(STATE.image_buffer, partial=True)
-            INTERFACE.show_partial(image, x0, y0)
-        else:
-            draw_footer(STATE.image_buffer)
-            INTERFACE.show(STATE.image_buffer)
+        image, x0, y0 = draw_footer(STATE.image_buffer)
+        INTERFACE.show(image, x0, y0)
 
 
 
 def update_display():
     """Draw call than handles the complete cycle of drawing a new image to the display."""
     image = STATE.clear_buffer()
-    draw_base(image)
-    STATE.active_app.draw(image)
-    INTERFACE.show(image)
+    image = draw_base(image)
+    image, x0, y0 = STATE.active_app.draw(image)
+    INTERFACE.show(image, x0, y0)
 
 
 STATE.add_app(FileManagerApp()) \
@@ -159,7 +155,7 @@ STATE.add_app(FileManagerApp()) \
     .add_app(MapApp(update_display, IPLocationProvider(apply_inaccuracy=True), OSMTileProvider()))
 
 
-def draw_footer(image: Image, partial = False) -> (Image, int, int):
+def draw_footer(image: Image) -> (Image, int, int):
     width, height = config.RESOLUTION
     footer_height = 20  # height of the footer
     footer_bottom_offset = 3  # spacing to the bottom
@@ -176,14 +172,11 @@ def draw_footer(image: Image, partial = False) -> (Image, int, int):
     text_padding = (footer_height - text_height) / 2
     draw.text((width - footer_side_offset - text_padding - text_width, height - footer_height - footer_bottom_offset +
                text_padding), date_str, config.ACCENT, font=font)
-    if partial:
-        x0, y0 = start
-        return image.crop(start + end), x0, y0
-    else:
-        return image, 0, 0
+    x0, y0 = start
+    return image.crop(start + end), x0, y0
 
 
-def draw_header(image: Image, partial = False) -> (Image, int, int):
+def draw_header(image: Image) -> (Image, int, int):
     width, height = config.RESOLUTION
     vertical_line = 5  # vertical limiter line
     header_top_offset = config.APP_TOP_OFFSET - vertical_line  # base for header
@@ -223,13 +216,10 @@ def draw_header(image: Image, partial = False) -> (Image, int, int):
             draw.line(start + end, fill=config.ACCENT)
         cursor = cursor + text_width + app_spacing
 
-    if partial:
-        partial_start = (header_side_offset, 0)
-        partial_end = (width - header_side_offset, header_top_offset + vertical_line)
-        x0, y0 = partial_start
-        return image.crop(partial_start + partial_end), x0, y0
-    else:
-        return image, 0, 0
+    partial_start = (header_side_offset, 0)
+    partial_end = (width - header_side_offset, header_top_offset + vertical_line)
+    x0, y0 = partial_start
+    return image.crop(partial_start + partial_end), x0, y0
 
 
 def draw_base(image: Image) -> Image:

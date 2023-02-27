@@ -17,7 +17,6 @@ class SPIConfig:
 
 
 DEV_MODE = 1
-PARTIAL_RENDER = 0
 
 # Interface definition (SPI display module ignores this, it supports only its own resolution)
 WIDTH: int = 480

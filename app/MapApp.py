@@ -168,7 +168,7 @@ class MapApp(SelfUpdatingApp):
             self.__position = self.__location_provider.get_location()
             self.__draw_callback()
 
-    def draw(self, image: Image) -> Image:
+    def draw(self, image: Image) -> (Image, int, int):
         draw = ImageDraw.Draw(image)
         left_top = (config.APP_SIDE_OFFSET, config.APP_TOP_OFFSET)
         width, height = config.RESOLUTION
@@ -304,7 +304,7 @@ class MapApp(SelfUpdatingApp):
         for control in self.__controls:
             control.draw(draw, cursor)
             cursor = (cursor[0], cursor[1] - self.__CONTROL_SIZE - 2 * self.__CONTROL_PADDING)
-        return image
+        return image, 0, 0
 
     def on_key_left(self):
         if self.__controls[self.__focussed_control].is_selected():

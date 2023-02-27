@@ -1,6 +1,6 @@
 from interface.Interface import Interface
 from interface.Input import Input
-from typing import Callable
+from typing import Callable, Tuple
 from PIL import Image, ImageTk
 import config
 from tkinter import Tk, Canvas, Button, constants, TclError
@@ -12,9 +12,12 @@ class TkInterface(Interface, Input):
 
     def __init__(self, on_key_left: Callable, on_key_right: Callable,
                  on_key_up: Callable, on_key_down: Callable, on_key_a: Callable, on_key_b: Callable,
-                 on_rotary_increase: Callable, on_rotary_decrease: Callable):
+                 on_rotary_increase: Callable, on_rotary_decrease: Callable,
+                 resolution: Tuple[int, int], background: Tuple[int, int, int]):
         Input.__init__(self, on_key_left, on_key_right, on_key_up, on_key_down, on_key_a, on_key_b,
                        on_rotary_increase, on_rotary_decrease)
+        self.__resolution = resolution
+        self.__background = background
         self.__image: Image = None
         self.__buffer: Image = None
         threading.Thread(target=_tk_thread, args=(self,), daemon=True).start()
@@ -27,11 +30,9 @@ class TkInterface(Interface, Input):
         self.__image = None
         return image
 
-    def show(self, image: Image):
-        self.__image = image
-        self.__buffer = image
-
-    def show_partial(self, image: Image, x0, y0):
+    def show(self, image: Image, x0, y0):
+        if self.__buffer is None:
+            self.__buffer = Image.new('RGB', self.__resolution, self.__background)
         self.__buffer.paste(image, (x0, y0))  # overwrites __buffer
         self.__image = self.__buffer  # thus assigning __buffer to __image
 

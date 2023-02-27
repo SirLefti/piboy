@@ -24,13 +24,7 @@ class ILI9486Interface(Interface):
         self.__spi.close()
         GPIO.cleanup()
 
-    def show(self, image: Image):
-        if not self.__blocked:
-            self.__blocked = True
-            self.__display.display(image)
-            self.__blocked = False
-
-    def show_partial(self, image: Image, x0, y0):
+    def show(self, image: Image, x0, y0):
         if not self.__blocked:
             self.__blocked = True
             self.__display.display(image, x0, y0)

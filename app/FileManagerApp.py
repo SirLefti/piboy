@@ -271,7 +271,7 @@ class FileManagerApp(App):
         except PermissionError:
             cls.__draw_error(draw, left_top, right_bottom, 'Permission denied')
 
-    def draw(self, image: Image) -> Image:
+    def draw(self, image: Image) -> (Image, int, int):
         width, height = config.RESOLUTION
         is_left_tab = self.__selected_tab == 0
         is_right_tab = self.__selected_tab == 1
@@ -290,7 +290,7 @@ class FileManagerApp(App):
         end = (width / 2, height - config.APP_BOTTOM_OFFSET)
         draw.rectangle(start + end, fill=config.ACCENT)
 
-        return draw
+        return image, 0, 0
 
     def _enter(self):
         path = os.path.join(self.__active_directory.directory, self.__active_directory.files[self.__active_directory
