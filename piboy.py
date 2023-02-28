@@ -65,45 +65,45 @@ STATE = AppState(config.RESOLUTION, config.BACKGROUND)
 
 def on_key_left():
     STATE.active_app.on_key_left()
-    update_display()
+    update_display(partial=True)
 
 
 def on_key_right():
     STATE.active_app.on_key_right()
-    update_display()
+    update_display(partial=True)
 
 
 def on_key_up():
     STATE.active_app.on_key_up()
-    update_display()
+    update_display(partial=True)
 
 
 def on_key_down():
     STATE.active_app.on_key_down()
-    update_display()
+    update_display(partial=True)
 
 
 def on_key_a():
     STATE.active_app.on_key_a()
-    update_display()
+    update_display(partial=True)
 
 
 def on_key_b():
     STATE.active_app.on_key_b()
-    update_display()
+    update_display(partial=True)
 
 
 def on_rotary_increase():
     STATE.active_app.on_app_leave()
     STATE.next_app()
-    update_display()
+    update_display(partial=False)
     STATE.active_app.on_app_enter()
 
 
 def on_rotary_decrease():
     STATE.active_app.on_app_leave()
     STATE.previous_app()
-    update_display()
+    update_display(partial=False)
     STATE.active_app.on_app_enter()
 
 
@@ -140,11 +140,12 @@ def watch_function():
 
 
 
-def update_display():
+def update_display(partial = False):
     """Draw call than handles the complete cycle of drawing a new image to the display."""
     image = STATE.clear_buffer()
     image = draw_base(image)
-    image, x0, y0 = STATE.active_app.draw(image)
+    image, x0, y0 = STATE.active_app.draw(image, partial)
+    print(f'drawing {image.size} at {x0, y0}')
     INTERFACE.show(image, x0, y0)
 
 

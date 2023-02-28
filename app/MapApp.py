@@ -3,7 +3,7 @@ from data.LocationProvider import LocationProvider
 from data.TileProvider import TileProvider
 from enum import Enum
 from abc import ABC
-from typing import Callable, Tuple, List
+from typing import Callable, Tuple, List, Any
 from PIL import Image, ImageDraw, ImageOps
 import os.path
 import math
@@ -103,10 +103,11 @@ class MapApp(SelfUpdatingApp):
         def is_selected(self) -> bool:
             return self.__selection_state == self.SelectionState.SELECTED
 
-    def __init__(self, draw_callback: Callable[[], None],
+    def __init__(self, draw_callback: Callable[[Any], None],
                  location_provider: LocationProvider, tile_provider: TileProvider):
         super().__init__(self.__update_location)
         self.__draw_callback = draw_callback
+        self.__draw_callback_kwargs = { 'partial': True }
         self.__location_provider = location_provider
         self.__tile_provider = tile_provider
         self.__zoom = 15
@@ -166,9 +167,9 @@ class MapApp(SelfUpdatingApp):
     def __update_location(self):
         if self.__x_offset == 0 and self.__y_offset == 0:
             self.__position = self.__location_provider.get_location()
-            self.__draw_callback()
+            self.__draw_callback(**self.__draw_callback_kwargs)
 
-    def draw(self, image: Image) -> (Image, int, int):
+    def draw(self, image: Image, partial = False) -> (Image, int, int):
         draw = ImageDraw.Draw(image)
         left_top = (config.APP_SIDE_OFFSET, config.APP_TOP_OFFSET)
         width, height = config.RESOLUTION
@@ -304,7 +305,12 @@ class MapApp(SelfUpdatingApp):
         for control in self.__controls:
             control.draw(draw, cursor)
             cursor = (cursor[0], cursor[1] - self.__CONTROL_SIZE - 2 * self.__CONTROL_PADDING)
-        return image, 0, 0
+
+        if partial:
+            right_bottom = width - config.APP_SIDE_OFFSET, height - config.APP_BOTTOM_OFFSET
+            return image.crop(left_top + right_bottom), *left_top
+        else:
+            return image, 0, 0
 
     def on_key_left(self):
         if self.__controls[self.__focussed_control].is_selected():

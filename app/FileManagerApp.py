@@ -119,10 +119,12 @@ class FileManagerApp(App):
         self.__left_directory = self.DirectoryState()
         self.__right_directory = self.DirectoryState()
         self.__selected_tab = 0  # 0 for left, 1 for right
+        self.__tab_changed = False
         pass
 
     def __change_tab(self):
         self.__selected_tab ^= 1
+        self.__tab_changed = True
 
     @property
     def __active_directory(self) -> DirectoryState:
@@ -271,19 +273,29 @@ class FileManagerApp(App):
         except PermissionError:
             cls.__draw_error(draw, left_top, right_bottom, 'Permission denied')
 
-    def draw(self, image: Image) -> (Image, int, int):
+    def draw(self, image: Image, partial = False) -> (Image, int, int):
         width, height = config.RESOLUTION
         is_left_tab = self.__selected_tab == 0
         is_right_tab = self.__selected_tab == 1
+        tab_changed = self.__tab_changed
+        self.__tab_changed = False  # resetting but keep value
+        draw_left = not partial or is_left_tab or tab_changed
+        draw_right = not partial or is_right_tab or tab_changed
         draw = ImageDraw.Draw(image)
 
-        left_top = (config.APP_SIDE_OFFSET, config.APP_TOP_OFFSET)
-        right_bottom = (int(width / 2), height - config.APP_BOTTOM_OFFSET)
-        self.__draw_directory(draw, left_top, right_bottom, self.__left_directory, is_selected=is_left_tab)
+        if draw_left:
+            left_top = (config.APP_SIDE_OFFSET, config.APP_TOP_OFFSET)
+            right_bottom = (int(width / 2) - 1, height - config.APP_BOTTOM_OFFSET)
+            self.__draw_directory(draw, left_top, right_bottom, self.__left_directory, is_selected=is_left_tab)
+            if partial and not tab_changed:
+                return image.crop(left_top + right_bottom), *left_top  # tuple unpacking for return
 
-        left_top = (int(width / 2), config.APP_TOP_OFFSET)
-        right_bottom = (width - config.APP_SIDE_OFFSET, height - config.APP_BOTTOM_OFFSET)
-        self.__draw_directory(draw, left_top, right_bottom, self.__right_directory, is_selected=is_right_tab)
+        if draw_right:
+            left_top = (int(width / 2) + 1, config.APP_TOP_OFFSET)
+            right_bottom = (width - config.APP_SIDE_OFFSET, height - config.APP_BOTTOM_OFFSET)
+            self.__draw_directory(draw, left_top, right_bottom, self.__right_directory, is_selected=is_right_tab)
+            if partial and not tab_changed:
+                return image.crop(left_top + right_bottom), *left_top  # tuple unpacking for return
 
         # split line
         start = (width / 2 - 1, config.APP_TOP_OFFSET)
