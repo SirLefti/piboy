@@ -145,7 +145,6 @@ def update_display(partial = False):
     image = STATE.clear_buffer()
     image = draw_base(image)
     image, x0, y0 = STATE.active_app.draw(image, partial)
-    print(f'drawing {image.size} at {x0, y0}')
     INTERFACE.show(image, x0, y0)
 
 
