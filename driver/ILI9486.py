@@ -215,7 +215,7 @@ class ILI9486:
         self.data(y1 & 0xFF)
         return self
 
-    def display(self, image=None):
+    def display(self, image=None, x0 = 0, y0 = 0):
         """Writes the display buffer or provided image to the display. If no
         image is provided the display buffer will be written to the display.
         If an image is provided, it should be in RGB format and the same
@@ -223,12 +223,14 @@ class ILI9486:
         if image is None:
             image = self.__buffer
         width, height = image.size
+        x1 = x0 + width - 1
+        y1 = y0 + height - 1
         if image.mode != 'RGB':
             raise ValueError('Image must be in RGB format')
-        if width != self.__width or height != self.__height:
+        if x1 >= self.__width or y1 >= self.__height or x0 < 0 or y0 < 0:
             raise ValueError(
-                'Image must be the same dimensions as display ({0}x{1})'.format(self.__width, self.__height))
-        self.set_window()
+                'Image exceeds display bounds ({0}x{1})'.format(self.__width, self.__height))
+        self.set_window(x0, y0, x1, y1)
         data = image_to_data(image)
         self.command(CMD_WRMEM)
         if isinstance(data, list):

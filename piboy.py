@@ -25,8 +25,9 @@ class AppState:
     def __init_buffer(self) -> Image:
         return Image.new('RGB', self.__resolution, self.__background)
 
-    def clear_buffer(self):
+    def clear_buffer(self) -> Image:
         self.__image_buffer = self.__init_buffer()
+        return self.__image_buffer
 
     def add_app(self, app: App):
         self.__apps.append(app)
@@ -64,45 +65,45 @@ STATE = AppState(config.RESOLUTION, config.BACKGROUND)
 
 def on_key_left():
     STATE.active_app.on_key_left()
-    update_display()
+    update_display(partial=True)
 
 
 def on_key_right():
     STATE.active_app.on_key_right()
-    update_display()
+    update_display(partial=True)
 
 
 def on_key_up():
     STATE.active_app.on_key_up()
-    update_display()
+    update_display(partial=True)
 
 
 def on_key_down():
     STATE.active_app.on_key_down()
-    update_display()
+    update_display(partial=True)
 
 
 def on_key_a():
     STATE.active_app.on_key_a()
-    update_display()
+    update_display(partial=True)
 
 
 def on_key_b():
     STATE.active_app.on_key_b()
-    update_display()
+    update_display(partial=True)
 
 
 def on_rotary_increase():
     STATE.active_app.on_app_leave()
     STATE.next_app()
-    update_display()
+    update_display(partial=False)
     STATE.active_app.on_app_enter()
 
 
 def on_rotary_decrease():
     STATE.active_app.on_app_leave()
     STATE.previous_app()
-    update_display()
+    update_display(partial=False)
     STATE.active_app.on_app_enter()
 
 
@@ -113,7 +114,7 @@ if config.DEV_MODE:
     from interface.TkInterface import TkInterface
 
     __tk = TkInterface(on_key_left, on_key_right, on_key_up, on_key_down, on_key_a, on_key_b,
-                       on_rotary_increase, on_rotary_decrease)
+                       on_rotary_increase, on_rotary_decrease, config.RESOLUTION, config.BACKGROUND)
     INTERFACE = __tk
     INPUT = __tk
 else:
@@ -134,18 +135,17 @@ def watch_function():
         time.sleep(1.0 - now.microsecond / 1000000.0)
 
         # draw the complete footer to remove existing clock display
-        draw_footer(STATE.image_buffer)
-        INTERFACE.show(STATE.image_buffer)
+        image, x0, y0 = draw_footer(STATE.image_buffer)
+        INTERFACE.show(image, x0, y0)
 
 
-def update_display():
+
+def update_display(partial = False):
     """Draw call than handles the complete cycle of drawing a new image to the display."""
-    STATE.clear_buffer()
-    image = STATE.image_buffer
-    # image = Image.new('RGB', config.RESOLUTION, config.BACKGROUND)
-    draw_base(image, config.RESOLUTION)
-    STATE.active_app.draw(image)
-    INTERFACE.show(image)
+    image = STATE.clear_buffer()
+    image = draw_base(image)
+    image, x0, y0 = STATE.active_app.draw(image, partial)
+    INTERFACE.show(image, x0, y0)
 
 
 STATE.add_app(FileManagerApp()) \
@@ -155,7 +155,7 @@ STATE.add_app(FileManagerApp()) \
     .add_app(MapApp(update_display, IPLocationProvider(apply_inaccuracy=True), OSMTileProvider()))
 
 
-def draw_footer(image: Image) -> Image:
+def draw_footer(image: Image) -> (Image, int, int):
     width, height = config.RESOLUTION
     footer_height = 20  # height of the footer
     footer_bottom_offset = 3  # spacing to the bottom
@@ -172,11 +172,12 @@ def draw_footer(image: Image) -> Image:
     text_padding = (footer_height - text_height) / 2
     draw.text((width - footer_side_offset - text_padding - text_width, height - footer_height - footer_bottom_offset +
                text_padding), date_str, config.ACCENT, font=font)
-    return image
+    x0, y0 = start
+    return image.crop(start + end), x0, y0
 
 
-def draw_base(image: Image, resolution: Tuple[int, int]) -> Image:
-    width, height = resolution
+def draw_header(image: Image) -> (Image, int, int):
+    width, height = config.RESOLUTION
     vertical_line = 5  # vertical limiter line
     header_top_offset = config.APP_TOP_OFFSET - vertical_line  # base for header
     header_side_offset = config.APP_SIDE_OFFSET  # spacing to the sides
@@ -215,7 +216,14 @@ def draw_base(image: Image, resolution: Tuple[int, int]) -> Image:
             draw.line(start + end, fill=config.ACCENT)
         cursor = cursor + text_width + app_spacing
 
-    # draw footer
+    partial_start = (header_side_offset, 0)
+    partial_end = (width - header_side_offset, header_top_offset + vertical_line)
+    x0, y0 = partial_start
+    return image.crop(partial_start + partial_end), x0, y0
+
+
+def draw_base(image: Image) -> Image:
+    draw_header(image)
     draw_footer(image)
     return image
 

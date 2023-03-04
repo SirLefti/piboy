@@ -9,5 +9,5 @@ class Interface(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def show(self, image: Image):
+    def show(self, image: Image, x0, y0):
         raise NotImplementedError
