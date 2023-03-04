@@ -69,7 +69,7 @@ purposes without a Raspberry Pi. It implements both ``BaseInterface`` and ``Base
 interface and input. On a Raspberry Pi use ``ILI9486Interface`` and ``GPIOInput``.
 
 This project uses FreeSansBold as default font. If the font cannot be found despite being installed, or you do not want
-to install it, place the ``FreeSanBold.ttf`` in the root directory as a workaround.
+to install it, place the ``FreeSansBold.ttf`` in the root directory as a workaround.
 
 ## Roadmap
 
