@@ -2,7 +2,7 @@ PiBoy
 =========================
 [![commit activity](https://img.shields.io/github/commit-activity/m/SirLefti/piboy)](https://github.com/SirLefti/piboy)
 [![last commit](https://img.shields.io/github/last-commit/SirLefti/piboy)](https://github.com/SirLefti/piboy)
-![image](./docs/piboy.jpg)
+![image](./docs/proto1_6.jpg)
 Build your own Pip-Boy with some useful features for real-life using your Raspberry Pi.
 
 ## Features
@@ -71,12 +71,16 @@ interface and input. On a Raspberry Pi use ``ILI9486Interface`` and ``GPIOInput`
 This project uses FreeSansBold as default font. If the font cannot be found despite being installed, or you do not want
 to install it, place the ``FreeSansBold.ttf`` in the root directory as a workaround.
 
+## Assembly
+
+See [instructions for prototype 1](./docs/PROTO1.md).
+
 ## Roadmap
 
 * [x] display driver
 * [x] project base
-* [ ] build documentation / guide
-* [ ] case
+* [x] build documentation / guide
+* [x] case
 * [x] file manager app
 * [x] map app
 * [ ] radio app

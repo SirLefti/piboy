@@ -139,8 +139,7 @@ def watch_function():
         INTERFACE.show(image, x0, y0)
 
 
-
-def update_display(partial = False):
+def update_display(partial=False):
     """Draw call than handles the complete cycle of drawing a new image to the display."""
     image = STATE.clear_buffer()
     image = draw_base(image)
