@@ -17,10 +17,14 @@ Supports zooming and moving the map around. Don't get lost in the wasteland.
 
 ![map](./docs/map.png)
 
+Other apps shown in the header are currently placeholders.
+
 ## Hardware
 
  - Raspberry Pi (full size board with all 40 pins recommended)
  - 3.5" SPI display module (with an ILI9486 display driver chip)
+
+Additional parts depending on case variant.
 
 ## Installation
 
@@ -65,7 +69,7 @@ To enable logging, use the following instead:
 Most config stuff is defined in the equally named file ``config.py``. However, the apps are configured in ``piboy.py``
 to avoid circular imports. The same applies to the interface (the way how the Pi-Boy shows the UI) and input
 configuration (the way how the Pi-Boy reads the user input). ``TkInterface`` can be used for development and simulation
-purposes without a Raspberry Pi. It implements both ``BaseInterface`` and ``BaseInput`` and thus should be used as
+purposes without a Raspberry Pi. It implements both ``Interface`` and ``Input`` and thus should be used as
 interface and input. On a Raspberry Pi use ``ILI9486Interface`` and ``GPIOInput``.
 
 This project uses FreeSansBold as default font. If the font cannot be found despite being installed, or you do not want

@@ -8,7 +8,7 @@ Case Prototype 1
 * [top part](./parts/proto1/Proto1-top.stl)
 * 3x M2x25
 * 6x micro push buttons (6mm x 6mm)
-* rotary encoder
+* rotary encoder (KY-040 module)
 * perfboard/protoboard (14x9 holes required)
 * wires, general soldering stuff
 * rotary encoder knob (optional)
