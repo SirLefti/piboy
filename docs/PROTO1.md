@@ -4,8 +4,8 @@ Case Prototype 1
 ![proto1_final](./proto1_6.jpg)
 
 ## Parts
-* [base part](./parts/proto1/Proto1-base.stl)
-* [top part](./parts/proto1/Proto1-top.stl)
+* [base part](./parts/proto1/Proto1.1-base.stl)
+* [top part](./parts/proto1/Proto1.1-top.stl)
 * 3x M2x25
 * 6x micro push buttons (6mm x 6mm)
 * rotary encoder (KY-040 module)
@@ -36,6 +36,14 @@ upside down
 * misplaced support posts for Pi board
 * missing cutout for audio jack
 * SMDs under the display module might interfere
+* right screw post blocks USB ports
+
+### Fixes in Prototype 1.1
+
+* added cutout for audio jack
+* fixed misplaced support posts
+* less tight screw holes in top part
+* removed/shortened screw post on the right side
 
 ## Building
 
