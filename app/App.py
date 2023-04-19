@@ -14,7 +14,7 @@ class App(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def draw(self, image: Image, partial = False) -> (Image, int, int):
+    def draw(self, image: Image, partial=False) -> (Image, int, int):
         raise NotImplementedError
 
     @abstractmethod
