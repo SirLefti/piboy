@@ -2,6 +2,8 @@ from app.App import App
 from app.FileManagerApp import FileManagerApp
 from app.MapApp import MapApp
 from app.NullApp import NullApp
+from app.DebugApp import DebugApp
+from app.ClockApp import ClockApp
 from interface.Interface import Interface
 from interface.Input import Input
 from data.IPLocationProvider import IPLocationProvider
@@ -149,8 +151,10 @@ def update_display(partial=False):
 
 STATE.add_app(FileManagerApp()) \
     .add_app(NullApp('DATA')) \
-    .add_app(NullApp('STATS')) \
-    .add_app(NullApp('RADIO')) \
+    .add_app(NullApp('STAT')) \
+    .add_app(NullApp('RAD')) \
+    .add_app(DebugApp()) \
+    .add_app(ClockApp(update_display)) \
     .add_app(MapApp(update_display, IPLocationProvider(apply_inaccuracy=True), OSMTileProvider()))
 
 
