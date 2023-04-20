@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Optional, Callable
+from typing import Optional, Callable, Any
 
 from PIL import Image
 import threading
@@ -73,7 +73,7 @@ class SelfUpdatingApp(App, ABC):
         def stop(self):
             self.__alive = False
 
-    def __init__(self, update_callback: Callable[[], None]):
+    def __init__(self, update_callback: Callable[[Any], None]):
         self.__update_callback = update_callback
         self.__update_thread: Optional[SelfUpdatingApp.UpdateThread] = None
 
