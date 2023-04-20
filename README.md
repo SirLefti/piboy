@@ -89,4 +89,6 @@ See [instructions for prototype 1](./docs/PROTO1.md).
 * [x] map app
 * [ ] radio app
 * [ ] other apps (?)
+* [ ] GPS module
+* [ ] battery power
 * [ ] utilities
