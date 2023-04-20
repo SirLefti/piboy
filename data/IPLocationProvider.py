@@ -21,13 +21,13 @@ def retry(exceptions, delay: float = 0, tries: int = -1):
         return wrapper
     return decorator
 
+
 class IPLocationProvider(LocationProvider):
 
     def __init__(self, apply_inaccuracy: bool = False):
         """Creates a location provider using the public IP. Set 'apply_inaccuracy' to 'True' to add a random variation
         to the returned values to emulate a real GPS device."""
         self.__apply_inaccuracy = apply_inaccuracy
-
 
     @retry(exceptions=requests.exceptions.ConnectionError, delay=2, tries=5)
     def get_location(self) -> Tuple[float, float]:
