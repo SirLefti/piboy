@@ -64,6 +64,8 @@ To enable logging, use the following instead:
 @reboot cd /home/pi/piboy && (.venv/bin/python -u piboy.py >log 2>err) &
 ````
 
+You might have to make sure, that ``DEV_MODE`` in ``config.py`` is set to ``0``
+
 ## Configuration
 
 Most config stuff is defined in the equally named file ``config.py``. However, the apps are configured in ``piboy.py``
