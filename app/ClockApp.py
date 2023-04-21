@@ -44,8 +44,8 @@ class ClockApp(SelfUpdatingApp):
         draw.line((right, center_y) + (right - quarters_length, center_y), fill=config.ACCENT)
 
         # clock hands
-        h_angle = ((now.hour % 12) / 12) * 360 + 180
-        m_angle = (now.minute / 60) * 360 + 180
+        h_angle = (now.hour / 12) * 360 + (now.minute / 60 / 12) * 360 + (now.second / 60 / 60 / 12) * 360 + 180
+        m_angle = (now.minute / 60) * 360 + (now.second / 60 / 60) * 360 + 180
         s_angle = (now.second / 60) * 360 + 180
 
         h_x = h_length * math.sin(math.radians(-h_angle))
