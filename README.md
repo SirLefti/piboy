@@ -17,6 +17,16 @@ Supports zooming and moving the map around. Don't get lost in the wasteland.
 
 ![map](./docs/map.png)
 
+#### Clock App
+It just shows the time on a classic analog clock.
+
+![clk](./docs/clk.png)
+
+#### Debug App
+Shows the last pressed key to help you check the key wiring.
+
+![dbg](./docs/dbg.png)
+
 Other apps shown in the header are currently placeholders.
 
 ## Hardware
