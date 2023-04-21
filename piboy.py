@@ -17,12 +17,20 @@ from datetime import datetime
 
 class AppState:
 
+    __INSTANCE = None
+
     def __init__(self, resolution: Tuple[int, int], background: Tuple[int, int, int]):
         self.__resolution = resolution
         self.__background = background
         self.__image_buffer = self.__init_buffer()
         self.__apps = []
         self.__active_app = 0
+
+    @classmethod
+    def instance(cls) -> 'AppState':
+        if cls.__INSTANCE is None:
+            cls.__INSTANCE = cls(config.RESOLUTION, config.BACKGROUND)
+        return cls.__INSTANCE
 
     def __init_buffer(self) -> Image:
         return Image.new('RGB', self.__resolution, self.__background)
@@ -62,51 +70,48 @@ class AppState:
             self.__active_app = len(self.__apps) - 1
 
 
-STATE = AppState(config.RESOLUTION, config.BACKGROUND)
-
-
 def on_key_left():
-    STATE.active_app.on_key_left()
+    AppState.instance().active_app.on_key_left()
     update_display(partial=True)
 
 
 def on_key_right():
-    STATE.active_app.on_key_right()
+    AppState.instance().active_app.on_key_right()
     update_display(partial=True)
 
 
 def on_key_up():
-    STATE.active_app.on_key_up()
+    AppState.instance().active_app.on_key_up()
     update_display(partial=True)
 
 
 def on_key_down():
-    STATE.active_app.on_key_down()
+    AppState.instance().active_app.on_key_down()
     update_display(partial=True)
 
 
 def on_key_a():
-    STATE.active_app.on_key_a()
+    AppState.instance().active_app.on_key_a()
     update_display(partial=True)
 
 
 def on_key_b():
-    STATE.active_app.on_key_b()
+    AppState.instance().active_app.on_key_b()
     update_display(partial=True)
 
 
 def on_rotary_increase():
-    STATE.active_app.on_app_leave()
-    STATE.next_app()
+    AppState.instance().active_app.on_app_leave()
+    AppState.instance().next_app()
     update_display(partial=False)
-    STATE.active_app.on_app_enter()
+    AppState.instance().active_app.on_app_enter()
 
 
 def on_rotary_decrease():
-    STATE.active_app.on_app_leave()
-    STATE.previous_app()
+    AppState.instance().active_app.on_app_leave()
+    AppState.instance().previous_app()
     update_display(partial=False)
-    STATE.active_app.on_app_enter()
+    AppState.instance().active_app.on_app_enter()
 
 
 INTERFACE: Interface
@@ -137,25 +142,16 @@ def watch_function():
         time.sleep(1.0 - now.microsecond / 1000000.0)
 
         # draw the complete footer to remove existing clock display
-        image, x0, y0 = draw_footer(STATE.image_buffer)
+        image, x0, y0 = draw_footer(AppState.instance().image_buffer)
         INTERFACE.show(image, x0, y0)
 
 
 def update_display(partial=False):
-    """Draw call than handles the complete cycle of drawing a new image to the display."""
-    image = STATE.clear_buffer()
+    """Draw call that handles the complete cycle of drawing a new image to the display."""
+    image = AppState.instance().clear_buffer()
     image = draw_base(image)
-    image, x0, y0 = STATE.active_app.draw(image, partial)
+    image, x0, y0 = AppState.instance().active_app.draw(image, partial)
     INTERFACE.show(image, x0, y0)
-
-
-STATE.add_app(FileManagerApp()) \
-    .add_app(NullApp('DATA')) \
-    .add_app(NullApp('STAT')) \
-    .add_app(NullApp('RAD')) \
-    .add_app(DebugApp()) \
-    .add_app(ClockApp(update_display)) \
-    .add_app(MapApp(update_display, IPLocationProvider(apply_inaccuracy=True), OSMTileProvider()))
 
 
 def draw_footer(image: Image) -> (Image, int, int):
@@ -202,12 +198,13 @@ def draw_header(image: Image) -> (Image, int, int):
     # draw app short name header
     font = config.FONT_HEADER
     max_text_width = width - (2 * header_side_offset)
-    app_text_width = sum(font.getbbox(app.title)[2] for app in STATE.apps) + (len(STATE.apps) - 1) * app_spacing
+    app_text_width = sum(font.getbbox(app.title)[2] for app in AppState.instance().apps)\
+        + (len(AppState.instance().apps) - 1) * app_spacing
     cursor = header_side_offset + (max_text_width - app_text_width) / 2
-    for app in STATE.apps:
+    for app in AppState.instance().apps:
         _, _, text_width, text_height = font.getbbox(app.title)
         draw.text((cursor, header_top_offset - text_height - app_padding), app.title, config.ACCENT, font=font)
-        if app is STATE.active_app:
+        if app is AppState.instance().active_app:
             start = (cursor - app_padding, header_top_offset - vertical_line)
             end = (cursor - app_padding, header_top_offset)
             draw.line(start + end, fill=config.ACCENT)
@@ -232,9 +229,17 @@ def draw_base(image: Image) -> Image:
 
 
 if __name__ == '__main__':
+    AppState.instance().add_app(FileManagerApp()) \
+        .add_app(NullApp('DATA')) \
+        .add_app(NullApp('STAT')) \
+        .add_app(NullApp('RAD')) \
+        .add_app(DebugApp()) \
+        .add_app(ClockApp(update_display)) \
+        .add_app(MapApp(update_display, IPLocationProvider(apply_inaccuracy=True), OSMTileProvider()))
+
     # initial draw
     update_display()
-    STATE.active_app.on_app_enter()
+    AppState.instance().active_app.on_app_enter()
 
     try:
         # blocking function that updates the clock
