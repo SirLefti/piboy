@@ -61,9 +61,12 @@ class SelfUpdatingApp(App, ABC):
             self.__alive = False
 
         def __thread_function(self):
+            next_call = time.time()
             while self.__alive:
                 self.__callback()
-                time.sleep(self.__sleep_time)
+                next_call = next_call + self.__sleep_time
+                diff = max(next_call - time.time(), 0)  # make sure it is not negative
+                time.sleep(diff)
 
         def start(self):
             self.__alive = True
