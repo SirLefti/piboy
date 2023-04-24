@@ -23,7 +23,8 @@ class ClockApp(SelfUpdatingApp):
         width, height = config.RESOLUTION
         center_x, center_y = int(width / 2), int(height / 2)
         size = 200
-        quarters_length = 20
+        quarters_length = 15
+        five_minutes_length = 7
         h_length = 40
         m_length = 60
         s_length = 80
@@ -31,17 +32,23 @@ class ClockApp(SelfUpdatingApp):
         now = datetime.now()
         draw = ImageDraw.Draw(image)
 
-        left = center_x - int(size / 2)
-        top = center_y - int(size / 2)
-        right = center_x + int(size / 2)
-        bottom = center_y + int(size / 2)
+        radius = int(size / 2)
+        left = center_x - radius
+        top = center_y - radius
+        right = center_x + radius
+        bottom = center_y + radius
 
         # clock body
         draw.ellipse([(left, top), (right, bottom)], outline=config.ACCENT, width=2)
-        draw.line((center_x, top) + (center_x, top + quarters_length), fill=config.ACCENT)
-        draw.line((center_x, bottom) + (center_x, bottom - quarters_length), fill=config.ACCENT)
-        draw.line((left, center_y) + (left + quarters_length, center_y), fill=config.ACCENT)
-        draw.line((right, center_y) + (right - quarters_length, center_y), fill=config.ACCENT)
+
+        for d in range(12):
+            angle = (d + 1) * int(360 / 12)
+            length = quarters_length if (d + 1) % 3 == 0 else five_minutes_length
+            start_x = center_x + (radius - length) * math.sin(math.radians(angle))
+            start_y = center_y + (radius - length) * math.cos(math.radians(angle))
+            end_x = center_x + radius * math.sin(math.radians(angle))
+            end_y = center_y + radius * math.cos(math.radians(angle))
+            draw.line((start_x, start_y) + (end_x, end_y), fill=config.ACCENT)
 
         # clock hands
         h_angle = (now.hour / 12) * 360 + (now.minute / 60 / 12) * 360 + (now.second / 60 / 60 / 12) * 360 + 180
