@@ -107,7 +107,7 @@ class MapApp(SelfUpdatingApp):
                  location_provider: LocationProvider, tile_provider: TileProvider):
         super().__init__(self.__update_location)
         self.__draw_callback = draw_callback
-        self.__draw_callback_kwargs = { 'partial': True }
+        self.__draw_callback_kwargs = {'partial': True}
         self.__location_provider = location_provider
         self.__tile_provider = tile_provider
         self.__zoom = 15
@@ -169,7 +169,7 @@ class MapApp(SelfUpdatingApp):
             self.__position = self.__location_provider.get_location()
             self.__draw_callback(**self.__draw_callback_kwargs)
 
-    def draw(self, image: Image, partial = False) -> (Image, int, int):
+    def draw(self, image: Image, partial=False) -> (Image, int, int):
         draw = ImageDraw.Draw(image)
         left_top = (config.APP_SIDE_OFFSET, config.APP_TOP_OFFSET)
         width, height = config.RESOLUTION

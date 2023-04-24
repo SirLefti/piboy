@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Optional, Callable
+from typing import Optional, Callable, Any
 
 from PIL import Image
 import threading
@@ -14,7 +14,7 @@ class App(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def draw(self, image: Image, partial = False) -> (Image, int, int):
+    def draw(self, image: Image, partial=False) -> (Image, int, int):
         raise NotImplementedError
 
     @abstractmethod
@@ -61,9 +61,12 @@ class SelfUpdatingApp(App, ABC):
             self.__alive = False
 
         def __thread_function(self):
+            next_call = time.time()
             while self.__alive:
                 self.__callback()
-                time.sleep(self.__sleep_time)
+                next_call = next_call + self.__sleep_time
+                diff = max(next_call - time.time(), 0)  # make sure it is not negative
+                time.sleep(diff)
 
         def start(self):
             self.__alive = True
@@ -73,7 +76,7 @@ class SelfUpdatingApp(App, ABC):
         def stop(self):
             self.__alive = False
 
-    def __init__(self, update_callback: Callable[[], None]):
+    def __init__(self, update_callback: Callable[[Any], None]):
         self.__update_callback = update_callback
         self.__update_thread: Optional[SelfUpdatingApp.UpdateThread] = None
 

@@ -17,10 +17,24 @@ Supports zooming and moving the map around. Don't get lost in the wasteland.
 
 ![map](./docs/map.png)
 
+#### Clock App
+It just shows the time on a classic analog clock.
+
+![clk](./docs/clk.png)
+
+#### Debug App
+Shows the last pressed key to help you check the key wiring.
+
+![dbg](./docs/dbg.png)
+
+Other apps shown in the header are currently placeholders.
+
 ## Hardware
 
  - Raspberry Pi (full size board with all 40 pins recommended)
  - 3.5" SPI display module (with an ILI9486 display driver chip)
+
+Additional parts depending on case variant.
 
 ## Installation
 
@@ -60,12 +74,14 @@ To enable logging, use the following instead:
 @reboot cd /home/pi/piboy && (.venv/bin/python -u piboy.py >log 2>err) &
 ````
 
+You might have to make sure, that ``DEV_MODE`` in ``config.py`` is set to ``0``.
+
 ## Configuration
 
 Most config stuff is defined in the equally named file ``config.py``. However, the apps are configured in ``piboy.py``
 to avoid circular imports. The same applies to the interface (the way how the Pi-Boy shows the UI) and input
 configuration (the way how the Pi-Boy reads the user input). ``TkInterface`` can be used for development and simulation
-purposes without a Raspberry Pi. It implements both ``BaseInterface`` and ``BaseInput`` and thus should be used as
+purposes without a Raspberry Pi. It implements both ``Interface`` and ``Input`` and thus should be used as
 interface and input. On a Raspberry Pi use ``ILI9486Interface`` and ``GPIOInput``.
 
 This project uses FreeSansBold as default font. If the font cannot be found despite being installed, or you do not want
@@ -85,4 +101,6 @@ See [instructions for prototype 1](./docs/PROTO1.md).
 * [x] map app
 * [ ] radio app
 * [ ] other apps (?)
+* [ ] GPS module
+* [ ] battery power
 * [ ] utilities

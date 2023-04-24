@@ -12,7 +12,7 @@ class NullApp(App):
     def title(self) -> str:
         return self.__title
 
-    def draw(self, image: Image, partial = False) -> (Image, int, int):
+    def draw(self, image: Image, partial=False) -> (Image, int, int):
         return image, 0, 0
 
     def on_key_left(self):
