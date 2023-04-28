@@ -17,12 +17,20 @@ from datetime import datetime
 
 class AppState:
 
+    __INSTANCE = None
+
     def __init__(self, resolution: Tuple[int, int], background: Tuple[int, int, int]):
         self.__resolution = resolution
         self.__background = background
         self.__image_buffer = self.__init_buffer()
         self.__apps = []
         self.__active_app = 0
+
+    @classmethod
+    def instance(cls) -> 'AppState':
+        if cls.__INSTANCE is None:
+            cls.__INSTANCE = cls(config.RESOLUTION, config.BACKGROUND)
+        return cls.__INSTANCE
 
     def __init_buffer(self) -> Image:
         return Image.new('RGB', self.__resolution, self.__background)
@@ -61,58 +69,89 @@ class AppState:
         if self.__active_app < 0:
             self.__active_app = len(self.__apps) - 1
 
-    def watch_function(self):
-        while True:
-            now = datetime.now()
-            # wait for next second
-            time.sleep(1.0 - now.microsecond / 1000000.0)
 
-            # draw the complete footer to remove existing clock display
-            image, x0, y0 = draw_footer(self.image_buffer)
-            INTERFACE.show(image, x0, y0)
+def on_key_left():
+    AppState.instance().active_app.on_key_left()
+    update_display(partial=True)
 
-    def update_display(self, partial=False):
-        """Draw call that handles the complete cycle of drawing a new image to the display."""
-        image = self.clear_buffer()
-        image = draw_base(image, self)
-        image, x0, y0 = self.active_app.draw(image, partial)
+
+def on_key_right():
+    AppState.instance().active_app.on_key_right()
+    update_display(partial=True)
+
+
+def on_key_up():
+    AppState.instance().active_app.on_key_up()
+    update_display(partial=True)
+
+
+def on_key_down():
+    AppState.instance().active_app.on_key_down()
+    update_display(partial=True)
+
+
+def on_key_a():
+    AppState.instance().active_app.on_key_a()
+    update_display(partial=True)
+
+
+def on_key_b():
+    AppState.instance().active_app.on_key_b()
+    update_display(partial=True)
+
+
+def on_rotary_increase():
+    AppState.instance().active_app.on_app_leave()
+    AppState.instance().next_app()
+    update_display(partial=False)
+    AppState.instance().active_app.on_app_enter()
+
+
+def on_rotary_decrease():
+    AppState.instance().active_app.on_app_leave()
+    AppState.instance().previous_app()
+    update_display(partial=False)
+    AppState.instance().active_app.on_app_enter()
+
+
+INTERFACE: Interface
+INPUT: Input
+
+if config.DEV_MODE:
+    from interface.TkInterface import TkInterface
+
+    __tk = TkInterface(on_key_left, on_key_right, on_key_up, on_key_down, on_key_a, on_key_b,
+                       on_rotary_increase, on_rotary_decrease, config.RESOLUTION, config.BACKGROUND)
+    INTERFACE = __tk
+    INPUT = __tk
+else:
+    from interface.ILI9486Interface import ILI9486Interface
+    from interface.GPIOInput import GPIOInput
+
+    INTERFACE = ILI9486Interface(config.FLIP_DISPLAY)
+    INPUT = GPIOInput(config.LEFT_PIN, config.UP_PIN, config.RIGHT_PIN, config.DOWN_PIN, config.A_PIN, config.B_PIN,
+                      config.CLK_PIN, config.DT_PIN, config.SW_PIN,
+                      on_key_left, on_key_right, on_key_up, on_key_down, on_key_a, on_key_b,
+                      on_rotary_increase, on_rotary_decrease)
+
+
+def watch_function():
+    while True:
+        now = datetime.now()
+        # wait for next second
+        time.sleep(1.0 - now.microsecond / 1000000.0)
+
+        # draw the complete footer to remove existing clock display
+        image, x0, y0 = draw_footer(AppState.instance().image_buffer)
         INTERFACE.show(image, x0, y0)
 
-    def on_key_left(self):
-        self.active_app.on_key_left()
-        self.update_display(partial=True)
 
-    def on_key_right(self):
-        self.active_app.on_key_right()
-        self.update_display(partial=True)
-
-    def on_key_up(self):
-        self.active_app.on_key_up()
-        self.update_display(partial=True)
-
-    def on_key_down(self):
-        self.active_app.on_key_down()
-        self.update_display(partial=True)
-
-    def on_key_a(self):
-        self.active_app.on_key_a()
-        self.update_display(partial=True)
-
-    def on_key_b(self):
-        self.active_app.on_key_b()
-        self.update_display(partial=True)
-
-    def on_rotary_increase(self):
-        self.active_app.on_app_leave()
-        self.next_app()
-        self.update_display(partial=False)
-        self.active_app.on_app_enter()
-
-    def on_rotary_decrease(self):
-        self.active_app.on_app_leave()
-        self.previous_app()
-        self.update_display(partial=False)
-        self.active_app.on_app_enter()
+def update_display(partial=False):
+    """Draw call that handles the complete cycle of drawing a new image to the display."""
+    image = AppState.instance().clear_buffer()
+    image = draw_base(image)
+    image, x0, y0 = AppState.instance().active_app.draw(image, partial)
+    INTERFACE.show(image, x0, y0)
 
 
 def draw_footer(image: Image) -> (Image, int, int):
@@ -130,14 +169,13 @@ def draw_footer(image: Image) -> (Image, int, int):
     draw.rectangle(start + end, fill=config.ACCENT_DARK)
     _, _, text_width, text_height = font.getbbox(date_str)
     text_padding = (footer_height - text_height) / 2
-    draw.text(
-        (width - footer_side_offset - text_padding - text_width, height - footer_height - footer_bottom_offset +
-         text_padding), date_str, config.ACCENT, font=font)
+    draw.text((width - footer_side_offset - text_padding - text_width, height - footer_height - footer_bottom_offset +
+               text_padding), date_str, config.ACCENT, font=font)
     x0, y0 = start
     return image.crop(start + end), x0, y0
 
 
-def draw_header(image: Image, state: AppState) -> (Image, int, int):
+def draw_header(image: Image) -> (Image, int, int):
     width, height = config.RESOLUTION
     vertical_line = 5  # vertical limiter line
     header_top_offset = config.APP_TOP_OFFSET - vertical_line  # base for header
@@ -160,12 +198,13 @@ def draw_header(image: Image, state: AppState) -> (Image, int, int):
     # draw app short name header
     font = config.FONT_HEADER
     max_text_width = width - (2 * header_side_offset)
-    app_text_width = sum(font.getbbox(app.title)[2] for app in state.apps) + (len(state.apps) - 1) * app_spacing
+    app_text_width = sum(font.getbbox(app.title)[2] for app in AppState.instance().apps)\
+        + (len(AppState.instance().apps) - 1) * app_spacing
     cursor = header_side_offset + (max_text_width - app_text_width) / 2
-    for app in state.apps:
+    for app in AppState.instance().apps:
         _, _, text_width, text_height = font.getbbox(app.title)
         draw.text((cursor, header_top_offset - text_height - app_padding), app.title, config.ACCENT, font=font)
-        if app is state.active_app:
+        if app is AppState.instance().active_app:
             start = (cursor - app_padding, header_top_offset - vertical_line)
             end = (cursor - app_padding, header_top_offset)
             draw.line(start + end, fill=config.ACCENT)
@@ -183,52 +222,28 @@ def draw_header(image: Image, state: AppState) -> (Image, int, int):
     return image.crop(partial_start + partial_end), x0, y0
 
 
-def draw_base(image: Image, state: AppState) -> Image:
-    draw_header(image, state)
+def draw_base(image: Image) -> Image:
+    draw_header(image)
     draw_footer(image)
     return image
 
 
 if __name__ == '__main__':
-    app_state = AppState(config.RESOLUTION, config.BACKGROUND)
-    app_state.add_app(FileManagerApp()) \
+    AppState.instance().add_app(FileManagerApp()) \
         .add_app(NullApp('DATA')) \
         .add_app(NullApp('STAT')) \
         .add_app(NullApp('RAD')) \
         .add_app(DebugApp()) \
-        .add_app(ClockApp(app_state.update_display)) \
-        .add_app(MapApp(app_state.update_display, IPLocationProvider(apply_inaccuracy=True), OSMTileProvider()))
-
-    INTERFACE: Interface
-    INPUT: Input
-
-    if config.DEV_MODE:
-        from interface.TkInterface import TkInterface
-
-        __tk = TkInterface(app_state.on_key_left, app_state.on_key_right, app_state.on_key_up, app_state.on_key_down,
-                           app_state.on_key_a, app_state.on_key_b,
-                           app_state.on_rotary_increase, app_state.on_rotary_decrease,
-                           config.RESOLUTION, config.BACKGROUND)
-        INTERFACE = __tk
-        INPUT = __tk
-    else:
-        from interface.ILI9486Interface import ILI9486Interface
-        from interface.GPIOInput import GPIOInput
-
-        INTERFACE = ILI9486Interface(config.FLIP_DISPLAY)
-        INPUT = GPIOInput(config.LEFT_PIN, config.UP_PIN, config.RIGHT_PIN, config.DOWN_PIN, config.A_PIN, config.B_PIN,
-                          config.CLK_PIN, config.DT_PIN, config.SW_PIN,
-                          app_state.on_key_left, app_state.on_key_right, app_state.on_key_up, app_state.on_key_down,
-                          app_state.on_key_a, app_state.on_key_b,
-                          app_state.on_rotary_increase, app_state.on_rotary_decrease, )
+        .add_app(ClockApp(update_display)) \
+        .add_app(MapApp(update_display, IPLocationProvider(apply_inaccuracy=True), OSMTileProvider()))
 
     # initial draw
-    app_state.update_display()
-    app_state.active_app.on_app_enter()
+    update_display()
+    AppState.instance().active_app.on_app_enter()
 
     try:
         # blocking function that updates the clock
-        app_state.watch_function()
+        watch_function()
     except KeyboardInterrupt:
         pass
     finally:
