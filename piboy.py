@@ -61,7 +61,7 @@ class AppState:
         if self.__active_app < 0:
             self.__active_app = len(self.__apps) - 1
 
-    def watch_function(self):
+    def watch_function(self, interface: Interface):
         while True:
             now = datetime.now()
             # wait for next second
@@ -69,49 +69,49 @@ class AppState:
 
             # draw the complete footer to remove existing clock display
             image, x0, y0 = draw_footer(self.image_buffer)
-            INTERFACE.show(image, x0, y0)
+            interface.show(image, x0, y0)
 
-    def update_display(self, partial=False):
+    def update_display(self, interface: Interface, partial=False):
         """Draw call that handles the complete cycle of drawing a new image to the display."""
         image = self.clear_buffer()
         image = draw_base(image, self)
         image, x0, y0 = self.active_app.draw(image, partial)
-        INTERFACE.show(image, x0, y0)
+        interface.show(image, x0, y0)
 
-    def on_key_left(self):
+    def on_key_left(self, interface: Interface):
         self.active_app.on_key_left()
-        self.update_display(partial=True)
+        self.update_display(interface, partial=True)
 
-    def on_key_right(self):
+    def on_key_right(self, interface: Interface):
         self.active_app.on_key_right()
-        self.update_display(partial=True)
+        self.update_display(interface, partial=True)
 
-    def on_key_up(self):
+    def on_key_up(self, interface: Interface):
         self.active_app.on_key_up()
-        self.update_display(partial=True)
+        self.update_display(interface, partial=True)
 
-    def on_key_down(self):
+    def on_key_down(self, interface: Interface):
         self.active_app.on_key_down()
-        self.update_display(partial=True)
+        self.update_display(interface, partial=True)
 
-    def on_key_a(self):
+    def on_key_a(self, interface: Interface):
         self.active_app.on_key_a()
-        self.update_display(partial=True)
+        self.update_display(interface, partial=True)
 
-    def on_key_b(self):
+    def on_key_b(self, interface: Interface):
         self.active_app.on_key_b()
-        self.update_display(partial=True)
+        self.update_display(interface, partial=True)
 
-    def on_rotary_increase(self):
+    def on_rotary_increase(self, interface: Interface):
         self.active_app.on_app_leave()
         self.next_app()
-        self.update_display(partial=False)
+        self.update_display(interface, partial=False)
         self.active_app.on_app_enter()
 
-    def on_rotary_decrease(self):
+    def on_rotary_decrease(self, interface: Interface):
         self.active_app.on_app_leave()
         self.previous_app()
-        self.update_display(partial=False)
+        self.update_display(interface, partial=False)
         self.active_app.on_app_enter()
 
 
@@ -190,25 +190,52 @@ def draw_base(image: Image, state: AppState) -> Image:
 
 
 if __name__ == '__main__':
+    INTERFACE: Interface
+    INPUT: Input
+
     app_state = AppState(config.RESOLUTION, config.BACKGROUND)
+
+    # wrapping key functions with local interface instance
+    def on_key_left():
+        app_state.on_key_left(INTERFACE)
+
+    def on_key_right():
+        app_state.on_key_right(INTERFACE)
+
+    def on_key_up():
+        app_state.on_key_up(INTERFACE)
+
+    def on_key_down():
+        app_state.on_key_down(INTERFACE)
+
+    def on_key_a():
+        app_state.on_key_a(INTERFACE)
+
+    def on_key_b():
+        app_state.on_key_b(INTERFACE)
+
+    def on_rotary_increase():
+        app_state.on_rotary_increase(INTERFACE)
+
+    def on_rotary_decrease():
+        app_state.on_rotary_decrease(INTERFACE)
+
+    def update_display(partial=False):
+        app_state.update_display(INTERFACE, partial)
+
     app_state.add_app(FileManagerApp()) \
         .add_app(NullApp('DATA')) \
         .add_app(NullApp('STAT')) \
         .add_app(NullApp('RAD')) \
         .add_app(DebugApp()) \
-        .add_app(ClockApp(app_state.update_display)) \
-        .add_app(MapApp(app_state.update_display, IPLocationProvider(apply_inaccuracy=True), OSMTileProvider()))
-
-    INTERFACE: Interface
-    INPUT: Input
+        .add_app(ClockApp(update_display)) \
+        .add_app(MapApp(update_display, IPLocationProvider(apply_inaccuracy=True), OSMTileProvider()))
 
     if config.DEV_MODE:
         from interface.TkInterface import TkInterface
 
-        __tk = TkInterface(app_state.on_key_left, app_state.on_key_right, app_state.on_key_up, app_state.on_key_down,
-                           app_state.on_key_a, app_state.on_key_b,
-                           app_state.on_rotary_increase, app_state.on_rotary_decrease,
-                           config.RESOLUTION, config.BACKGROUND)
+        __tk = TkInterface(on_key_left, on_key_right, on_key_up, on_key_down, on_key_a, on_key_b,
+                           on_rotary_increase, on_rotary_decrease, config.RESOLUTION, config.BACKGROUND)
         INTERFACE = __tk
         INPUT = __tk
     else:
@@ -218,17 +245,16 @@ if __name__ == '__main__':
         INTERFACE = ILI9486Interface(config.FLIP_DISPLAY)
         INPUT = GPIOInput(config.LEFT_PIN, config.UP_PIN, config.RIGHT_PIN, config.DOWN_PIN, config.A_PIN, config.B_PIN,
                           config.CLK_PIN, config.DT_PIN, config.SW_PIN,
-                          app_state.on_key_left, app_state.on_key_right, app_state.on_key_up, app_state.on_key_down,
-                          app_state.on_key_a, app_state.on_key_b,
-                          app_state.on_rotary_increase, app_state.on_rotary_decrease, )
+                          on_key_left, on_key_right, on_key_up, on_key_down, on_key_a, on_key_b,
+                          on_rotary_increase, on_rotary_decrease)
 
     # initial draw
-    app_state.update_display()
+    app_state.update_display(INTERFACE)
     app_state.active_app.on_app_enter()
 
     try:
-        # blocking function that updates the clock
-        app_state.watch_function()
+        # blocking function that updates th clock
+        app_state.watch_function(INTERFACE)
     except KeyboardInterrupt:
         pass
     finally:
