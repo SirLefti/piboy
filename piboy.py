@@ -253,7 +253,7 @@ if __name__ == '__main__':
     app_state.active_app.on_app_enter()
 
     try:
-        # blocking function that updates th clock
+        # blocking function that updates the clock
         app_state.watch_function(INTERFACE)
     except KeyboardInterrupt:
         pass
