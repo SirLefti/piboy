@@ -4,10 +4,13 @@ from PIL import Image
 import os
 import requests
 import math
+import time
 import config
 
 
 class OSMTileProvider(TileProvider):
+
+    __CACHE_DURATION = 1000 * 60 * 60 * 24 * 365  # one year in ms
 
     @property
     def zoom_range(self) -> Iterable[int]:
@@ -69,10 +72,10 @@ class OSMTileProvider(TileProvider):
         """Fetches the requested tile either from cache or from OSM tile API"""
         tile_cache = '.tiles'
         cache_template = '{zoom}-{x}-{y}.png'
-        if not os.path.exists(tile_cache):
+        if not os.path.isdir(tile_cache):
             os.mkdir(tile_cache)
         tile_path = os.path.join(tile_cache, cache_template.format(zoom=zoom, x=x_tile, y=y_tile))
-        if os.path.exists(tile_path):
+        if os.path.isfile(tile_path) and time.time() - os.path.getmtime(tile_path) < cls.__CACHE_DURATION:
             return Image.open(tile_path)
         else:
             headers = {
