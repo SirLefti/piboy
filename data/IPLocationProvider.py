@@ -1,22 +1,24 @@
 import time
 from data.LocationProvider import LocationProvider
-from typing import Tuple, Callable
+from typing import Tuple, Callable, Type, Collection
 import requests
 import json
 import random
 
 
-def retry(exceptions, delay: float = 0, tries: int = -1):
+def retry(exceptions: Collection[Type[Exception]], delay: float = 0, tries: int = -1):
     def decorator(func: Callable):
         def wrapper(*args, **kwargs):
             t = tries
             while t:
                 try:
                     return func(*args, **kwargs)
-                except exceptions:
+                except exceptions as e:
                     t -= 1
                     if not t:
-                        raise Exception(f'Max retry {tries} reached, {func.__name__} failed')
+                        # raise Exception(f'Max retry {tries} reached, {func.__name__} failed', e)
+                        # let's raise last exception instead
+                        raise e
                     time.sleep(delay)
         return wrapper
     return decorator
@@ -29,7 +31,7 @@ class IPLocationProvider(LocationProvider):
         to the returned values to emulate a real GPS device."""
         self.__apply_inaccuracy = apply_inaccuracy
 
-    @retry(exceptions=requests.exceptions.ConnectionError, delay=2, tries=5)
+    @retry(exceptions=(requests.exceptions.ConnectionError,), delay=2, tries=5)
     def get_location(self) -> Tuple[float, float]:
         response = requests.get('https://ipinfo.io/json')
         if response.status_code == 200:
