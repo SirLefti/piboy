@@ -1,6 +1,6 @@
-import time
-from data.LocationProvider import LocationProvider
+from data.LocationProvider import LocationProvider, LocationException
 from typing import Tuple, Callable, Type, Collection
+import time
 import requests
 import json
 import random
@@ -16,9 +16,7 @@ def retry(exceptions: Collection[Type[Exception]], delay: float = 0, tries: int 
                 except exceptions as e:
                     t -= 1
                     if not t:
-                        # raise Exception(f'Max retry {tries} reached, {func.__name__} failed', e)
-                        # let's raise last exception instead
-                        raise e
+                        raise LocationException(f'Max retry {tries} reached, {func.__name__} failed', e)
                     time.sleep(delay)
         return wrapper
     return decorator
