@@ -306,15 +306,9 @@ class MapApp(SelfUpdatingApp):
 
         # draw location info
         cursor = (left_top[0] + size[0] + side_tab_padding, left_top[1])
-        if lat is None:
-            draw.text(cursor, 'lat: unknown', config.ACCENT, font=font)
-        else:
-            draw.text(cursor, 'lat: {:.4f}°'.format(lat), config.ACCENT, font=font)
+        draw.text(cursor, 'lat: unknown' if lat is None else 'lat: {:.4f}°'.format(lat), config.ACCENT, font=font)
         cursor = (cursor[0], cursor[1] + line_height)
-        if lon is None:
-            draw.text(cursor, 'lon: unknown', config.ACCENT, font=font)
-        else:
-            draw.text(cursor, 'lon: {:.4f}°'.format(lon), config.ACCENT, font=font)
+        draw.text(cursor, 'lon: unknown' if lon is None else 'lon: {:.4f}°'.format(lon), config.ACCENT, font=font)
         cursor = (cursor[0], cursor[1] + line_height)
         draw.text(cursor, f'zoom: {self.__zoom}x', config.ACCENT, font=font)
         if self.__x_offset != 0 or self.__y_offset != 0:
