@@ -83,7 +83,7 @@ class OSMTileProvider(TileProvider):
         tile_w, tile_h = tile.size
         draw = ImageDraw.Draw(tile)
         draw.rectangle((0, 0) + self.__OSM_TILE_SIZE, fill=config.BACKGROUND, outline=config.ACCENT, width=1)
-        draw.text((tile_w / 2 - text_w / 2, tile_h / 2 - text_h / 2), '?')
+        draw.text((tile_w / 2 - text_w / 2, tile_h / 2 - text_h / 2), '?', font=font)
         return tile
 
     @classmethod
