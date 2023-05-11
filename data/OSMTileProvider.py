@@ -1,6 +1,6 @@
 from data.TileProvider import TileProvider, TileInfo
 from typing import Tuple, Iterable
-from PIL import Image, UnidentifiedImageError
+from PIL import Image, ImageDraw, UnidentifiedImageError
 from requests.exceptions import ConnectionError
 import os
 import requests
@@ -25,7 +25,7 @@ class OSMTileProvider(TileProvider):
         try:
             tile = self._fetch_tile(zoom, x_tile, y_tile)
         except (ValueError, FileNotFoundError, ConnectionError, UnidentifiedImageError):
-            tile = Image.new('RGB', self.__OSM_TILE_SIZE, config.BACKGROUND)
+            tile = self._get_placeholder_tile()
         tile_width, tile_height = tile.size
         target_width, target_height = size
 
@@ -57,7 +57,7 @@ class OSMTileProvider(TileProvider):
                         grid[x][y] = self._fetch_tile(zoom, (x_tile - left_tiles + x) % int(math.pow(2, zoom)),
                                                       (y_tile - top_tiles + y) % int(math.pow(2, zoom)))
                     except (ValueError, FileNotFoundError, ConnectionError, UnidentifiedImageError):
-                        grid[x][y] = grid[x][y] = Image.new('RGB', size, config.BACKGROUND)
+                        grid[x][y] = grid[x][y] = self._get_placeholder_tile()
 
         merged_tile = Image.new('RGB', (len(grid) * tile_width, len(grid[0]) * tile_height), (255, 255, 255))
         for row_index, row in enumerate(grid):
@@ -75,6 +75,16 @@ class OSMTileProvider(TileProvider):
         top_left = lat - (height_deg / 2), lon - (width_deg / 2)
         bottom_right = lat + (height_deg / 2), lon + (width_deg / 2)
         return TileInfo(top_left, bottom_right, cropped_tile)
+
+    def _get_placeholder_tile(self) -> Image:
+        font = config.FONT_STANDARD
+        tile = Image.new('RGB', self.__OSM_TILE_SIZE, config.BACKGROUND)
+        text_w, text_h = font.getbbox('?')[-2:]
+        tile_w, tile_h = tile.size
+        draw = ImageDraw.Draw(tile)
+        draw.rectangle((0, 0) + self.__OSM_TILE_SIZE, fill=config.BACKGROUND, outline=config.ACCENT, width=1)
+        draw.text((tile_w / 2 - text_w / 2, tile_h / 2 - text_h / 2), '?')
+        return tile
 
     @classmethod
     def _fetch_tile(cls, zoom: int, x_tile: int, y_tile: int) -> Image:
