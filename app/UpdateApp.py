@@ -92,6 +92,10 @@ class UpdateApp(App):
         else:
             return None
 
+    def __update_files_to_reset_and_clean(self):
+        self.__files_to_reset = self.__get_files_to_reset()
+        self.__files_to_clean = self.__get_files_to_clean()
+
     @property
     def title(self) -> str:
         return 'SYS'
@@ -106,6 +110,10 @@ class UpdateApp(App):
 
         if self.__result is not None:
             # log action responses
+            print(f'code: {self.__result.returncode}')
+            if self.__result.stdout:
+                print(self.__result.stdout.decode('utf-8').rstrip('\n'))
+
             text = self.__result.stdout.decode('utf-8') if self.__result.stdout else f'code: {self.__result.returncode}'
             _, _, _, text_height = font.getbbox(text)
             log_left_top = (width / 2 + self.CENTER_OFFSET, left_top[1])
@@ -152,13 +160,13 @@ class UpdateApp(App):
 
     def on_key_a(self):
         self.__result = self.__options[self.__selected_index].action()
+        self.__update_files_to_reset_and_clean()
 
     def on_key_b(self):
         pass
 
     def on_app_enter(self):
-        self.__files_to_reset = self.__get_files_to_reset()
-        self.__files_to_clean = self.__get_files_to_clean()
+        self.__update_files_to_reset_and_clean()
 
     def on_app_leave(self):
         pass
