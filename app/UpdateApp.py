@@ -151,9 +151,9 @@ class UpdateApp(App):
 
             # clear existing logs
             cursor = (width / 2 + self.CENTER_OFFSET, left_top[1])
-            rect_right_bottom = (cursor[1] +
-                                 min(len(self.__results) * self.LINE_HEIGHT, height - config.APP_BOTTOM_OFFSET),
-                                 width - config.APP_SIDE_OFFSET)
+            rect_right_bottom = (width - config.APP_SIDE_OFFSET,
+                                 cursor[1] +
+                                 min(len(self.__results) * self.LINE_HEIGHT, height - config.APP_BOTTOM_OFFSET))
             draw.rectangle(cursor + rect_right_bottom, fill=config.BACKGROUND)
             # and draw history in reverse order
             for text in reversed(self.__results):
