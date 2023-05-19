@@ -80,9 +80,9 @@ class UpdateApp(App):
             return 'restarting...'
 
         self.__options = [
-            self.Option('fetch updates', self.__run_fetch, result_text_fetch),
             self.Option('reset changes', self.__run_reset, result_text_reset, count_action=get_files_to_reset),
             self.Option('clean files', self.__run_clean, result_text_clean, count_action=get_files_to_clean),
+            self.Option('fetch updates', self.__run_fetch, result_text_fetch),
             self.Option('install updates', self.__run_install, result_text_install),
             self.Option('restart', self.__run_restart, result_text_restart)
         ]
