@@ -73,24 +73,20 @@ class UpdateApp(App):
     @staticmethod
     def __get_files_to_reset() -> Optional[int]:
         result = run(['git', 'diff', '--name-only'], stdout=PIPE)
-        if result.returncode == 0:
-            if result.stdout is None:
-                return 0
-            else:
-                return result.stdout.decode('utf-8').count('\n')
-        else:
+        if result.returncode != 0:
             return None
+        if result.stdout is not None:
+            return result.stdout.decode('utf-8').count('\n')
+        return 0
 
     @staticmethod
     def __get_files_to_clean() -> Optional[int]:
         result = run(['git', 'clean', '-nd'], stdout=PIPE)
-        if result.returncode == 0:
-            if result.stdout is None:
-                return 0
-            else:
-                return result.stdout.decode('utf-8').count('\n')
-        else:
+        if result.returncode != 0:
             return None
+        if result.stdout is not None:
+            return result.stdout.decode('utf-8').count('\n')
+        return 0
 
     def __update_files_to_reset_and_clean(self):
         self.__files_to_reset = self.__get_files_to_reset()
