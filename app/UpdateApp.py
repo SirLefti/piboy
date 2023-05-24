@@ -13,11 +13,13 @@ class UpdateApp(App):
 
         def __init__(self, name: str, action: Callable[[], Optional[CompletedProcess]],
                      result_text_action: Callable[[CompletedProcess], str],
-                     count_action: Callable[[], Optional[int]] = None):
+                     count_action: Optional[Callable[[], Optional[int]]] = None,
+                     count_name: Optional[str] = None):
             self.__name = name
             self.__action = action
             self.__result_text_action = result_text_action
             self.__count_action = count_action
+            self.__count_name = count_name
 
         @property
         def name(self) -> str:
@@ -32,19 +34,27 @@ class UpdateApp(App):
             return self.__result_text_action
 
         @property
-        def count_action(self) -> Callable[[], Optional[int]]:
+        def count_action(self) -> Optional[Callable[[], Optional[int]]]:
             return self.__count_action
+
+        @property
+        def count_name(self) -> Optional[str]:
+            return self.__count_name
 
     def __init__(self):
         self.__selected_index = 0
         self.__files_to_reset: Optional[int] = None
         self.__files_to_clean: Optional[int] = None
+        self.__commits_to_update: Optional[int] = None
 
-        def get_files_to_reset():
+        def get_files_to_reset() -> Optional[int]:
             return self.__files_to_reset
 
-        def get_files_to_clean():
+        def get_files_to_clean() -> Optional[int]:
             return self.__files_to_clean
+
+        def get_commits_to_update() -> Optional[int]:
+            return self.__commits_to_update
 
         def result_text_fetch(result: CompletedProcess) -> str:
             if result.returncode != 0:
@@ -80,10 +90,13 @@ class UpdateApp(App):
             return 'restarting...'
 
         self.__options = [
-            self.Option('reset changes', self.__run_reset, result_text_reset, count_action=get_files_to_reset),
-            self.Option('clean files', self.__run_clean, result_text_clean, count_action=get_files_to_clean),
+            self.Option('reset changes', self.__run_reset, result_text_reset,
+                        count_action=get_files_to_reset, count_name='files'),
+            self.Option('clean files', self.__run_clean, result_text_clean,
+                        count_action=get_files_to_clean, count_name='files'),
             self.Option('fetch updates', self.__run_fetch, result_text_fetch),
-            self.Option('install updates', self.__run_install, result_text_install),
+            self.Option('install updates', self.__run_install, result_text_install,
+                        count_action=get_commits_to_update, count_name='commits'),
             self.Option('restart', self.__run_restart, result_text_restart)
         ]
         self.__result = None
@@ -127,9 +140,19 @@ class UpdateApp(App):
             return result.stdout.decode('utf-8').count('\n')
         return 0
 
-    def __update_files_to_reset_and_clean(self):
+    @staticmethod
+    def __get_commits_to_update() -> Optional[int]:
+        result = run(['git', 'rev-list', '@{upstream}', '--not', 'HEAD'], stdout=PIPE)
+        if result.returncode != 0:
+            return None
+        if result.stdout is not None:
+            return result.stdout.decode('utf-8').count('\n')
+        return 0
+
+    def __update_counts(self):
         self.__files_to_reset = self.__get_files_to_reset()
         self.__files_to_clean = self.__get_files_to_clean()
+        self.__commits_to_update = self.__get_commits_to_update()
 
     @property
     def title(self) -> str:
@@ -171,10 +194,10 @@ class UpdateApp(App):
             else:
                 draw.rectangle(cursor + (width / 2, cursor[1] + self.LINE_HEIGHT), fill=config.BACKGROUND)
             text = option.name
-            if option.count_action is not None:
+            if option.count_action is not None and option.count_name:
                 count = option.count_action()
                 if count is not None:
-                    text = f'{text} ({count} files)'
+                    text = f'{text} ({count} {option.count_name})'
                 else:
                     text = f'{text} (error)'
             draw.text(cursor, text, fill=config.ACCENT, font=font)
@@ -205,13 +228,13 @@ class UpdateApp(App):
         result = option.action()
         self.__result = result
         self.__results.append(option.result_text_action(result))
-        self.__update_files_to_reset_and_clean()
+        self.__update_counts()
 
     def on_key_b(self):
         pass
 
     def on_app_enter(self):
-        self.__update_files_to_reset_and_clean()
+        self.__update_counts()
 
     def on_app_leave(self):
         pass
