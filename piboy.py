@@ -1,5 +1,6 @@
 from app.App import App
 from app.FileManagerApp import FileManagerApp
+from app.UpdateApp import UpdateApp
 from app.MapApp import MapApp
 from app.NullApp import NullApp
 from app.DebugApp import DebugApp
@@ -105,14 +106,14 @@ class AppState:
     def on_rotary_increase(self, interface: Interface):
         self.active_app.on_app_leave()
         self.next_app()
-        self.update_display(interface, partial=False)
         self.active_app.on_app_enter()
+        self.update_display(interface, partial=False)
 
     def on_rotary_decrease(self, interface: Interface):
         self.active_app.on_app_leave()
         self.previous_app()
-        self.update_display(interface, partial=False)
         self.active_app.on_app_enter()
+        self.update_display(interface, partial=False)
 
 
 def draw_footer(image: Image) -> (Image, int, int):
@@ -224,7 +225,7 @@ if __name__ == '__main__':
         app_state.update_display(INTERFACE, partial)
 
     app_state.add_app(FileManagerApp()) \
-        .add_app(NullApp('DATA')) \
+        .add_app(UpdateApp()) \
         .add_app(NullApp('STAT')) \
         .add_app(NullApp('RAD')) \
         .add_app(DebugApp()) \

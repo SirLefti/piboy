@@ -2,6 +2,7 @@ import config
 from app.ClockApp import ClockApp
 from app.DebugApp import DebugApp
 from app.FileManagerApp import FileManagerApp
+from app.UpdateApp import UpdateApp
 from app.MapApp import MapApp
 from app.NullApp import NullApp
 from data.IPLocationProvider import IPLocationProvider
@@ -51,7 +52,7 @@ if __name__ == '__main__':
         app_state.update_display(INTERFACE, partial)
 
     app_state.add_app(FileManagerApp()) \
-        .add_app(NullApp('DATA')) \
+        .add_app(UpdateApp()) \
         .add_app(NullApp('STAT')) \
         .add_app(NullApp('RAD')) \
         .add_app(DebugApp()) \

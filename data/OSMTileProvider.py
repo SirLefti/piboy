@@ -1,13 +1,18 @@
 from data.TileProvider import TileProvider, TileInfo
 from typing import Tuple, Iterable
-from PIL import Image
+from PIL import Image, ImageDraw, UnidentifiedImageError
+from requests.exceptions import ConnectionError
 import os
 import requests
 import math
+import time
 import config
 
 
 class OSMTileProvider(TileProvider):
+
+    __CACHE_DURATION = 1000 * 60 * 60 * 24 * 365  # one year in ms
+    __OSM_TILE_SIZE = (256, 256)  # size of a tile image from OSM
 
     @property
     def zoom_range(self) -> Iterable[int]:
@@ -16,7 +21,11 @@ class OSMTileProvider(TileProvider):
     def get_tile(self, lat: float, lon: float, zoom: int, size: Tuple[int, int] = (256, 256), x_offset: int = 0,
                  y_offset: int = 0) -> TileInfo:
         x_tile, y_tile = self._deg_to_num(lat, lon, zoom)
-        tile = self._fetch_tile(zoom, x_tile, y_tile)
+        tile: Image
+        try:
+            tile = self._fetch_tile(zoom, x_tile, y_tile)
+        except (ValueError, FileNotFoundError, ConnectionError, UnidentifiedImageError):
+            tile = self._get_placeholder_tile()
         tile_width, tile_height = tile.size
         target_width, target_height = size
 
@@ -44,8 +53,11 @@ class OSMTileProvider(TileProvider):
                     # empty image if tile ends on top or bottom and there is no further tile
                     grid[x][y] = Image.new('RGB', size, config.BACKGROUND)
                 else:
-                    grid[x][y] = self._fetch_tile(zoom, (x_tile - left_tiles + x) % int(math.pow(2, zoom)),
-                                                  (y_tile - top_tiles + y) % int(math.pow(2, zoom)))
+                    try:
+                        grid[x][y] = self._fetch_tile(zoom, (x_tile - left_tiles + x) % int(math.pow(2, zoom)),
+                                                      (y_tile - top_tiles + y) % int(math.pow(2, zoom)))
+                    except (ValueError, FileNotFoundError, ConnectionError, UnidentifiedImageError):
+                        grid[x][y] = grid[x][y] = self._get_placeholder_tile()
 
         merged_tile = Image.new('RGB', (len(grid) * tile_width, len(grid[0]) * tile_height), (255, 255, 255))
         for row_index, row in enumerate(grid):
@@ -64,15 +76,25 @@ class OSMTileProvider(TileProvider):
         bottom_right = lat + (height_deg / 2), lon + (width_deg / 2)
         return TileInfo(top_left, bottom_right, cropped_tile)
 
+    def _get_placeholder_tile(self) -> Image:
+        font = config.FONT_STANDARD
+        tile = Image.new('RGB', self.__OSM_TILE_SIZE, config.BACKGROUND)
+        text_w, text_h = font.getbbox('?')[-2:]
+        tile_w, tile_h = tile.size
+        draw = ImageDraw.Draw(tile)
+        draw.rectangle((0, 0) + self.__OSM_TILE_SIZE, fill=config.BACKGROUND, outline=config.ACCENT, width=1)
+        draw.text((tile_w / 2 - text_w / 2, tile_h / 2 - text_h / 2), '?', font=font)
+        return tile
+
     @classmethod
     def _fetch_tile(cls, zoom: int, x_tile: int, y_tile: int) -> Image:
         """Fetches the requested tile either from cache or from OSM tile API"""
         tile_cache = '.tiles'
         cache_template = '{zoom}-{x}-{y}.png'
-        if not os.path.exists(tile_cache):
+        if not os.path.isdir(tile_cache):
             os.mkdir(tile_cache)
         tile_path = os.path.join(tile_cache, cache_template.format(zoom=zoom, x=x_tile, y=y_tile))
-        if os.path.exists(tile_path):
+        if os.path.isfile(tile_path) and time.time() - os.path.getmtime(tile_path) < cls.__CACHE_DURATION:
             return Image.open(tile_path)
         else:
             headers = {

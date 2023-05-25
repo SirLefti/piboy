@@ -57,8 +57,8 @@ class DebugApp(App):
         ]
         draw.polygon(points_down, fill=(config.ACCENT if self.__button_down else config.ACCENT_DARK))
 
-        points_a = ((center_x + action_offset - button_size / 2, center_y - action_spacing / 2),
-                    (center_x + action_offset + button_size / 2, center_y - button_size - action_spacing / 2))
+        points_a = ((center_x + action_offset - button_size / 2, center_y - button_size - action_spacing / 2),
+                    (center_x + action_offset + button_size / 2, center_y - action_spacing / 2))
         draw.rectangle(points_a, fill=(config.ACCENT if self.__button_a else config.ACCENT_DARK))
 
         points_b = ((center_x + action_offset - button_size / 2, center_y + action_spacing / 2),
