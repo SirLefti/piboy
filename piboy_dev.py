@@ -1,4 +1,3 @@
-import config
 from app.ClockApp import ClockApp
 from app.DebugApp import DebugApp
 from app.FileManagerApp import FileManagerApp
@@ -61,7 +60,8 @@ if __name__ == '__main__':
         .add_app(MapApp(update_display, IPLocationProvider(apply_inaccuracy=True), OSMTileProvider()))
 
     __tk = SelfManagedTkInterface(on_key_left, on_key_right, on_key_up, on_key_down, on_key_a, on_key_b,
-                                  on_rotary_increase, on_rotary_decrease, config.RESOLUTION, config.BACKGROUND)
+                                  on_rotary_increase, on_rotary_decrease,
+                                  env.app_config.resolution, env.app_config.background, env.app_config.accent_dark)
     INTERFACE = __tk
     INPUT = __tk
 

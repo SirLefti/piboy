@@ -2,7 +2,6 @@ from interface.Interface import Interface
 from interface.Input import Input
 from typing import Callable, Tuple
 from PIL import Image, ImageTk
-import config
 import tkinter as tk
 
 
@@ -14,7 +13,7 @@ class SelfManagedTkInterface(Interface, Input):
     def __init__(self, on_key_left: Callable, on_key_right: Callable,
                  on_key_up: Callable, on_key_down: Callable, on_key_a: Callable, on_key_b: Callable,
                  on_rotary_increase: Callable, on_rotary_decrease: Callable,
-                 resolution: Tuple[int, int], background: Tuple[int, int, int]):
+                 resolution: Tuple[int, int], background: Tuple[int, int, int], ui_background: Tuple[int, int, int]):
         Input.__init__(self, on_key_left, on_key_right, on_key_up, on_key_down, on_key_a, on_key_b,
                        on_rotary_increase, on_rotary_decrease)
         self.__on_key_left = on_key_left
@@ -31,7 +30,7 @@ class SelfManagedTkInterface(Interface, Input):
 
         self.__root = tk.Tk()
         self.__root.title('PiBoy - Simulator')
-        self.__root.configure(bg='#%02x%02x%02x' % config.ACCENT_DARK)
+        self.__root.configure(bg='#%02x%02x%02x' % ui_background)
         self.__image_tk = ImageTk.PhotoImage(self.__image)
         self.__label = tk.Label(self.__root, image=self.__image_tk)
         self.__label.grid(row=0, column=0, rowspan=4)

@@ -243,20 +243,25 @@ if __name__ == '__main__':
         .add_app(NullApp('RAD')) \
         .add_app(DebugApp()) \
         .add_app(ClockApp(update_display)) \
-        .add_app(MapApp(update_display, IPLocationProvider(apply_inaccuracy=True), OSMTileProvider()))
+        .add_app(MapApp(update_display,
+                        IPLocationProvider(apply_inaccuracy=True),
+                        OSMTileProvider(env.app_config.background, env.app_config.accent, env.app_config.font_standard)
+                        )
+                 )
 
     if config.DEV_MODE:
         from interface.TkInterface import TkInterface
 
         __tk = TkInterface(on_key_left, on_key_right, on_key_up, on_key_down, on_key_a, on_key_b,
-                           on_rotary_increase, on_rotary_decrease, config.RESOLUTION, config.BACKGROUND)
+                           on_rotary_increase, on_rotary_decrease,
+                           env.app_config.resolution, env.app_config.background, env.app_config.accent_dark)
         INTERFACE = __tk
         INPUT = __tk
     else:
         from interface.ILI9486Interface import ILI9486Interface
         from interface.GPIOInput import GPIOInput
 
-        INTERFACE = ILI9486Interface(config.FLIP_DISPLAY)
+        INTERFACE = ILI9486Interface(env.display_config, env.pin_config.dc_pin, env.pin_config.rst_pin, env.flip_display)
         INPUT = GPIOInput(config.LEFT_PIN, config.UP_PIN, config.RIGHT_PIN, config.DOWN_PIN, config.A_PIN, config.B_PIN,
                           config.CLK_PIN, config.DT_PIN, config.SW_PIN,
                           on_key_left, on_key_right, on_key_up, on_key_down, on_key_a, on_key_b,

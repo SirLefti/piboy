@@ -1,20 +1,20 @@
 from interface.Interface import Interface
 from PIL import Image
-import config
 from driver.ILI9486 import ILI9486, Origin
-import RPi.GPIO as GPIO
+from environment import SPIConfig, PinConfig
 from spidev import SpiDev
+import RPi.GPIO as GPIO
 
 
 class ILI9486Interface(Interface):
 
-    def __init__(self, flip_display: bool = False):
+    def __init__(self, spi_config: SPIConfig, dc_pin: int, rst_pin: int, flip_display: bool = False):
         GPIO.setmode(GPIO.BCM)
-        spi = SpiDev(config.DISPLAY_CONFIG.bus, config.DISPLAY_CONFIG.device)
+        spi = SpiDev(spi_config.bus, spi_config.device)
         spi.mode = 0b10  # [CPOL|CPHA] -> polarity 1, phase 0
         spi.max_speed_hz = 64000000
         origin = Origin.LOWER_RIGHT if flip_display else Origin.UPPER_LEFT
-        lcd = ILI9486(dc=config.DC_PIN, rst=config.RST_PIN, spi=spi, origin=origin).begin()
+        lcd = ILI9486(dc=dc_pin, rst=rst_pin, spi=spi, origin=origin).begin()
         self.__spi = spi
         self.__display = lcd
         self.__blocked = False  # Flag to block new draw calls while still drawing (takes around 333 ms)
