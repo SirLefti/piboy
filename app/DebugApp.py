@@ -1,24 +1,27 @@
 from app.App import App
 from PIL import Image, ImageDraw
-import config
+from typing import Tuple
 
 
 class DebugApp(App):
 
-    def __init__(self):
+    def __init__(self, resolution: Tuple[int, int], color: Tuple[int, int, int], color_dark: Tuple[int, int, int]):
         self.__button_left = False
         self.__button_right = False
         self.__button_up = False
         self.__button_down = False
         self.__button_a = False
         self.__button_b = False
+        self.__resolution = resolution
+        self.__color = color
+        self.__color_dark = color_dark
 
     @property
     def title(self) -> str:
         return 'DBG'
 
     def draw(self, image: Image, partial=False) -> (Image, int, int):
-        width, height = config.RESOLUTION
+        width, height = self.__resolution
         center_x, center_y = int(width / 2), int(height / 2)
 
         dpad_offset = 40
@@ -34,36 +37,36 @@ class DebugApp(App):
             (center_x - dpad_offset - dpad_spacing, center_y + button_size / 2),
             (center_x - dpad_offset - dpad_spacing - button_size, center_y)
         ]
-        draw.polygon(points_left, fill=(config.ACCENT if self.__button_left else config.ACCENT_DARK))
+        draw.polygon(points_left, fill=(self.__color if self.__button_left else self.__color_dark))
 
         points_right = [
             (center_x - dpad_offset + dpad_spacing, center_y - button_size / 2),
             (center_x - dpad_offset + dpad_spacing, center_y + button_size / 2),
             (center_x - dpad_offset + dpad_spacing + button_size, center_y)
         ]
-        draw.polygon(points_right, fill=(config.ACCENT if self.__button_right else config.ACCENT_DARK))
+        draw.polygon(points_right, fill=(self.__color if self.__button_right else self.__color_dark))
 
         points_up = [
             (center_x - dpad_offset - button_size / 2, center_y - dpad_spacing),
             (center_x - dpad_offset + button_size / 2, center_y - dpad_spacing),
             (center_x - dpad_offset, center_y - dpad_spacing - button_size)
         ]
-        draw.polygon(points_up, fill=(config.ACCENT if self.__button_up else config.ACCENT_DARK))
+        draw.polygon(points_up, fill=(self.__color if self.__button_up else self.__color_dark))
 
         points_down = [
             (center_x - dpad_offset - button_size / 2, center_y + dpad_spacing),
             (center_x - dpad_offset + button_size / 2, center_y + dpad_spacing),
             (center_x - dpad_offset, center_y + dpad_spacing + button_size)
         ]
-        draw.polygon(points_down, fill=(config.ACCENT if self.__button_down else config.ACCENT_DARK))
+        draw.polygon(points_down, fill=(self.__color if self.__button_down else self.__color_dark))
 
         points_a = ((center_x + action_offset - button_size / 2, center_y - button_size - action_spacing / 2),
                     (center_x + action_offset + button_size / 2, center_y - action_spacing / 2))
-        draw.rectangle(points_a, fill=(config.ACCENT if self.__button_a else config.ACCENT_DARK))
+        draw.rectangle(points_a, fill=(self.__color if self.__button_a else self.__color_dark))
 
         points_b = ((center_x + action_offset - button_size / 2, center_y + action_spacing / 2),
                     (center_x + action_offset + button_size / 2, center_y + button_size + action_spacing / 2))
-        draw.rectangle(points_b, fill=(config.ACCENT if self.__button_b else config.ACCENT_DARK))
+        draw.rectangle(points_b, fill=(self.__color if self.__button_b else self.__color_dark))
 
         if partial:
             points_all = [*points_left, *points_right, *points_up, *points_down, *points_a, *points_b]
