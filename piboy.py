@@ -9,11 +9,11 @@ from interface.Interface import Interface
 from interface.Input import Input
 from data.IPLocationProvider import IPLocationProvider
 from data.OSMTileProvider import OSMTileProvider
-import config
 from typing import List, Tuple
 from PIL import Image, ImageDraw
-import time
 from datetime import datetime
+import config
+import time
 
 
 class AppState:
