@@ -12,6 +12,8 @@ from data.OSMTileProvider import OSMTileProvider
 from typing import List, Tuple
 from PIL import Image, ImageDraw
 from datetime import datetime
+from environment import Environment
+import environment
 import config
 import time
 
@@ -190,11 +192,22 @@ def draw_base(image: Image, state: AppState) -> Image:
     return image
 
 
+def load_environment() -> Environment:
+    environment.configure()
+    try:
+        return environment.load()
+    except FileNotFoundError:
+        e = Environment()
+        environment.save(e)
+        return e
+
+
 if __name__ == '__main__':
     INTERFACE: Interface
     INPUT: Input
 
-    app_state = AppState(config.RESOLUTION, config.BACKGROUND)
+    env = load_environment()
+    app_state = AppState(env.app_config.resolution, env.app_config.background)
 
     # wrapping key functions with local interface instance
     def on_key_left():

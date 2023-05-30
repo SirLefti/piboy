@@ -18,6 +18,12 @@ class AppConfig:
     font_header_size: int = 16
     font_standard_size: int = 14
     color_mode: int = 0
+    width: int = 480
+    height: int = 320
+
+    @property
+    def resolution(self) -> Tuple[int, int]:
+        return self.width, self.height
 
     @property
     def font_header(self) -> ImageFont:
@@ -76,6 +82,7 @@ class PinConfig:
 @dataclass
 class Environment:
     dev_mode: bool = True
+    flip_display: bool = False
     display_config: SPIConfig = SPIConfig(0, 0)
     touch_config: SPIConfig = SPIConfig(0, 1)
     app_config: AppConfig = AppConfig()

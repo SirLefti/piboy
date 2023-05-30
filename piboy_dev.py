@@ -9,7 +9,7 @@ from data.IPLocationProvider import IPLocationProvider
 from data.OSMTileProvider import OSMTileProvider
 from interface import Interface, Input
 from interface.SelfManagedTkInterrface import SelfManagedTkInterface
-from piboy import AppState
+from piboy import AppState, load_environment
 import threading
 
 """
@@ -21,7 +21,8 @@ if __name__ == '__main__':
     INTERFACE: Interface
     INPUT: Input
 
-    app_state = AppState(config.RESOLUTION, config.BACKGROUND)
+    env = load_environment()
+    app_state = AppState(env.app_config.resolution, env.app_config.background)
 
     # wrapping key functions with local interface instance
     def on_key_left():
