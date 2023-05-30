@@ -246,7 +246,7 @@ if __name__ == '__main__':
         .add_app(NullApp('STAT')) \
         .add_app(NullApp('RAD')) \
         .add_app(DebugApp()) \
-        .add_app(ClockApp(update_display)) \
+        .add_app(ClockApp(update_display, env.app_config.resolution, env.app_config.accent)) \
         .add_app(MapApp(update_display,
                         IPLocationProvider(apply_inaccuracy=True),
                         OSMTileProvider(env.app_config.background, env.app_config.accent, env.app_config.font_standard)

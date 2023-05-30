@@ -1,7 +1,7 @@
 from interface.Interface import Interface
 from PIL import Image
 from driver.ILI9486 import ILI9486, Origin
-from environment import SPIConfig, PinConfig
+from environment import SPIConfig
 from spidev import SpiDev
 import RPi.GPIO as GPIO
 
