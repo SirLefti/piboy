@@ -1,16 +1,17 @@
 from interface.Interface import Interface
 from PIL import Image
 from driver.ILI9486 import ILI9486, Origin
-from environment import SPIConfig
+from typing import Tuple
 from spidev import SpiDev
 import RPi.GPIO as GPIO
 
 
 class ILI9486Interface(Interface):
 
-    def __init__(self, spi_config: SPIConfig, dc_pin: int, rst_pin: int, flip_display: bool = False):
+    def __init__(self, spi_config: Tuple[int, int], dc_pin: int, rst_pin: int, flip_display: bool = False):
         GPIO.setmode(GPIO.BCM)
-        spi = SpiDev(spi_config.bus, spi_config.device)
+        bus, device = spi_config
+        spi = SpiDev(bus, device)
         spi.mode = 0b10  # [CPOL|CPHA] -> polarity 1, phase 0
         spi.max_speed_hz = 64000000
         origin = Origin.LOWER_RIGHT if flip_display else Origin.UPPER_LEFT

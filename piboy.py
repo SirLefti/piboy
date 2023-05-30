@@ -265,7 +265,8 @@ if __name__ == '__main__':
         from interface.ILI9486Interface import ILI9486Interface
         from interface.GPIOInput import GPIOInput
 
-        INTERFACE = ILI9486Interface(env.display_config, env.pin_config.dc_pin, env.pin_config.rst_pin, env.flip_display)
+        display_spi = (env.display_config.bus, env.display_config.device)
+        INTERFACE = ILI9486Interface(display_spi, env.pin_config.dc_pin, env.pin_config.rst_pin, env.flip_display)
         INPUT = GPIOInput(env.pin_config.left_pin, env.pin_config.up_pin,
                           env.pin_config.right_pin, env.pin_config.down_pin,
                           env.pin_config.a_pin, env.pin_config.b_pin,
