@@ -21,7 +21,7 @@ if __name__ == '__main__':
     INPUT: Input
 
     env = load_environment()
-    app_state = AppState(env.app_config.resolution, env.app_config.background)
+    app_state = AppState(env)
 
     # wrapping key functions with local interface instance
     def on_key_left():
@@ -57,7 +57,10 @@ if __name__ == '__main__':
         .add_app(NullApp('RAD')) \
         .add_app(DebugApp()) \
         .add_app(ClockApp(update_display)) \
-        .add_app(MapApp(update_display, IPLocationProvider(apply_inaccuracy=True), OSMTileProvider()))
+        .add_app(MapApp(update_display, IPLocationProvider(apply_inaccuracy=True),
+                        OSMTileProvider(env.app_config.background, env.app_config.accent, env.app_config.font_standard)
+                        )
+                 )
 
     __tk = SelfManagedTkInterface(on_key_left, on_key_right, on_key_up, on_key_down, on_key_a, on_key_b,
                                   on_rotary_increase, on_rotary_decrease,
