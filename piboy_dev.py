@@ -21,6 +21,15 @@ if __name__ == '__main__':
     INPUT: Input
 
     env = load_environment()
+    resolution = env.app_config.resolution
+    background = env.app_config.background
+    color = env.app_config.accent
+    color_dark = env.app_config.accent_dark
+    font_standard = env.app_config.font_standard
+    top_offset = env.app_config.app_top_offset
+    side_offset = env.app_config.app_side_offset
+    bottom_offset = env.app_config.app_bottom_offset
+
     app_state = AppState(env)
 
     # wrapping key functions with local interface instance
@@ -52,19 +61,20 @@ if __name__ == '__main__':
         app_state.update_display(INTERFACE, partial)
 
     app_state.add_app(FileManagerApp()) \
-        .add_app(UpdateApp()) \
+        .add_app(UpdateApp(resolution, background, color, color_dark, top_offset, side_offset, bottom_offset,
+                           font_standard)) \
         .add_app(NullApp('STAT')) \
         .add_app(NullApp('RAD')) \
-        .add_app(DebugApp(env.app_config.resolution, env.app_config.accent, env.app_config.accent_dark)) \
-        .add_app(ClockApp(update_display, env.app_config.resolution, env.app_config.accent)) \
+        .add_app(DebugApp(resolution, color, color_dark)) \
+        .add_app(ClockApp(update_display, resolution, color)) \
         .add_app(MapApp(update_display, IPLocationProvider(apply_inaccuracy=True),
-                        OSMTileProvider(env.app_config.background, env.app_config.accent, env.app_config.font_standard)
+                        OSMTileProvider(background, color, env.app_config.font_standard)
                         )
                  )
 
     __tk = SelfManagedTkInterface(on_key_left, on_key_right, on_key_up, on_key_down, on_key_a, on_key_b,
                                   on_rotary_increase, on_rotary_decrease,
-                                  env.app_config.resolution, env.app_config.background, env.app_config.accent_dark)
+                                  resolution, background, color_dark)
     INTERFACE = __tk
     INPUT = __tk
 

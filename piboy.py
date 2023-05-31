@@ -150,19 +150,19 @@ def draw_header(image: Image, state: AppState) -> (Image, int, int):
     app_spacing = 20  # space between app headers
     app_padding = 5  # space around app header
     draw = ImageDraw.Draw(image)
-    background = state.environment.app_config.background
-    accent = state.environment.app_config.accent
+    color_background = state.environment.app_config.background
+    color_accent = state.environment.app_config.accent
 
     # draw base header lines
     start = (header_side_offset, header_top_offset + vertical_line)
     end = (header_side_offset, header_top_offset)
-    draw.line(start + end, fill=accent)
+    draw.line(start + end, fill=color_accent)
     start = end
     end = (width - header_side_offset, header_top_offset)
-    draw.line(start + end, fill=accent)
+    draw.line(start + end, fill=color_accent)
     start = end
     end = (width - header_side_offset, header_top_offset + vertical_line)
-    draw.line(start + end, fill=accent)
+    draw.line(start + end, fill=color_accent)
 
     # draw app short name header
     font = state.environment.app_config.font_header
@@ -171,17 +171,17 @@ def draw_header(image: Image, state: AppState) -> (Image, int, int):
     cursor = header_side_offset + (max_text_width - app_text_width) / 2
     for app in state.apps:
         _, _, text_width, text_height = font.getbbox(app.title)
-        draw.text((cursor, header_top_offset - text_height - app_padding), app.title, accent, font=font)
+        draw.text((cursor, header_top_offset - text_height - app_padding), app.title, color_accent, font=font)
         if app is state.active_app:
             start = (cursor - app_padding, header_top_offset - vertical_line)
             end = (cursor - app_padding, header_top_offset)
-            draw.line(start + end, fill=accent)
+            draw.line(start + end, fill=color_accent)
             start = end
             end = (cursor + text_width + app_padding, header_top_offset)
-            draw.line(start + end, fill=background)
+            draw.line(start + end, fill=color_background)
             start = end
             end = (cursor + text_width + app_padding, header_top_offset - vertical_line)
-            draw.line(start + end, fill=accent)
+            draw.line(start + end, fill=color_accent)
         cursor = cursor + text_width + app_spacing
 
     partial_start = (header_side_offset, 0)
@@ -211,6 +211,15 @@ if __name__ == '__main__':
     INPUT: Input
 
     env = load_environment()
+    resolution = env.app_config.resolution
+    background = env.app_config.background
+    color = env.app_config.accent
+    color_dark = env.app_config.accent_dark
+    font_standard = env.app_config.font_standard
+    top_offset = env.app_config.app_top_offset
+    side_offset = env.app_config.app_side_offset
+    bottom_offset = env.app_config.app_bottom_offset
+
     app_state = AppState(env)
 
     # wrapping key functions with local interface instance
@@ -242,14 +251,15 @@ if __name__ == '__main__':
         app_state.update_display(INTERFACE, partial)
 
     app_state.add_app(FileManagerApp()) \
-        .add_app(UpdateApp()) \
+        .add_app(UpdateApp(resolution, background, color, color_dark, top_offset, side_offset, bottom_offset,
+                           font_standard)) \
         .add_app(NullApp('STAT')) \
         .add_app(NullApp('RAD')) \
-        .add_app(DebugApp(env.app_config.resolution, env.app_config.accent, env.app_config.accent_dark)) \
-        .add_app(ClockApp(update_display, env.app_config.resolution, env.app_config.accent)) \
+        .add_app(DebugApp(resolution, color, color_dark)) \
+        .add_app(ClockApp(update_display, resolution, color)) \
         .add_app(MapApp(update_display,
                         IPLocationProvider(apply_inaccuracy=True),
-                        OSMTileProvider(env.app_config.background, env.app_config.accent, env.app_config.font_standard)
+                        OSMTileProvider(background, color, font_standard)
                         )
                  )
 
@@ -258,7 +268,7 @@ if __name__ == '__main__':
 
         __tk = TkInterface(on_key_left, on_key_right, on_key_up, on_key_down, on_key_a, on_key_b,
                            on_rotary_increase, on_rotary_decrease,
-                           env.app_config.resolution, env.app_config.background, env.app_config.accent_dark)
+                           resolution, background, color_dark)
         INTERFACE = __tk
         INPUT = __tk
     else:

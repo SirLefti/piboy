@@ -1,8 +1,7 @@
 from app.App import App
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 from subprocess import run, CompletedProcess, PIPE
-from typing import Callable, Optional
-import config
+from typing import Callable, Optional, Tuple
 
 
 class UpdateApp(App):
@@ -41,7 +40,18 @@ class UpdateApp(App):
         def count_name(self) -> Optional[str]:
             return self.__count_name
 
-    def __init__(self):
+    def __init__(self, resolution: Tuple[int, int],
+                 background: Tuple[int, int, int], color: Tuple[int, int, int], color_dark: Tuple[int, int, int],
+                 app_top_offset: int, app_side_offset: int, app_bottom_offset: int, font_standard: ImageFont):
+        self.__resolution = resolution
+        self.__background = background
+        self.__color = color
+        self.__color_dark = color_dark
+        self.__app_top_offset = app_top_offset
+        self.__app_side_offset = app_side_offset
+        self.__app_bottom_offset = app_bottom_offset
+        self.__font = font_standard
+
         self.__selected_index = 0
         self.__files_to_reset: Optional[int] = None
         self.__files_to_clean: Optional[int] = None
@@ -163,11 +173,11 @@ class UpdateApp(App):
         return 'SYS'
 
     def draw(self, image: Image, partial=False) -> (Image, int, int):
-        width, height = config.RESOLUTION
-        font = config.FONT_STANDARD
+        width, height = self.__resolution
+        font = self.__font
 
-        left_top = (config.APP_SIDE_OFFSET, config.APP_TOP_OFFSET)
-        right_bottom = (width / 2, config.APP_TOP_OFFSET)
+        left_top = (self.__app_side_offset, self.__app_top_offset)
+        right_bottom = (width / 2, self.__app_top_offset)
         draw = ImageDraw.Draw(image)
 
         if self.__result is not None or not partial:
@@ -178,25 +188,25 @@ class UpdateApp(App):
 
             # clear existing logs
             cursor = (width / 2 + self.CENTER_OFFSET, left_top[1])
-            rect_right_bottom = (width - config.APP_SIDE_OFFSET,
+            rect_right_bottom = (width - self.__app_side_offset,
                                  cursor[1] +
-                                 min(len(self.__results) * self.LINE_HEIGHT, height - config.APP_BOTTOM_OFFSET))
-            draw.rectangle(cursor + rect_right_bottom, fill=config.BACKGROUND)
+                                 min(len(self.__results) * self.LINE_HEIGHT, height - self.__app_bottom_offset))
+            draw.rectangle(cursor + rect_right_bottom, fill=self.__background)
             # and draw history in reverse order
             for text in reversed(self.__results):
                 _, _, _, text_height = font.getbbox(text)
-                if cursor[1] + text_height > height - config.APP_BOTTOM_OFFSET:
+                if cursor[1] + text_height > height - self.__app_bottom_offset:
                     break
-                draw.text(cursor, text, fill=config.ACCENT, font=font)
+                draw.text(cursor, text, fill=self.__color, font=font)
                 cursor = (cursor[0], cursor[1] + self.LINE_HEIGHT)
-            right_bottom = (width - config.APP_SIDE_OFFSET, cursor[1])
+            right_bottom = (width - self.__app_side_offset, cursor[1])
 
         cursor = left_top
         for index, option in enumerate(self.__options):
             if index == self.__selected_index:
-                draw.rectangle(cursor + (width / 2, cursor[1] + self.LINE_HEIGHT), fill=config.ACCENT_DARK)
+                draw.rectangle(cursor + (width / 2, cursor[1] + self.LINE_HEIGHT), fill=self.__color_dark)
             else:
-                draw.rectangle(cursor + (width / 2, cursor[1] + self.LINE_HEIGHT), fill=config.BACKGROUND)
+                draw.rectangle(cursor + (width / 2, cursor[1] + self.LINE_HEIGHT), fill=self.__background)
             text = option.name
             if option.count_action is not None and option.count_name:
                 count = option.count_action()
@@ -204,10 +214,10 @@ class UpdateApp(App):
                     text = f'{text} ({count} {option.count_name})'
                 else:
                     text = f'{text} (error)'
-            draw.text(cursor, text, fill=config.ACCENT, font=font)
+            draw.text(cursor, text, fill=self.__color, font=font)
             cursor = (cursor[0], cursor[1] + self.LINE_HEIGHT)
             right_bottom = (max(right_bottom[0], width / 2), max(right_bottom[1], cursor[1]))
-        draw.line((width / 2, left_top[1]) + (width / 2, cursor[1]), fill=config.ACCENT, width=1)
+        draw.line((width / 2, left_top[1]) + (width / 2, cursor[1]), fill=self.__color, width=1)
 
         if partial:
             # right_bottom = (width / 2, cursor[1])
