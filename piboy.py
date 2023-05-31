@@ -250,7 +250,8 @@ if __name__ == '__main__':
     def update_display(partial=False):
         app_state.update_display(INTERFACE, partial)
 
-    app_state.add_app(FileManagerApp()) \
+    app_state.add_app(FileManagerApp(resolution, background, color, color_dark, top_offset, side_offset, bottom_offset,
+                                     font_standard)) \
         .add_app(UpdateApp(resolution, background, color, color_dark, top_offset, side_offset, bottom_offset,
                            font_standard)) \
         .add_app(NullApp('STAT')) \
