@@ -105,7 +105,9 @@ class UpdateApp(App):
     @staticmethod
     def __run_fetch() -> CompletedProcess:
         # git fetch does not return stuff into stdout, return output of git log instead
-        run(['git', 'fetch'], stdout=PIPE)
+        result = run(['git', 'fetch'], stdout=PIPE)
+        if result.returncode != 0:
+            return result
         return run(['git', 'log', '..@{u}', '--pretty=oneline'], stdout=PIPE)
 
     @staticmethod
