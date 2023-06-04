@@ -4,10 +4,12 @@ from PIL import ImageFont
 from yaml import Loader, Dumper, MappingNode, Node, FullLoader
 import yaml
 
+
 @dataclass
 class SPIConfig:
     bus: int
     device: int
+
 
 @dataclass
 class AppConfig:
@@ -55,6 +57,7 @@ class AppConfig:
         else:
             raise ValueError('color_mode must be either 0 or 1')
 
+
 @dataclass
 class PinConfig:
     # Buttons
@@ -93,29 +96,37 @@ def spi_config_constructor(loader: Loader, node: Node) -> SPIConfig:
     values = loader.construct_mapping(node)
     return SPIConfig(**values)
 
+
 def spi_config_representor(dumper: Dumper, data: SPIConfig) -> MappingNode:
     return dumper.represent_mapping('!SPIConfig', vars(data))
+
 
 def app_config_constructor(loader: Loader, node: Node) -> AppConfig:
     values = loader.construct_mapping(node)
     return AppConfig(**values)
 
+
 def app_config_representor(dumper: Dumper, data: AppConfig) -> MappingNode:
     return dumper.represent_mapping('!AppConfig', vars(data))
+
 
 def pin_config_constructor(loader: Loader, node: Node) -> PinConfig:
     values = loader.construct_mapping(node)
     return PinConfig(**values)
 
+
 def pin_config_representor(dumper: Dumper, data: PinConfig) -> MappingNode:
     return dumper.represent_mapping('!PinConfig', vars(data))
+
 
 def environment_constructor(loader: Loader, node: Node) -> Environment:
     values = loader.construct_mapping(node)
     return Environment(**values)
 
+
 def environment_representor(dumper: Dumper, data: Environment) -> MappingNode:
     return dumper.represent_mapping('!Environment', vars(data))
+
 
 def configure():
     yaml.add_constructor('!SPIConfig', spi_config_constructor)
@@ -127,9 +138,11 @@ def configure():
     yaml.add_representer(PinConfig, pin_config_representor)
     yaml.add_representer(Environment, environment_representor)
 
+
 def load(file_name: str = 'config.yaml') -> Environment:
     with open(file_name, 'r') as file:
         return yaml.load(file, FullLoader)
+
 
 def save(environment: Environment, file_name: str = 'config.yaml'):
     with open(file_name, 'w') as file:
