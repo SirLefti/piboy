@@ -56,6 +56,8 @@ class UpdateApp(App):
         self.__files_to_reset: Optional[int] = None
         self.__files_to_clean: Optional[int] = None
         self.__commits_to_update: Optional[int] = None
+        self.__branch_name = self.__get_branch_name()
+        self.__remote_name = self.__get_remote_name()
 
         def get_files_to_reset() -> Optional[int]:
             return self.__files_to_reset
@@ -163,6 +165,24 @@ class UpdateApp(App):
             return result.stdout.decode('utf-8').count('\n')
         return 0
 
+    @staticmethod
+    def __get_branch_name() -> Optional[str]:
+        result = run(['git', 'branch', '--show-current'], stdout=PIPE)
+        if result.returncode != 0:
+            return None
+        if result.stdout is not None:
+            return result.stdout.decode('utf-8')
+        return None
+
+    @staticmethod
+    def __get_remote_name() -> Optional[str]:
+        result = run(['git', 'remote', 'show'], stdout=PIPE)
+        if result.returncode != 0:
+            return None
+        if result.stdout is not None:
+            return result.stdout.decode('utf-8')
+        return None
+
     def __update_counts(self):
         self.__files_to_reset = self.__get_files_to_reset()
         self.__files_to_clean = self.__get_files_to_clean()
@@ -180,6 +200,7 @@ class UpdateApp(App):
         right_bottom = (width / 2, self.__app_top_offset)
         draw = ImageDraw.Draw(image)
 
+        # part: result history
         if self.__result is not None or not partial:
             # log action responses
             if self.__result is not None and self.__result.stdout:
@@ -201,6 +222,7 @@ class UpdateApp(App):
                 cursor = (cursor[0], cursor[1] + self.LINE_HEIGHT)
             right_bottom = (width - self.__app_side_offset, cursor[1])
 
+        # part: options
         cursor = left_top
         for index, option in enumerate(self.__options):
             if index == self.__selected_index:
@@ -218,6 +240,16 @@ class UpdateApp(App):
             cursor = (cursor[0], cursor[1] + self.LINE_HEIGHT)
             right_bottom = (max(right_bottom[0], width / 2), max(right_bottom[1], cursor[1]))
         draw.line((width / 2, left_top[1]) + (width / 2, cursor[1]), fill=self.__color, width=1)
+
+        # part: repository and branch information
+        if not partial:
+            # information does not change, so just draw it initially
+            _, _, _, text_height_branch = font.getbbox(self.__branch_name)
+            _, _, _, text_height_remote = font.getbbox(self.__remote_name)
+            draw.text((self.__app_side_offset, height - self.__app_bottom_offset - text_height_branch -
+                       text_height_remote), f'branch: {self.__branch_name}', fill=self.__color, font=font)
+            draw.text((self.__app_side_offset, height - self.__app_bottom_offset - text_height_remote),
+                      f'remote: {self.__remote_name}', fill=self.__color, font=font)
 
         if partial:
             # right_bottom = (width / 2, cursor[1])
