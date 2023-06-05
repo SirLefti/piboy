@@ -244,12 +244,13 @@ class UpdateApp(App):
         # part: repository and branch information
         if not partial:
             # information does not change, so just draw it initially
-            _, _, _, text_height_branch = font.getbbox(self.__branch_name)
-            _, _, _, text_height_remote = font.getbbox(self.__remote_name)
+            unknown = 'unknown'
+            _, _, _, text_height_branch = font.getbbox(self.__branch_name or unknown)
+            _, _, _, text_height_remote = font.getbbox(self.__remote_name or unknown)
             draw.text((self.__app_side_offset, height - self.__app_bottom_offset - text_height_branch -
-                       text_height_remote), f'branch: {self.__branch_name}', fill=self.__color, font=font)
+                       text_height_remote), f'branch: {self.__branch_name or unknown}', fill=self.__color, font=font)
             draw.text((self.__app_side_offset, height - self.__app_bottom_offset - text_height_remote),
-                      f'remote: {self.__remote_name}', fill=self.__color, font=font)
+                      f'remote: {self.__remote_name or unknown}', fill=self.__color, font=font)
 
         if partial:
             # right_bottom = (width / 2, cursor[1])
