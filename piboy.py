@@ -137,7 +137,7 @@ def draw_footer(image: Image, state: AppState) -> (Image, int, int):
     text_padding = (footer_height - text_height) / 2
     draw.text(
         (width - footer_side_offset - text_padding - text_width, height - footer_height - footer_bottom_offset +
-         text_padding), date_str, state.environment.app_config.accent_dark, font=font)
+         text_padding), date_str, state.environment.app_config.accent, font=font)
     x0, y0 = start
     return image.crop(start + end), x0, y0
 
