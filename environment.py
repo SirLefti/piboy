@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Tuple
+from typing import Tuple, List, Dict
 from PIL import ImageFont
 from yaml import Loader, Dumper, MappingNode, Node, FullLoader
 import yaml
@@ -22,6 +22,22 @@ class AppConfig:
     color_mode: int = 0
     width: int = 480
     height: int = 320
+    modes: List[Dict[str, Tuple[int, int, int]]] = None
+
+    def __post_init__(self):
+        if self.modes is None:
+            self.modes = [
+                {
+                    'background': (0, 0, 0),
+                    'accent': (27, 251, 30),
+                    'accent_dark': (9, 64, 9)
+                },
+                {
+                    'background': (0, 0, 0),
+                    'accent': (255, 245, 101),
+                    'accent_dark': (59, 45, 25)
+                }
+            ]
 
     @property
     def resolution(self) -> Tuple[int, int]:
@@ -37,25 +53,15 @@ class AppConfig:
 
     @property
     def background(self) -> Tuple[int, int, int]:
-        return 0, 0, 0
+        return self.modes[self.color_mode]['background']
 
     @property
     def accent(self) -> Tuple[int, int, int]:
-        if self.color_mode == 0:
-            return 27, 251, 30
-        elif self.color_mode == 1:
-            return 255, 245, 101
-        else:
-            raise ValueError('color_mode must be either 0 or 1')
+        return self.modes[self.color_mode]['accent']
 
     @property
     def accent_dark(self) -> Tuple[int, int, int]:
-        if self.color_mode == 0:
-            return 9, 64, 9
-        elif self.color_mode == 1:
-            return 59, 45, 25
-        else:
-            raise ValueError('color_mode must be either 0 or 1')
+        return self.modes[self.color_mode]['accent_dark']
 
 
 @dataclass
