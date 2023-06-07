@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Tuple, List, Dict
+from typing import Tuple, List
 from PIL import ImageFont
 from yaml import Loader, Dumper, MappingNode, Node, FullLoader
 import yaml
@@ -9,6 +9,13 @@ import yaml
 class SPIConfig:
     bus: int
     device: int
+
+
+@dataclass
+class ColorConfig:
+    background: Tuple[int, int, int]
+    accent: Tuple[int, int, int]
+    accent_dark: Tuple[int, int, int]
 
 
 @dataclass
@@ -22,21 +29,21 @@ class AppConfig:
     color_mode: int = 0
     width: int = 480
     height: int = 320
-    modes: List[Dict[str, Tuple[int, int, int]]] = None
+    modes: List[ColorConfig] = None
 
     def __post_init__(self):
         if self.modes is None:
             self.modes = [
-                {
-                    'background': (0, 0, 0),
-                    'accent': (27, 251, 30),
-                    'accent_dark': (9, 64, 9)
-                },
-                {
-                    'background': (0, 0, 0),
-                    'accent': (255, 245, 101),
-                    'accent_dark': (59, 45, 25)
-                }
+                ColorConfig(
+                    background=(0, 0, 0),
+                    accent=(27, 251, 30),
+                    accent_dark=(9, 64, 9)
+                ),
+                ColorConfig(
+                    background=(0, 0, 0),
+                    accent=(255, 245, 101),
+                    accent_dark=(59, 45, 25)
+                )
             ]
 
     @property
@@ -53,15 +60,15 @@ class AppConfig:
 
     @property
     def background(self) -> Tuple[int, int, int]:
-        return self.modes[self.color_mode]['background']
+        return self.modes[self.color_mode].background
 
     @property
     def accent(self) -> Tuple[int, int, int]:
-        return self.modes[self.color_mode]['accent']
+        return self.modes[self.color_mode].accent
 
     @property
     def accent_dark(self) -> Tuple[int, int, int]:
-        return self.modes[self.color_mode]['accent_dark']
+        return self.modes[self.color_mode].accent_dark
 
 
 @dataclass
@@ -107,6 +114,15 @@ def spi_config_representor(dumper: Dumper, data: SPIConfig) -> MappingNode:
     return dumper.represent_mapping('!SPIConfig', vars(data))
 
 
+def color_config_constructor(loader: Loader, node: Node) -> ColorConfig:
+    values = loader.construct_mapping(node)
+    return ColorConfig(**values)
+
+
+def color_config_representor(dumper: Dumper, data: ColorConfig) -> MappingNode:
+    return dumper.represent_mapping('!ColorConfig', vars(data))
+
+
 def app_config_constructor(loader: Loader, node: Node) -> AppConfig:
     values = loader.construct_mapping(node)
     return AppConfig(**values)
@@ -136,10 +152,12 @@ def environment_representor(dumper: Dumper, data: Environment) -> MappingNode:
 
 def configure():
     yaml.add_constructor('!SPIConfig', spi_config_constructor)
+    yaml.add_constructor('!ColorConfig', color_config_constructor)
     yaml.add_constructor('!AppConfig', app_config_constructor)
     yaml.add_constructor('!PinConfig', pin_config_constructor)
     yaml.add_constructor('!Environment', environment_constructor)
     yaml.add_representer(SPIConfig, spi_config_representor)
+    yaml.add_representer(ColorConfig, color_config_representor)
     yaml.add_representer(AppConfig, app_config_representor)
     yaml.add_representer(PinConfig, pin_config_representor)
     yaml.add_representer(Environment, environment_representor)
