@@ -1,18 +1,23 @@
 from data.TileProvider import TileProvider, TileInfo
 from typing import Tuple, Iterable
-from PIL import Image, ImageDraw, UnidentifiedImageError
+from PIL import Image, ImageDraw, ImageFont, UnidentifiedImageError
 from requests.exceptions import ConnectionError
 import os
 import requests
 import math
 import time
-import config
 
 
 class OSMTileProvider(TileProvider):
 
     __CACHE_DURATION = 1000 * 60 * 60 * 24 * 365  # one year in ms
     __OSM_TILE_SIZE = (256, 256)  # size of a tile image from OSM
+
+    def __init__(self, background: Tuple[int, int, int], color: Tuple[int, int, int], font: ImageFont):
+        self.__background = background
+        self.__color = color
+        self.__font = font
+
 
     @property
     def zoom_range(self) -> Iterable[int]:
@@ -51,7 +56,7 @@ class OSMTileProvider(TileProvider):
             for y, _ in enumerate(row):
                 if y_tile - top_tiles + y < 0 or y_tile - top_tiles + y == math.pow(2, zoom):
                     # empty image if tile ends on top or bottom and there is no further tile
-                    grid[x][y] = Image.new('RGB', size, config.BACKGROUND)
+                    grid[x][y] = Image.new('RGB', size, self.__background)
                 else:
                     try:
                         grid[x][y] = self._fetch_tile(zoom, (x_tile - left_tiles + x) % int(math.pow(2, zoom)),
@@ -77,12 +82,12 @@ class OSMTileProvider(TileProvider):
         return TileInfo(top_left, bottom_right, cropped_tile)
 
     def _get_placeholder_tile(self) -> Image:
-        font = config.FONT_STANDARD
-        tile = Image.new('RGB', self.__OSM_TILE_SIZE, config.BACKGROUND)
+        font = self.__font
+        tile = Image.new('RGB', self.__OSM_TILE_SIZE, self.__background)
         text_w, text_h = font.getbbox('?')[-2:]
         tile_w, tile_h = tile.size
         draw = ImageDraw.Draw(tile)
-        draw.rectangle((0, 0) + self.__OSM_TILE_SIZE, fill=config.BACKGROUND, outline=config.ACCENT, width=1)
+        draw.rectangle((0, 0) + self.__OSM_TILE_SIZE, fill=self.__background, outline=self.__color, width=1)
         draw.text((tile_w / 2 - text_w / 2, tile_h / 2 - text_h / 2), '?', font=font)
         return tile
 

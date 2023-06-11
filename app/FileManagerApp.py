@@ -1,7 +1,6 @@
 from app.App import App
-from PIL import Image, ImageDraw, ImageOps
+from PIL import Image, ImageDraw, ImageOps, ImageFont
 from typing import Tuple, List, Callable, Optional
-import config
 import os
 import shutil
 
@@ -115,7 +114,18 @@ class FileManagerApp(App):
         def files(self) -> List[str]:
             return sorted([f for f in os.listdir(self.__directory)], key=str.lower)
 
-    def __init__(self):
+    def __init__(self, resolution: Tuple[int, int],
+                 background: Tuple[int, int, int], color: Tuple[int, int, int], color_dark: Tuple[int, int, int],
+                 app_top_offset: int, app_side_offset: int, app_bottom_offset: int, font_standard: ImageFont):
+        self.__resolution = resolution
+        self.__background = background
+        self.__color = color
+        self.__color_dark = color_dark
+        self.__app_top_offset = app_top_offset
+        self.__app_side_offset = app_side_offset
+        self.__app_bottom_offset = app_bottom_offset
+        self.__font = font_standard
+
         self.__left_directory = self.DirectoryState()
         self.__right_directory = self.DirectoryState()
         self.__selected_tab = 0  # 0 for left, 1 for right
@@ -152,19 +162,19 @@ class FileManagerApp(App):
         else:
             return value
 
-    @classmethod
-    def __draw_popup(cls, draw: ImageDraw, left_top: Tuple[int, int], right_bottom: Tuple[int, int],
+
+    def __draw_popup(self, draw: ImageDraw, left_top: Tuple[int, int], right_bottom: Tuple[int, int],
                      popup: DirectoryState.Popup):
         """Draws a popup with the given options."""
-        line_height = cls.LINE_HEIGHT
-        popup_border = cls.POPUP_BORDER
+        line_height = self.LINE_HEIGHT
+        popup_border = self.POPUP_BORDER
         popup_min_width = 150
-        font = config.FONT_STANDARD
+        font = self.__font
         left, top = left_top
         right, bottom = right_bottom
 
         sizes = [font.getbbox(text)[2:] for text in popup.options]
-        popup_width = cls.__next_even(
+        popup_width = self.__next_even(
             max(max(e[0] for e in sizes), popup_min_width))  # require at least popup_min_width
         popup_height = line_height * len(popup.options)
 
@@ -172,48 +182,46 @@ class FileManagerApp(App):
 
         start = center[0] - int(popup_width / 2) - popup_border, center[1] - int(popup_height / 2) - popup_border
         end = center[0] + int(popup_width / 2) + popup_border, center[1] + int(popup_height / 2) + popup_border
-        draw.rectangle(start + end, fill=config.ACCENT)
+        draw.rectangle(start + end, fill=self.__color)
         start = center[0] - int(popup_width / 2), center[1] - int(popup_height / 2)
         end = center[0] + int(popup_width / 2), center[1] + int(popup_height / 2)
-        draw.rectangle(start + end, fill=config.BACKGROUND)
+        draw.rectangle(start + end, fill=self.__background)
 
         cursor = start
         for index, text in enumerate(popup.options):
             if index == popup.selected_index:
-                draw.rectangle(cursor + (cursor[0] + popup_width, cursor[1] + line_height), fill=config.ACCENT_DARK)
-            draw.text(cursor, text, config.ACCENT, font=font)
+                draw.rectangle(cursor + (cursor[0] + popup_width, cursor[1] + line_height), fill=self.__color_dark)
+            draw.text(cursor, text, self.__color, font=font)
             cursor = cursor[0], cursor[1] + line_height
 
-    @classmethod
-    def __draw_error(cls, draw: ImageDraw, left_top: Tuple[int, int], right_bottom: Tuple[int, int], text: str):
+    def __draw_error(self, draw: ImageDraw, left_top: Tuple[int, int], right_bottom: Tuple[int, int], text: str):
         left, top = left_top  # unpacking top left anchor point
         right, bottom = right_bottom  # unpacking bottom right anchor point
-        font = config.FONT_STANDARD
+        font = self.__font
         _, _, text_width, text_height = font.getbbox(text)
         popup_width = text_width + 10
         popup_height = text_height * 3
-        popup_border = cls.POPUP_BORDER
+        popup_border = self.POPUP_BORDER
         center = left + int((right - left) / 2), top + int((bottom - top) / 2)
 
         start = center[0] - int(popup_width / 2) - popup_border, center[1] - int(popup_height / 2) - popup_border
         end = center[0] + int(popup_width / 2) + popup_border, center[1] + int(popup_height / 2) + popup_border
-        draw.rectangle(start + end, fill=config.ACCENT)
+        draw.rectangle(start + end, fill=self.__color)
         start = start[0] + popup_border, start[1] + popup_border
         end = end[0] - popup_border, end[1] - popup_border
-        draw.rectangle(start + end, fill=config.BACKGROUND)
-        draw.text((center[0] - int(text_width / 2), center[1] - int(text_height / 2)), text, config.ACCENT, font=font)
+        draw.rectangle(start + end, fill=self.__background)
+        draw.text((center[0] - int(text_width / 2), center[1] - int(text_height / 2)), text, self.__color, font=font)
 
-    @classmethod
-    def __draw_directory(cls, draw: ImageDraw, left_top: Tuple[int, int], right_bottom: Tuple[int, int],
+    def __draw_directory(self, draw: ImageDraw, left_top: Tuple[int, int], right_bottom: Tuple[int, int],
                          state: DirectoryState, is_selected: bool) -> None:
         """Draws the given directory to the given ImageDraw and returns the new top_index."""
-        line_height = cls.LINE_HEIGHT  # height of a line entry in the directory
+        line_height = self.LINE_HEIGHT  # height of a line entry in the directory
         side_padding = 3  # padding to the side of the directory background
         symbol_dimensions = 10  # size of symbol entry
         symbol_padding = (line_height - symbol_dimensions) / 2  # space around symbol
         left, top = left_top  # unpacking top left anchor point
         right, bottom = right_bottom  # unpacking bottom right anchor point
-        font = config.FONT_STANDARD
+        font = self.__font
 
         resources_path = 'resources'
         file_icon = 'file.png'
@@ -221,11 +229,11 @@ class FileManagerApp(App):
 
         # draw background if this directory is selected
         if is_selected:
-            draw.rectangle(left_top + right_bottom, fill=config.ACCENT_DARK)
+            draw.rectangle(left_top + right_bottom, fill=self.__color_dark)
         text = state.directory
         while font.getbbox(text)[3] > right - left - side_padding:
             text = text[:-1]  # cut off last char until it fits
-        draw.text((left + side_padding, top), text, config.ACCENT, font=font)
+        draw.text((left + side_padding, top), text, self.__color, font=font)
 
         cursor = (left, top + line_height)
         try:
@@ -245,36 +253,36 @@ class FileManagerApp(App):
                 cursor_x, cursor_y = cursor
                 index += state.top_index  # pad index if entries are skipped
                 if state.selected_index == index and is_selected:
-                    draw.rectangle((left, cursor_y, right, cursor_y + line_height), fill=config.BACKGROUND)
+                    draw.rectangle((left, cursor_y, right, cursor_y + line_height), fill=self.__background)
 
                 start = (left + symbol_padding, cursor_y + symbol_padding)
                 end = (left + symbol_padding + symbol_dimensions, cursor_y + symbol_padding + symbol_dimensions)
                 if end[1] > bottom - line_height:
-                    draw.text((cursor_x + side_padding, cursor_y), '...', config.ACCENT, font=font)
+                    draw.text((cursor_x + side_padding, cursor_y), '...', self.__color, font=font)
                     break
 
                 if os.path.isfile(os.path.join(state.directory, file)):
                     icon = Image.open(os.path.join(resources_path, file_icon)).convert('1')
-                    draw.bitmap(start, ImageOps.invert(icon), fill=config.ACCENT)
+                    draw.bitmap(start, ImageOps.invert(icon), fill=self.__color)
                 else:
                     icon = Image.open(os.path.join(resources_path, directory_icon)).convert('1')
-                    draw.bitmap(start, ImageOps.invert(icon), fill=config.ACCENT)
+                    draw.bitmap(start, ImageOps.invert(icon), fill=self.__color)
 
                 while draw.textsize(file, font=font)[0] > right - left - symbol_dimensions - 2 * symbol_padding:
                     file = file[:-1]  # cut off last char until it fits
-                draw.text((cursor_x + symbol_dimensions + 2 * symbol_padding, cursor_y), file, config.ACCENT, font=font)
+                draw.text((cursor_x + symbol_dimensions + 2 * symbol_padding, cursor_y), file, self.__color, font=font)
                 cursor = (cursor_x, cursor_y + line_height)
 
             if state.error_message is not None:
-                cls.__draw_error(draw, left_top, right_bottom, state.error_message.message)
+                self.__draw_error(draw, left_top, right_bottom, state.error_message.message)
             elif state.popup is not None:
-                cls.__draw_popup(draw, left_top, right_bottom, state.popup)
+                self.__draw_popup(draw, left_top, right_bottom, state.popup)
 
         except PermissionError:
-            cls.__draw_error(draw, left_top, right_bottom, 'Permission denied')
+            self.__draw_error(draw, left_top, right_bottom, 'Permission denied')
 
     def draw(self, image: Image, partial=False) -> (Image, int, int):
-        width, height = config.RESOLUTION
+        width, height = self.__resolution
         is_left_tab = self.__selected_tab == 0
         is_right_tab = self.__selected_tab == 1
         tab_changed = self.__tab_changed
@@ -284,23 +292,23 @@ class FileManagerApp(App):
         draw = ImageDraw.Draw(image)
 
         if draw_left:
-            left_top = (config.APP_SIDE_OFFSET, config.APP_TOP_OFFSET)
-            right_bottom = (int(width / 2) - 1, height - config.APP_BOTTOM_OFFSET)
+            left_top = (self.__app_side_offset, self.__app_top_offset)
+            right_bottom = (int(width / 2) - 1, height - self.__app_bottom_offset)
             self.__draw_directory(draw, left_top, right_bottom, self.__left_directory, is_selected=is_left_tab)
             if partial and not tab_changed:
                 return image.crop(left_top + right_bottom), *left_top  # tuple unpacking for return
 
         if draw_right:
-            left_top = (int(width / 2) + 1, config.APP_TOP_OFFSET)
-            right_bottom = (width - config.APP_SIDE_OFFSET, height - config.APP_BOTTOM_OFFSET)
+            left_top = (int(width / 2) + 1, self.__app_top_offset)
+            right_bottom = (width - self.__app_side_offset, height - self.__app_bottom_offset)
             self.__draw_directory(draw, left_top, right_bottom, self.__right_directory, is_selected=is_right_tab)
             if partial and not tab_changed:
                 return image.crop(left_top + right_bottom), *left_top  # tuple unpacking for return
 
         # split line
-        start = (width / 2 - 1, config.APP_TOP_OFFSET)
-        end = (width / 2, height - config.APP_BOTTOM_OFFSET)
-        draw.rectangle(start + end, fill=config.ACCENT)
+        start = (width / 2 - 1, self.__app_top_offset)
+        end = (width / 2, height - self.__app_bottom_offset)
+        draw.rectangle(start + end, fill=self.__color)
 
         return image, 0, 0
 

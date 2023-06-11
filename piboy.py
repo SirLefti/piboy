@@ -9,24 +9,24 @@ from interface.Interface import Interface
 from interface.Input import Input
 from data.IPLocationProvider import IPLocationProvider
 from data.OSMTileProvider import OSMTileProvider
-import config
-from typing import List, Tuple
+from typing import List
 from PIL import Image, ImageDraw
-import time
 from datetime import datetime
+from environment import Environment
+import environment
+import time
 
 
 class AppState:
 
-    def __init__(self, resolution: Tuple[int, int], background: Tuple[int, int, int]):
-        self.__resolution = resolution
-        self.__background = background
+    def __init__(self, e: Environment):
+        self.__environment = e
         self.__image_buffer = self.__init_buffer()
         self.__apps = []
         self.__active_app = 0
 
     def __init_buffer(self) -> Image:
-        return Image.new('RGB', self.__resolution, self.__background)
+        return Image.new('RGB', self.__environment.app_config.resolution, self.__environment.app_config.background)
 
     def clear_buffer(self) -> Image:
         self.__image_buffer = self.__init_buffer()
@@ -35,6 +35,10 @@ class AppState:
     def add_app(self, app: App):
         self.__apps.append(app)
         return self
+
+    @property
+    def environment(self) -> Environment:
+        return self.__environment
 
     @property
     def image_buffer(self) -> Image:
@@ -69,7 +73,7 @@ class AppState:
             time.sleep(1.0 - now.microsecond / 1000000.0)
 
             # draw the complete footer to remove existing clock display
-            image, x0, y0 = draw_footer(self.image_buffer)
+            image, x0, y0 = draw_footer(self.image_buffer, self)
             interface.show(image, x0, y0)
 
     def update_display(self, interface: Interface, partial=False):
@@ -116,66 +120,68 @@ class AppState:
         self.update_display(interface, partial=False)
 
 
-def draw_footer(image: Image) -> (Image, int, int):
-    width, height = config.RESOLUTION
+def draw_footer(image: Image, state: AppState) -> (Image, int, int):
+    width, height = state.environment.app_config.resolution
     footer_height = 20  # height of the footer
     footer_bottom_offset = 3  # spacing to the bottom
-    footer_side_offset = config.APP_SIDE_OFFSET  # spacing to the sides
-    font = config.FONT_HEADER
+    footer_side_offset = state.environment.app_config.app_side_offset  # spacing to the sides
+    font = state.environment.app_config.font_header
     draw = ImageDraw.Draw(image)
 
     date_str = datetime.now().strftime('%d-%m-%Y %H:%M:%S')
 
     start = (footer_side_offset, height - footer_height - footer_bottom_offset)
     end = (width - footer_side_offset, height - footer_bottom_offset)
-    draw.rectangle(start + end, fill=config.ACCENT_DARK)
+    draw.rectangle(start + end, fill=state.environment.app_config.accent_dark)
     _, _, text_width, text_height = font.getbbox(date_str)
     text_padding = (footer_height - text_height) / 2
     draw.text(
         (width - footer_side_offset - text_padding - text_width, height - footer_height - footer_bottom_offset +
-         text_padding), date_str, config.ACCENT, font=font)
+         text_padding), date_str, state.environment.app_config.accent, font=font)
     x0, y0 = start
     return image.crop(start + end), x0, y0
 
 
 def draw_header(image: Image, state: AppState) -> (Image, int, int):
-    width, height = config.RESOLUTION
+    width, height = state.environment.app_config.resolution
     vertical_line = 5  # vertical limiter line
-    header_top_offset = config.APP_TOP_OFFSET - vertical_line  # base for header
-    header_side_offset = config.APP_SIDE_OFFSET  # spacing to the sides
+    header_top_offset = state.environment.app_config.app_top_offset - vertical_line  # base for header
+    header_side_offset = state.environment.app_config.app_side_offset  # spacing to the sides
     app_spacing = 20  # space between app headers
     app_padding = 5  # space around app header
     draw = ImageDraw.Draw(image)
+    color_background = state.environment.app_config.background
+    color_accent = state.environment.app_config.accent
 
     # draw base header lines
     start = (header_side_offset, header_top_offset + vertical_line)
     end = (header_side_offset, header_top_offset)
-    draw.line(start + end, fill=config.ACCENT)
+    draw.line(start + end, fill=color_accent)
     start = end
     end = (width - header_side_offset, header_top_offset)
-    draw.line(start + end, fill=config.ACCENT)
+    draw.line(start + end, fill=color_accent)
     start = end
     end = (width - header_side_offset, header_top_offset + vertical_line)
-    draw.line(start + end, fill=config.ACCENT)
+    draw.line(start + end, fill=color_accent)
 
     # draw app short name header
-    font = config.FONT_HEADER
+    font = state.environment.app_config.font_header
     max_text_width = width - (2 * header_side_offset)
     app_text_width = sum(font.getbbox(app.title)[2] for app in state.apps) + (len(state.apps) - 1) * app_spacing
     cursor = header_side_offset + (max_text_width - app_text_width) / 2
     for app in state.apps:
         _, _, text_width, text_height = font.getbbox(app.title)
-        draw.text((cursor, header_top_offset - text_height - app_padding), app.title, config.ACCENT, font=font)
+        draw.text((cursor, header_top_offset - text_height - app_padding), app.title, color_accent, font=font)
         if app is state.active_app:
             start = (cursor - app_padding, header_top_offset - vertical_line)
             end = (cursor - app_padding, header_top_offset)
-            draw.line(start + end, fill=config.ACCENT)
+            draw.line(start + end, fill=color_accent)
             start = end
             end = (cursor + text_width + app_padding, header_top_offset)
-            draw.line(start + end, fill=config.BACKGROUND)
+            draw.line(start + end, fill=color_background)
             start = end
             end = (cursor + text_width + app_padding, header_top_offset - vertical_line)
-            draw.line(start + end, fill=config.ACCENT)
+            draw.line(start + end, fill=color_accent)
         cursor = cursor + text_width + app_spacing
 
     partial_start = (header_side_offset, 0)
@@ -186,15 +192,35 @@ def draw_header(image: Image, state: AppState) -> (Image, int, int):
 
 def draw_base(image: Image, state: AppState) -> Image:
     draw_header(image, state)
-    draw_footer(image)
+    draw_footer(image, state)
     return image
+
+
+def load_environment() -> Environment:
+    environment.configure()
+    try:
+        return environment.load()
+    except FileNotFoundError:
+        e = Environment()
+        environment.save(e)
+        return e
 
 
 if __name__ == '__main__':
     INTERFACE: Interface
     INPUT: Input
 
-    app_state = AppState(config.RESOLUTION, config.BACKGROUND)
+    env = load_environment()
+    resolution = env.app_config.resolution
+    background = env.app_config.background
+    color = env.app_config.accent
+    color_dark = env.app_config.accent_dark
+    font_standard = env.app_config.font_standard
+    top_offset = env.app_config.app_top_offset
+    side_offset = env.app_config.app_side_offset
+    bottom_offset = env.app_config.app_bottom_offset
+
+    app_state = AppState(env)
 
     # wrapping key functions with local interface instance
     def on_key_left():
@@ -224,28 +250,40 @@ if __name__ == '__main__':
     def update_display(partial=False):
         app_state.update_display(INTERFACE, partial)
 
-    app_state.add_app(FileManagerApp()) \
-        .add_app(UpdateApp()) \
+    app_state.add_app(FileManagerApp(resolution, background, color, color_dark, top_offset, side_offset, bottom_offset,
+                                     font_standard)) \
+        .add_app(UpdateApp(resolution, background, color, color_dark, top_offset, side_offset, bottom_offset,
+                           font_standard)) \
         .add_app(NullApp('STAT')) \
         .add_app(NullApp('RAD')) \
-        .add_app(DebugApp()) \
-        .add_app(ClockApp(update_display)) \
-        .add_app(MapApp(update_display, IPLocationProvider(apply_inaccuracy=True), OSMTileProvider()))
+        .add_app(DebugApp(resolution, color, color_dark)) \
+        .add_app(ClockApp(update_display, resolution, color)) \
+        .add_app(MapApp(update_display,
+                        IPLocationProvider(apply_inaccuracy=True),
+                        OSMTileProvider(background, color, font_standard),
+                        resolution, background, color, color_dark, top_offset, side_offset, bottom_offset,
+                        font_standard
+                        )
+                 )
 
-    if config.DEV_MODE:
+    if env.dev_mode:
         from interface.TkInterface import TkInterface
 
         __tk = TkInterface(on_key_left, on_key_right, on_key_up, on_key_down, on_key_a, on_key_b,
-                           on_rotary_increase, on_rotary_decrease, config.RESOLUTION, config.BACKGROUND)
+                           on_rotary_increase, on_rotary_decrease,
+                           resolution, background, color_dark)
         INTERFACE = __tk
         INPUT = __tk
     else:
         from interface.ILI9486Interface import ILI9486Interface
         from interface.GPIOInput import GPIOInput
 
-        INTERFACE = ILI9486Interface(config.FLIP_DISPLAY)
-        INPUT = GPIOInput(config.LEFT_PIN, config.UP_PIN, config.RIGHT_PIN, config.DOWN_PIN, config.A_PIN, config.B_PIN,
-                          config.CLK_PIN, config.DT_PIN, config.SW_PIN,
+        display_spi = (env.display_config.bus, env.display_config.device)
+        INTERFACE = ILI9486Interface(display_spi, env.pin_config.dc_pin, env.pin_config.rst_pin, env.flip_display)
+        INPUT = GPIOInput(env.pin_config.left_pin, env.pin_config.up_pin,
+                          env.pin_config.right_pin, env.pin_config.down_pin,
+                          env.pin_config.a_pin, env.pin_config.b_pin,
+                          env.pin_config.clk_pin, env.pin_config.dt_pin, env.pin_config.sw_pin,
                           on_key_left, on_key_right, on_key_up, on_key_down, on_key_a, on_key_b,
                           on_rotary_increase, on_rotary_decrease)
 

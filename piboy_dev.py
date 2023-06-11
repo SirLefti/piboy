@@ -1,4 +1,3 @@
-import config
 from app.ClockApp import ClockApp
 from app.DebugApp import DebugApp
 from app.FileManagerApp import FileManagerApp
@@ -9,7 +8,7 @@ from data.IPLocationProvider import IPLocationProvider
 from data.OSMTileProvider import OSMTileProvider
 from interface import Interface, Input
 from interface.SelfManagedTkInterrface import SelfManagedTkInterface
-from piboy import AppState
+from piboy import AppState, load_environment
 import threading
 
 """
@@ -21,7 +20,17 @@ if __name__ == '__main__':
     INTERFACE: Interface
     INPUT: Input
 
-    app_state = AppState(config.RESOLUTION, config.BACKGROUND)
+    env = load_environment()
+    resolution = env.app_config.resolution
+    background = env.app_config.background
+    color = env.app_config.accent
+    color_dark = env.app_config.accent_dark
+    font_standard = env.app_config.font_standard
+    top_offset = env.app_config.app_top_offset
+    side_offset = env.app_config.app_side_offset
+    bottom_offset = env.app_config.app_bottom_offset
+
+    app_state = AppState(env)
 
     # wrapping key functions with local interface instance
     def on_key_left():
@@ -51,16 +60,24 @@ if __name__ == '__main__':
     def update_display(partial=False):
         app_state.update_display(INTERFACE, partial)
 
-    app_state.add_app(FileManagerApp()) \
-        .add_app(UpdateApp()) \
+    app_state.add_app(FileManagerApp(resolution, background, color, color_dark, top_offset, side_offset, bottom_offset,
+                                     font_standard)) \
+        .add_app(UpdateApp(resolution, background, color, color_dark, top_offset, side_offset, bottom_offset,
+                           font_standard)) \
         .add_app(NullApp('STAT')) \
         .add_app(NullApp('RAD')) \
-        .add_app(DebugApp()) \
-        .add_app(ClockApp(update_display)) \
-        .add_app(MapApp(update_display, IPLocationProvider(apply_inaccuracy=True), OSMTileProvider()))
+        .add_app(DebugApp(resolution, color, color_dark)) \
+        .add_app(ClockApp(update_display, resolution, color)) \
+        .add_app(MapApp(update_display, IPLocationProvider(apply_inaccuracy=True),
+                        OSMTileProvider(background, color, env.app_config.font_standard),
+                        resolution, background, color, color_dark, top_offset, side_offset, bottom_offset,
+                        font_standard
+                        )
+                 )
 
     __tk = SelfManagedTkInterface(on_key_left, on_key_right, on_key_up, on_key_down, on_key_a, on_key_b,
-                                  on_rotary_increase, on_rotary_decrease, config.RESOLUTION, config.BACKGROUND)
+                                  on_rotary_increase, on_rotary_decrease,
+                                  resolution, background, color_dark)
     INTERFACE = __tk
     INPUT = __tk
 

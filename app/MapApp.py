@@ -1,13 +1,11 @@
 from app.App import SelfUpdatingApp
 from data.LocationProvider import LocationProvider, LocationException
 from data.TileProvider import TileProvider
-from enum import Enum
 from abc import ABC
 from typing import Callable, Tuple, List, Any
-from PIL import Image, ImageDraw, ImageOps
+from PIL import Image, ImageDraw, ImageOps, ImageFont
 import os.path
 import math
-import config
 
 
 class MapApp(SelfUpdatingApp):
@@ -16,19 +14,25 @@ class MapApp(SelfUpdatingApp):
     __CONTROL_PADDING = 4
 
     class Control(ABC):
+        """
+        Represents a UI control element. A control has a texture, initial selection state, various callbacks and a flag
+        that indicates, if it is an instant action. Instant actions will not get the SELECTED state when selected and
+        thus cannot use callbacks the directional callbacks (up, right, down, left).
+        """
 
-        class SelectionState(Enum):
-            NONE = 0, config.ACCENT_DARK, config.BACKGROUND
-            FOCUSSED = 1, config.ACCENT, config.BACKGROUND
-            SELECTED = 2, config.BACKGROUND, config.ACCENT
-
-            def __new__(cls, *args, **kwargs):
-                obj = object.__new__(cls)
-                obj._value_ = args[0]
-                return obj
+        # not an enum, because we have to reassign the values
+        class SelectionState:
+            """
+            Container class representing a state of a control element. A selection state has an element color and
+            a background color.
+            Initially, the state members are all none, replace them before usage or create new ones for a specific use.
+            """
+            NONE = None
+            FOCUSED = None
+            SELECTED = None
 
             # skip first argument, it is the value for the enum
-            def __init__(self, _, color: Tuple[int, int, int], background_color: Tuple[int, int, int]):
+            def __init__(self, color: Tuple[int, int, int], background_color: Tuple[int, int, int]):
                 self.__color = color
                 self.__background_color = background_color
 
@@ -40,11 +44,11 @@ class MapApp(SelfUpdatingApp):
             def background_color(self):
                 return self.__background_color
 
-        def __init__(self, icon_bitmap: Image,
+        def __init__(self, icon_bitmap: Image, initial_state: SelectionState,
                      on_select: Callable[[], None] = None, on_deselect: Callable[[], None] = None,
                      on_key_left: Callable[[], None] = None, on_key_right: Callable[[], None] = None,
                      on_key_up: Callable[[], None] = None, on_key_down: Callable[[], None] = None,
-                     instant_action=False, initial_state=SelectionState.NONE):
+                     instant_action=False):
             self.__icon_bitmap = icon_bitmap
             self.__on_select = on_select
             self.__on_deselect = on_deselect
@@ -81,13 +85,13 @@ class MapApp(SelfUpdatingApp):
         def on_deselect(self):
             """When pressing button B"""
             if not self.__instant_action:
-                self.__selection_state = self.SelectionState.FOCUSSED
+                self.__selection_state = self.SelectionState.FOCUSED
             if self.__on_deselect is not None:
                 self.__on_deselect()
 
         def on_focus(self):
             """When moving selection on this control"""
-            self.__selection_state = self.SelectionState.FOCUSSED
+            self.__selection_state = self.SelectionState.FOCUSED
 
         def on_blur(self):
             """When moving selection away from this control"""
@@ -104,8 +108,24 @@ class MapApp(SelfUpdatingApp):
             return self.__selection_state == self.SelectionState.SELECTED
 
     def __init__(self, draw_callback: Callable[[Any], None],
-                 location_provider: LocationProvider, tile_provider: TileProvider):
+                 location_provider: LocationProvider, tile_provider: TileProvider, resolution: Tuple[int, int],
+                 background: Tuple[int, int, int], color: Tuple[int, int, int], color_dark: Tuple[int, int, int],
+                 app_top_offset: int, app_side_offset: int, app_bottom_offset: int, font_standard: ImageFont):
         super().__init__(self.__update_location)
+        self.__resolution = resolution
+        self.__background = background
+        self.__color = color
+        self.__color_dark = color_dark
+        self.__app_top_offset = app_top_offset
+        self.__app_side_offset = app_side_offset
+        self.__app_bottom_offset = app_bottom_offset
+        self.__font = font_standard
+
+        # init selection states
+        self.Control.SelectionState.NONE = self.Control.SelectionState(color_dark, background)
+        self.Control.SelectionState.FOCUSED = self.Control.SelectionState(color, background)
+        self.Control.SelectionState.SELECTED = self.Control.SelectionState(background, color)
+
         self.__draw_callback = draw_callback
         self.__draw_callback_kwargs = {'partial': True}
         self.__location_provider = location_provider
@@ -149,15 +169,20 @@ class MapApp(SelfUpdatingApp):
             self.__y_offset += 1
 
         self.__controls: List[MapApp.Control] = [
-            self.Control(ImageOps.invert(minus_icon), on_select=zoom_out, instant_action=True,
-                         initial_state=self.Control.SelectionState.FOCUSSED),
-            self.Control(ImageOps.invert(plus_icon), on_select=zoom_in, instant_action=True),
-            self.Control(ImageOps.invert(move_icon), on_key_left=move_left, on_key_right=move_right,
+            self.Control(ImageOps.invert(minus_icon), initial_state=self.Control.SelectionState.NONE,
+                         on_select=zoom_out, instant_action=True),
+            self.Control(ImageOps.invert(plus_icon), initial_state=self.Control.SelectionState.NONE,
+                         on_select=zoom_in, instant_action=True),
+            self.Control(ImageOps.invert(move_icon), initial_state=self.Control.SelectionState.NONE,
+                         on_key_left=move_left, on_key_right=move_right,
                          on_key_up=move_up, on_key_down=move_down,
                          on_select=self.stop_updating, on_deselect=self.start_updating),
-            self.Control(ImageOps.invert(focus_icon), on_select=reset_offset, instant_action=True)
+            self.Control(ImageOps.invert(focus_icon), initial_state=self.Control.SelectionState.NONE,
+                         on_select=reset_offset, instant_action=True)
         ]
-        self.__focussed_control = 0
+        self.__focused_control_index = 0
+        # focus the currently focused control to initially update the selection state
+        self.__controls[self.__focused_control_index].on_focus()
 
     @property
     def title(self) -> str:
@@ -177,23 +202,23 @@ class MapApp(SelfUpdatingApp):
 
     def draw(self, image: Image, partial=False) -> (Image, int, int):
         draw = ImageDraw.Draw(image)
-        width, height = config.RESOLUTION
-        left_top = (config.APP_SIDE_OFFSET, config.APP_TOP_OFFSET)
+        width, height = self.__resolution
+        left_top = (self.__app_side_offset, self.__app_top_offset)
         side_tab_width = 120
         side_tab_padding = 5
         line_height = 20
-        font = config.FONT_STANDARD
+        font = self.__font
 
         lat, lon = self.__position
-        size = (width - 2 * config.APP_SIDE_OFFSET - side_tab_width,
-                height - config.APP_TOP_OFFSET - config.APP_BOTTOM_OFFSET)
+        size = (width - 2 * self.__app_side_offset - side_tab_width,
+                height - self.__app_top_offset - self.__app_bottom_offset)
 
         if lat is None or lon is None:
             # if location is not available, just paste a black image for now
             left, top = left_top
             tile_width, tile_height = size
             right_bottom = (left + tile_width, top + tile_height)
-            draw.rectangle(left_top + right_bottom, config.BACKGROUND, config.ACCENT, 3)
+            draw.rectangle(left_top + right_bottom, self.__background, self.__color, 3)
         else:
             # if location is available, just fetch the tile as usual
             tile = self.__tile_provider.get_tile(lat, lon, self.__zoom, size=size,
@@ -217,7 +242,7 @@ class MapApp(SelfUpdatingApp):
                 draw.polygon([marker_center,
                               (marker_center[0] - int(marker_size / 2), marker_center[1] - marker_size),
                               (marker_center[0] + int(marker_size / 2), marker_center[1] - marker_size)],
-                             fill=config.ACCENT_DARK)
+                             fill=self.__color_dark)
             else:
                 def draw_outside_marker(edge_position: Tuple[int, int], center_position: Tuple[int, int]):
                     marker_width = 3
@@ -228,7 +253,7 @@ class MapApp(SelfUpdatingApp):
                     diff_y = edge_position[1] - center_position[1]
                     draw.line((edge_position[0] - diff_x * marker_length_percentage,
                                edge_position[1] - diff_y * marker_length_percentage) +
-                              edge_position, fill=config.ACCENT, width=marker_width)  # line towards center
+                              edge_position, fill=self.__color, width=marker_width)  # line towards center
 
                     def dot(v1: Tuple[float, float], v2: Tuple[float, float]) -> float:
                         """ vector dot product """
@@ -255,65 +280,65 @@ class MapApp(SelfUpdatingApp):
                     tip_2_y = tip_length * math.cos(math.radians(angle - tip_angle + 180))
 
                     draw.line((edge_position[0] + tip_1_x, edge_position[1] + tip_1_y) +
-                              edge_position, fill=config.ACCENT, width=marker_width)  # first tip
+                              edge_position, fill=self.__color, width=marker_width)  # first tip
                     draw.line((edge_position[0] + tip_2_x, edge_position[1] + tip_2_y) +
-                              edge_position, fill=config.ACCENT, width=marker_width)  # second tip
+                              edge_position, fill=self.__color, width=marker_width)  # second tip
 
                 # exclude cases where x_offset or y_offset are zero, division is not possible, but marker is straight
                 # anyway
-                map_center = (left_top[0] + size[0] / 2, left_top[1] + size[1] / 2)
+                map_center = (left_top[0] + size[0] // 2, left_top[1] + size[1] // 2)
                 if self.__x_offset == 0:
                     if self.__y_offset > 0:
-                        edge_center = (left_top[0] + size[0] / 2, left_top[1])
+                        edge_center = (left_top[0] + size[0] // 2, left_top[1])
                         draw_outside_marker(edge_center, map_center)
                     else:
-                        edge_center = (left_top[0] + size[0] / 2, left_top[1] + size[1])
+                        edge_center = (left_top[0] + size[0] // 2, left_top[1] + size[1])
                         draw_outside_marker(edge_center, map_center)
                 elif self.__y_offset == 0:
                     if self.__x_offset > 0:
-                        edge_center = (left_top[0], left_top[1] + size[1] / 2)
+                        edge_center = (left_top[0], left_top[1] + size[1] // 2)
                         draw_outside_marker(edge_center, map_center)
                     else:
-                        edge_center = (left_top[0] + size[0], left_top[1] + size[1] / 2)
+                        edge_center = (left_top[0] + size[0], left_top[1] + size[1] // 2)
                         draw_outside_marker(edge_center, map_center)
                 else:
                     # neither x nor y are zero, division possible
                     # positive ratio means top-left or bottom-right sector, negativ means others
                     vertical_limit = size[0] / size[1]  # x / y
                     horizontal_limit = size[1] / size[0]  # y / x
-                    vertical_ratio = self.__x_offset / self.__y_offset
-                    horizontal_ratio = self.__y_offset / self.__x_offset
+                    vertical_ratio = self.__x_offset // self.__y_offset
+                    horizontal_ratio = self.__y_offset // self.__x_offset
                     # calculate edge_center by taking the center of the edge and adding or subtracting the product of
                     # the other edge's half-length and the ratio
                     if -vertical_limit <= vertical_ratio <= vertical_limit:
                         if self.__y_offset > 0:
-                            edge_center = (left_top[0] + size[0] / 2 - (size[1] / 2) * vertical_ratio,
+                            edge_center = (left_top[0] + size[0] // 2 - (size[1] // 2) * vertical_ratio,
                                            left_top[1])
                             draw_outside_marker(edge_center, map_center)
                         else:
-                            edge_center = (left_top[0] + size[0] / 2 + (size[1] / 2) * vertical_ratio,
+                            edge_center = (left_top[0] + size[0] // 2 + (size[1] // 2) * vertical_ratio,
                                            left_top[1] + size[1])
                             draw_outside_marker(edge_center, map_center)
                     elif -horizontal_limit <= horizontal_ratio <= horizontal_limit:
                         if self.__x_offset > 0:
                             edge_center = (left_top[0],
-                                           left_top[1] + size[1] / 2 - (size[0] / 2) * horizontal_ratio)
+                                           left_top[1] + size[1] // 2 - (size[0] // 2) * horizontal_ratio)
                             draw_outside_marker(edge_center, map_center)
                         else:
                             edge_center = (left_top[0] + size[0],
-                                           left_top[1] + size[1] / 2 + (size[0] / 2) * horizontal_ratio)
+                                           left_top[1] + size[1] // 2 + (size[0] // 2) * horizontal_ratio)
                             draw_outside_marker(edge_center, map_center)
 
         # draw location info
         cursor = (left_top[0] + size[0] + side_tab_padding, left_top[1])
-        draw.text(cursor, 'lat: unknown' if lat is None else 'lat: {:.4f}°'.format(lat), config.ACCENT, font=font)
+        draw.text(cursor, 'lat: unknown' if lat is None else 'lat: {:.4f}°'.format(lat), self.__color, font=font)
         cursor = (cursor[0], cursor[1] + line_height)
-        draw.text(cursor, 'lon: unknown' if lon is None else 'lon: {:.4f}°'.format(lon), config.ACCENT, font=font)
+        draw.text(cursor, 'lon: unknown' if lon is None else 'lon: {:.4f}°'.format(lon), self.__color, font=font)
         cursor = (cursor[0], cursor[1] + line_height)
-        draw.text(cursor, f'zoom: {self.__zoom}x', config.ACCENT, font=font)
+        draw.text(cursor, f'zoom: {self.__zoom}x', self.__color, font=font)
         if self.__x_offset != 0 or self.__y_offset != 0:
             cursor = (cursor[0], cursor[1] + line_height)
-            draw.text(cursor, f'x: {self.__x_offset}, y: {self.__y_offset}', config.ACCENT, font=font)
+            draw.text(cursor, f'x: {self.__x_offset}, y: {self.__y_offset}', self.__color, font=font)
 
         # draw controls
         cursor = (left_top[0] + size[0] - self.__CONTROL_SIZE - self.__CONTROL_PADDING,
@@ -323,37 +348,37 @@ class MapApp(SelfUpdatingApp):
             cursor = (cursor[0], cursor[1] - self.__CONTROL_SIZE - 2 * self.__CONTROL_PADDING)
 
         if partial:
-            right_bottom = width - config.APP_SIDE_OFFSET, height - config.APP_BOTTOM_OFFSET
+            right_bottom = width - self.__app_side_offset, height - self.__app_bottom_offset
             return image.crop(left_top + right_bottom), *left_top
         else:
             return image, 0, 0
 
     def on_key_left(self):
-        if self.__controls[self.__focussed_control].is_selected():
-            self.__controls[self.__focussed_control].on_key_left()
+        if self.__controls[self.__focused_control_index].is_selected():
+            self.__controls[self.__focused_control_index].on_key_left()
 
     def on_key_right(self):
-        if self.__controls[self.__focussed_control].is_selected():
-            self.__controls[self.__focussed_control].on_key_right()
+        if self.__controls[self.__focused_control_index].is_selected():
+            self.__controls[self.__focused_control_index].on_key_right()
 
     def on_key_up(self):
-        if self.__controls[self.__focussed_control].is_selected():
-            self.__controls[self.__focussed_control].on_key_up()
+        if self.__controls[self.__focused_control_index].is_selected():
+            self.__controls[self.__focused_control_index].on_key_up()
         else:
-            self.__controls[self.__focussed_control].on_blur()
-            self.__focussed_control = min(self.__focussed_control + 1, len(self.__controls) - 1)
-            self.__controls[self.__focussed_control].on_focus()
+            self.__controls[self.__focused_control_index].on_blur()
+            self.__focused_control_index = min(self.__focused_control_index + 1, len(self.__controls) - 1)
+            self.__controls[self.__focused_control_index].on_focus()
 
     def on_key_down(self):
-        if self.__controls[self.__focussed_control].is_selected():
-            self.__controls[self.__focussed_control].on_key_down()
+        if self.__controls[self.__focused_control_index].is_selected():
+            self.__controls[self.__focused_control_index].on_key_down()
         else:
-            self.__controls[self.__focussed_control].on_blur()
-            self.__focussed_control = max(self.__focussed_control - 1, 0)
-            self.__controls[self.__focussed_control].on_focus()
+            self.__controls[self.__focused_control_index].on_blur()
+            self.__focused_control_index = max(self.__focused_control_index - 1, 0)
+            self.__controls[self.__focused_control_index].on_focus()
 
     def on_key_a(self):
-        self.__controls[self.__focussed_control].on_select()
+        self.__controls[self.__focused_control_index].on_select()
 
     def on_key_b(self):
-        self.__controls[self.__focussed_control].on_deselect()
+        self.__controls[self.__focused_control_index].on_deselect()

@@ -12,3 +12,4 @@ __pycache__/
 # Project files
 .tiles
 FreeSansBold.ttf
+config.yaml
