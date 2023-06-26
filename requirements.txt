@@ -1,6 +1,7 @@
-Pillow >= 9.2.0
-requests >= 2.28.0
+Pillow >= 9.4.0
+requests >= 2.31.0
 PyYAML >= 6.0
+pyaudio >= 0.2.13
 
 # The following requirements are used by only the hardware modules for Raspberry Pi.
 RPi.GPIO >= 0.7.1; sys_platform == 'linux' and ('arm' in platform_machine or 'aarch' in platform_machine)

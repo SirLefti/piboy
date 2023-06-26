@@ -162,7 +162,6 @@ class FileManagerApp(App):
         else:
             return value
 
-
     def __draw_popup(self, draw: ImageDraw, left_top: Tuple[int, int], right_bottom: Tuple[int, int],
                      popup: DirectoryState.Popup):
         """Draws a popup with the given options."""

@@ -1,7 +1,6 @@
 from app.App import SelfUpdatingApp
 from data.LocationProvider import LocationProvider, LocationException
 from data.TileProvider import TileProvider
-from abc import ABC
 from typing import Callable, Tuple, List, Any
 from PIL import Image, ImageDraw, ImageOps, ImageFont
 import os.path
@@ -13,7 +12,7 @@ class MapApp(SelfUpdatingApp):
     __CONTROL_SIZE = 30
     __CONTROL_PADDING = 4
 
-    class Control(ABC):
+    class Control:
         """
         Represents a UI control element. A control has a texture, initial selection state, various callbacks and a flag
         that indicates, if it is an instant action. Instant actions will not get the SELECTED state when selected and
