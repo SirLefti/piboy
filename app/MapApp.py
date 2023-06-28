@@ -89,11 +89,11 @@ class MapApp(SelfUpdatingApp):
                 self.__on_deselect()
 
         def on_focus(self):
-            """When moving selection on this control"""
+            """When moving focus on this control"""
             self.__selection_state = self.SelectionState.FOCUSED
 
         def on_blur(self):
-            """When moving selection away from this control"""
+            """When moving focus away from this control"""
             self.__selection_state = self.SelectionState.NONE
 
         def draw(self, draw: ImageDraw, left_top: Tuple[int, int]):
