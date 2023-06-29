@@ -11,6 +11,12 @@ class RadioApp(App):
     __CONTROL_BOTTOM_OFFSET = 20
 
     class ControlGroup:
+        """
+        Represents a group of control, where only a single control can be selected at the same time. Pass the control
+        group instance as a parameter to the init block of a control, where it can call the `listen` function to be
+        registered in this group. When selecting this control, it can call the `clear_selection` function to deselect
+        every other control in the group.
+        """
 
         def __init__(self):
             self.__controls: List['RadioApp.Control'] = []
@@ -23,6 +29,10 @@ class RadioApp(App):
                 control.on_deselect()
 
     class Control:
+        """
+        Represents a UI control element. A control has a texture, a callback and might have a control group that
+        unselects other controls in the same group, if this control gets selected.
+        """
 
         class SelectionState:
             """
@@ -87,12 +97,14 @@ class RadioApp(App):
 
         def on_select(self):
             """When pressing button A"""
+            # technically this should also call on_select callback, but we cannot if we want to re-use some code here
+            # and it should set the selection state, as it is the default behaviour here even though we do not need it
             if not self.is_selected:
                 if self._control_group:
                     self._control_group.clear_selection(self)
 
         def on_deselect(self):
-            """When pressing button B or selecting a different control"""
+            """When pressing button B or selecting a different control in the same group"""
             self._selection_state = self.SelectionState.from_state(self.is_focused, False)
 
         def on_focus(self):
@@ -115,6 +127,10 @@ class RadioApp(App):
             draw.bitmap(left_top, self._icon_bitmap, fill=self._selection_state.color)
 
     class SingleActionControl(Control):
+        """
+        Represents a UI control element. A single action control is a simple type of control. If it is already selected,
+        it cannot be selected again and has to be deselected in some way (either by a key or by a control group).
+        """
 
         def __init__(self, icon_bitmap: Image, on_select: Callable[[], None],
                      control_group: 'RadioApp.ControlGroup' = None):
@@ -127,6 +143,11 @@ class RadioApp(App):
                 self._on_select()
 
     class SwitchControl(Control):
+        """
+        Represents a UI control element. A switch control has two textures, that can be switched on selection. Thus, it
+        is never really in a selected state, but can switch between two states and can call different callbacks
+        depending on this state.
+        """
 
         def __init__(self, icon_bitmap: Image, switched_icon_bitmap: Image,
                      on_select: Callable[[], None],
@@ -157,6 +178,10 @@ class RadioApp(App):
                         fill=self._selection_state.color)
 
     class InstantControl(Control):
+        """
+        Represents a UI control element. An instant control can never be selected. When selecting, it only calls the
+        callback but stays in the same state, allowing to call the action again.
+        """
 
         def __init__(self, icon_bitmap: Image, on_select: Callable[[], None],
                      control_group: 'RadioApp.ControlGroup' = None):
