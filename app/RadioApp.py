@@ -1,6 +1,6 @@
 from app.App import App
 from PIL import Image, ImageDraw, ImageFont
-from typing import Tuple, Collection
+from typing import Tuple, Collection, List, Callable
 import pyaudio
 import wave
 import os
@@ -10,8 +10,19 @@ class RadioApp(App):
     __CONTROL_PADDING = 4
     __CONTROL_BOTTOM_OFFSET = 20
 
-    class Control:
+    class ControlGroup:
 
+        def __init__(self):
+            self.__controls: List['RadioApp.Control'] = []
+
+        def listen(self, control: 'RadioApp.Control'):
+            self.__controls.append(control)
+
+        def clear_selection(self, control: 'RadioApp.Control'):
+            for control in [c for c in self.__controls if c is not control]:
+                control.on_deselect()
+
+    class Control:
         class SelectionState:
             NONE = None
             FOCUSED = None
@@ -47,9 +58,14 @@ class RadioApp(App):
             def background_color(self):
                 return self.__background_color
 
-        def __init__(self, icon_bitmap: Image):
+        def __init__(self, icon_bitmap: Image, on_select: Callable[[], None],
+                     control_group: 'RadioApp.ControlGroup' = None):
             self._icon_bitmap = icon_bitmap
             self._selection_state = self.SelectionState.NONE
+            self._on_select = on_select
+            self._control_group = control_group
+            if self._control_group:
+                self._control_group.listen(self)
 
         @property
         def size(self) -> Tuple[int, int]:
@@ -65,7 +81,11 @@ class RadioApp(App):
 
         def on_select(self):
             """When pressing button A"""
-            self._selection_state = self.SelectionState.from_state(self.is_focused, True)
+            if not self.is_selected:
+                if self._control_group:
+                    self._control_group.clear_selection(self)
+                self._selection_state = self.SelectionState.from_state(self.is_focused, True)
+                self._on_select()
 
         def on_deselect(self):
             """When pressing button B or selecting a different control"""
@@ -79,6 +99,10 @@ class RadioApp(App):
             """When moving focus away from this control"""
             self._selection_state = self.SelectionState.from_state(False, self.is_selected)
 
+        def reset(self):
+            """Resets the control to and unfocused and unselected state"""
+            self._selection_state = self.SelectionState.from_state(False, False)
+
         def draw(self, draw: ImageDraw, left_top: Tuple[int, int]):
             width, height = self._icon_bitmap.size
             left, top = left_top
@@ -88,13 +112,26 @@ class RadioApp(App):
 
     class SwitchControl(Control):
 
-        def __init__(self, icon_bitmap: Image, switched_icon_bitmap: Image):
-            super().__init__(icon_bitmap)
+        def __init__(self, icon_bitmap: Image, switched_icon_bitmap: Image,
+                     on_select: Callable[[], None],
+                     on_switched_select: Callable[[], None],
+                     control_group: 'RadioApp.ControlGroup' = None):
+            super().__init__(icon_bitmap, on_select, control_group)
+            self._on_switched_select = on_switched_select
             self._switched_icon_bitmap = switched_icon_bitmap
             self._is_switched = False
 
         def on_select(self):
+            if self._control_group:
+                self._control_group.clear_selection(self)
             self._is_switched = not self._is_switched
+            if self._is_switched:
+                self._on_switched_select()
+            else:
+                self._on_select()
+
+        def on_deselect(self):
+            self._is_switched = False
 
         def draw(self, draw: ImageDraw, left_top: Tuple[int, int]):
             width, height = self._icon_bitmap.size
@@ -106,11 +143,14 @@ class RadioApp(App):
 
     class InstantControl(Control):
 
-        def __init__(self, icon_bitmap: Image):
-            super().__init__(icon_bitmap)
+        def __init__(self, icon_bitmap: Image, on_select: Callable[[], None],
+                     control_group: 'RadioApp.ControlGroup' = None):
+            super().__init__(icon_bitmap, on_select, control_group)
 
         def on_select(self):
-            pass
+            if self._control_group:
+                self._control_group.clear_selection(self)
+            self._on_select()
 
     def __init__(self, resolution: Tuple[int, int],
                  background: Tuple[int, int, int], color: Tuple[int, int, int], color_dark: Tuple[int, int, int],
@@ -145,12 +185,34 @@ class RadioApp(App):
         order_icon = Image.open(os.path.join(resources_path, 'order.png')).convert('1')
         random_icon = Image.open(os.path.join(resources_path, 'random.png')).convert('1')
 
+        def stop_action():
+            print('stop')
+
+        def prev_action():
+            print('previous')
+
+        def skip_action():
+            print('skip')
+
+        def play_action():
+            print('play')
+
+        def pause_action():
+            print('pause')
+
+        def random_action():
+            print('random')
+
+        def order_action():
+            print('order')
+
+        control_group = self.ControlGroup()
         self.__controls = [
-            self.Control(stop_icon),
-            self.InstantControl(previous_icon),
-            self.SwitchControl(play_icon, pause_icon),
-            self.InstantControl(skip_icon),
-            self.SwitchControl(order_icon, random_icon)
+            self.Control(stop_icon, stop_action, control_group),
+            self.InstantControl(previous_icon, prev_action, control_group),
+            self.SwitchControl(play_icon, pause_icon, pause_action, play_action, control_group),
+            self.InstantControl(skip_icon, skip_action, control_group),
+            self.SwitchControl(order_icon, random_icon, order_action, random_action)
         ]
         self.__selected_control_index = 0
 
@@ -163,9 +225,9 @@ class RadioApp(App):
         width, height = self.__resolution
         left_top = (self.__app_side_offset, self.__app_top_offset)
 
-        # test draw controls
-        controls_total_width = sum([c.size[0] for c in self.__controls]) + self.__CONTROL_PADDING * \
-            (len(self.__controls) - 1)
+        # draw controls
+        controls_total_width = sum([c.size[0] for c in self.__controls]) + self.__CONTROL_PADDING * (
+                len(self.__controls) - 1)
         max_control_height = max([c.size[1] for c in self.__controls])
         cursor = (width // 2 - controls_total_width // 2,
                   height - self.__app_bottom_offset - max_control_height - self.__CONTROL_BOTTOM_OFFSET)
