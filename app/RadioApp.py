@@ -23,7 +23,13 @@ class RadioApp(App):
                 control.on_deselect()
 
     class Control:
+
         class SelectionState:
+            """
+            Container class representing a state of a control element. A selection state has an element color and
+            a background color, and also values determining if it represents focused and selected.
+            Initially, the state members are all none, replace them before usage or create new ones for a specific use.
+            """
             NONE = None
             FOCUSED = None
             SELECTED = None
@@ -84,8 +90,6 @@ class RadioApp(App):
             if not self.is_selected:
                 if self._control_group:
                     self._control_group.clear_selection(self)
-                self._selection_state = self.SelectionState.from_state(self.is_focused, True)
-                self._on_select()
 
         def on_deselect(self):
             """When pressing button B or selecting a different control"""
@@ -110,6 +114,18 @@ class RadioApp(App):
                            fill=self._selection_state.background_color)
             draw.bitmap(left_top, self._icon_bitmap, fill=self._selection_state.color)
 
+    class SingleActionControl(Control):
+
+        def __init__(self, icon_bitmap: Image, on_select: Callable[[], None],
+                     control_group: 'RadioApp.ControlGroup' = None):
+            super().__init__(icon_bitmap, on_select, control_group)
+
+        def on_select(self):
+            if not self.is_selected:
+                super().on_select()
+                self._selection_state = self.SelectionState.from_state(self.is_focused, True)
+                self._on_select()
+
     class SwitchControl(Control):
 
         def __init__(self, icon_bitmap: Image, switched_icon_bitmap: Image,
@@ -122,8 +138,7 @@ class RadioApp(App):
             self._is_switched = False
 
         def on_select(self):
-            if self._control_group:
-                self._control_group.clear_selection(self)
+            super().on_select()
             self._is_switched = not self._is_switched
             if self._is_switched:
                 self._on_switched_select()
@@ -148,8 +163,7 @@ class RadioApp(App):
             super().__init__(icon_bitmap, on_select, control_group)
 
         def on_select(self):
-            if self._control_group:
-                self._control_group.clear_selection(self)
+            super().on_select()
             self._on_select()
 
     def __init__(self, resolution: Tuple[int, int],
@@ -208,7 +222,7 @@ class RadioApp(App):
 
         control_group = self.ControlGroup()
         self.__controls = [
-            self.Control(stop_icon, stop_action, control_group),
+            self.SingleActionControl(stop_icon, stop_action, control_group),
             self.InstantControl(previous_icon, prev_action, control_group),
             self.SwitchControl(play_icon, pause_icon, pause_action, play_action, control_group),
             self.InstantControl(skip_icon, skip_action, control_group),
