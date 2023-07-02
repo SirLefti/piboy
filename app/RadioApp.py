@@ -9,6 +9,7 @@ import os
 class RadioApp(App):
     __CONTROL_PADDING = 4
     __CONTROL_BOTTOM_OFFSET = 20
+    __MAX_ENTRIES = 9
     __LINE_HEIGHT = 20
 
     class ControlGroup:
@@ -209,6 +210,7 @@ class RadioApp(App):
         self.__font = font_standard
 
         self.__selected_index = 0
+        self.__top_index = 0
         self.__player = pyaudio.PyAudio()
         self.__stream: Optional[pyaudio.Stream] = None
         self.__wave = None
@@ -326,7 +328,7 @@ class RadioApp(App):
             self.InstantControl(skip_icon, skip_action, control_group),
             self.SwitchControl(order_icon, random_icon, order_action, random_action)
         ]
-        self.__selected_control_index = 0
+        self.__selected_control_index = 2
 
     @property
     def title(self) -> str:
@@ -349,15 +351,33 @@ class RadioApp(App):
 
         # draw track list
         left_top = (self.__app_side_offset, self.__app_top_offset)
-        right_bottom = (width - self.__app_side_offset, cursor[1] - self.__CONTROL_BOTTOM_OFFSET)
+        left, top = left_top
+        right_bottom = (width - self.__app_side_offset, top + self.__LINE_HEIGHT * self.__MAX_ENTRIES)
         right, bottom = right_bottom
-        # draw.rectangle(left_top + right_bottom, fill=self.__background, outline=self.__color, width=2)
+
+        if len(self.__files) > self.__MAX_ENTRIES:
+            if self.__selected_index < self.__top_index:
+                self.__top_index = self.__selected_index
+            elif self.__selected_index not in range(self.__top_index, self.__top_index + self.__MAX_ENTRIES):
+                self.__top_index = self.__selected_index - self.__MAX_ENTRIES + 1
+        else:
+            self.__top_index = 0
 
         cursor = left_top
-        for index, file in enumerate(self.__files):
+        for index, file in enumerate(self.__files[self.__top_index:]):
+            index += self.__top_index  # pad index if entries are skipped
             if self.__selected_index == index:
                 draw.rectangle(cursor + (right, cursor[1] + self.__LINE_HEIGHT), self.__color_dark)
-            draw.text(cursor, file, self.__color, font=self.__font)
+
+            if index == self.__MAX_ENTRIES + self.__top_index:
+                draw.text(cursor, '...', self.__color, font=self.__font)
+                break
+
+            text = file
+            while self.__font.getbbox(text)[2] > right - left:
+                text = text[:-1]  # cut off last char until it fits
+
+            draw.text(cursor, text, self.__color, font=self.__font)
             cursor = (cursor[0], cursor[1] + self.__LINE_HEIGHT)
 
         return image, 0, 0
