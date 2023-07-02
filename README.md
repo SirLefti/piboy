@@ -78,11 +78,16 @@ You might have to make sure, that ``DEV_MODE`` in ``config.py`` is set to ``0``.
 
 ## Configuration
 
-Most config stuff is defined in the equally named file ``config.py``. However, the apps are configured in ``piboy.py``
-to avoid circular imports. The same applies to the interface (the way how the Pi-Boy shows the UI) and input
-configuration (the way how the Pi-Boy reads the user input). ``TkInterface`` can be used for development and simulation
-purposes without a Raspberry Pi. It implements both ``Interface`` and ``Input`` and thus should be used as
-interface and input. On a Raspberry Pi use ``ILI9486Interface`` and ``GPIOInput``.
+On first run, the PiBoy script will create a ``config.yaml`` if not found. In that config file, you can configure
+everything that relates to appearance and wiring. When running on a Raspberry Pi, ``dev_move`` must be set to ``False``
+if not set by default. For development, it must be set to ``True`` instead, obviously. This setting automatically loads
+the right input and display modules. On a Raspberry Pi, ``ILI9486Interface`` and ``GPIOInput`` are being used. For
+development, ``TkInterface`` or ``SelfManagedTkInterface`` can be used, both implement full input and display
+functionality.
+
+You can define additional color groups under ``app_config/modes`` for your own theme and set the index at
+``app_config/color_mode``. The first default color group is the traditional class green theme, the second is a yellow
+power armor mode theme.
 
 This project uses FreeSansBold as default font. If the font cannot be found despite being installed, or you do not want
 to install it, place the ``FreeSansBold.ttf`` in the root directory as a workaround.
