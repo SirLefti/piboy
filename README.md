@@ -40,7 +40,7 @@ Additional parts depending on case variant.
 
 Install system dependencies:
 ````bash
-sudo apt install build-essential git usbmount python3 python3-dev python3-smbus python3-venv fonts-freefont-ttf libjpeg-dev libatlas-base-dev libopenjp2-7-dev
+sudo apt install build-essential git usbmount python3 python3-dev python3-smbus python3-venv python3-audio fonts-freefont-ttf libjpeg-dev libatlas-base-dev libopenjp2-7-dev
 ````
 
 Make sure the following entry in ``/lib/systemd/system/systemd-udevd.service`` matches and reboot after changes:
