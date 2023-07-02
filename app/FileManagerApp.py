@@ -230,7 +230,7 @@ class FileManagerApp(App):
         if is_selected:
             draw.rectangle(left_top + right_bottom, fill=self.__color_dark)
         text = state.directory
-        while font.getbbox(text)[3] > right - left - side_padding:
+        while font.getbbox(text)[2] > right - left - side_padding:
             text = text[:-1]  # cut off last char until it fits
         draw.text((left + side_padding, top), text, self.__color, font=font)
 
@@ -238,7 +238,7 @@ class FileManagerApp(App):
         try:
             content = state.files
             entries = state.entries
-            max_entries = int((bottom - cursor[1]) / line_height)
+            max_entries = (bottom - cursor[1]) // line_height
             max_entries -= 1 if entries > max_entries else 0  # reduce max shown entries to show the ... line if needed
             if entries > max_entries:  # not all entries will fit in the view
                 if state.selected_index < state.top_index:
