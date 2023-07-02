@@ -11,6 +11,7 @@ class RadioApp(App):
     __CONTROL_BOTTOM_OFFSET = 20
     __MAX_ENTRIES = 9
     __LINE_HEIGHT = 20
+    __VOLUME_STEP = 10
 
     class ControlGroup:
         """
@@ -235,6 +236,8 @@ class RadioApp(App):
         skip_icon = Image.open(os.path.join(resources_path, 'skip.png')).convert('1')
         order_icon = Image.open(os.path.join(resources_path, 'order.png')).convert('1')
         random_icon = Image.open(os.path.join(resources_path, 'random.png')).convert('1')
+        volume_decrease_icon = Image.open(os.path.join(resources_path, 'volume_decrease.png')).convert('1')
+        volume_increase_icon = Image.open(os.path.join(resources_path, 'volume_increase.png')).convert('1')
 
         def stream_callback(_1, frame_count, _2,  _3):
             data = self.__wave.readframes(frame_count)
@@ -320,13 +323,21 @@ class RadioApp(App):
         def order_action():
             self.__is_random = False
 
+        def decrease_volume_action():
+            pass
+
+        def increase_volume_action():
+            pass
+
         control_group = self.ControlGroup()
         self.__controls = [
             self.InstantControl(stop_icon, stop_action, control_group),
             self.InstantControl(previous_icon, prev_action, control_group),
             self.SwitchControl(play_icon, pause_icon, pause_action, play_action, control_group),
             self.InstantControl(skip_icon, skip_action, control_group),
-            self.SwitchControl(order_icon, random_icon, order_action, random_action)
+            self.SwitchControl(order_icon, random_icon, order_action, random_action),
+            self.InstantControl(volume_decrease_icon, decrease_volume_action),
+            self.InstantControl(volume_increase_icon, increase_volume_action)
         ]
         self.__selected_control_index = 2
 
