@@ -1,6 +1,6 @@
 from app.App import App
 from PIL import Image, ImageDraw, ImageFont
-from typing import Tuple, Collection, List, Callable
+from typing import Tuple, List, Callable, Optional
 import pyaudio
 import wave
 import os
@@ -9,6 +9,7 @@ import os
 class RadioApp(App):
     __CONTROL_PADDING = 4
     __CONTROL_BOTTOM_OFFSET = 20
+    __LINE_HEIGHT = 20
 
     class ControlGroup:
         """
@@ -95,13 +96,17 @@ class RadioApp(App):
         def is_selected(self) -> bool:
             return self._selection_state.is_selected
 
-        def on_select(self):
-            """When pressing button A"""
-            # technically this should also call on_select callback, but we cannot if we want to re-use some code here
-            # and it should set the selection state, as it is the default behaviour here even though we do not need it
+        def _handle_control_group(self):
+            """Clears selection in the same control group"""
             if not self.is_selected:
                 if self._control_group:
                     self._control_group.clear_selection(self)
+
+        def on_select(self):
+            """When pressing button A"""
+            self._handle_control_group()
+            self._selection_state = self.SelectionState.from_state(self.is_focused, True)
+            self._on_select()
 
         def on_deselect(self):
             """When pressing button B or selecting a different control in the same group"""
@@ -138,7 +143,7 @@ class RadioApp(App):
 
         def on_select(self):
             if not self.is_selected:
-                super().on_select()
+                super()._handle_control_group()
                 self._selection_state = self.SelectionState.from_state(self.is_focused, True)
                 self._on_select()
 
@@ -159,7 +164,7 @@ class RadioApp(App):
             self._is_switched = False
 
         def on_select(self):
-            super().on_select()
+            super()._handle_control_group()
             self._is_switched = not self._is_switched
             if self._is_switched:
                 self._on_switched_select()
@@ -188,7 +193,7 @@ class RadioApp(App):
             super().__init__(icon_bitmap, on_select, control_group)
 
         def on_select(self):
-            super().on_select()
+            super()._handle_control_group()
             self._on_select()
 
     def __init__(self, resolution: Tuple[int, int],
@@ -205,15 +210,20 @@ class RadioApp(App):
 
         self.__selected_index = 0
         self.__player = pyaudio.PyAudio()
+        self.__stream: Optional[pyaudio.Stream] = None
+        self.__wave = None
+        self.__is_playing = False
+        self.__is_random = False
 
+        self.__directory = 'media'
         self.__supported_extensions = ['.wav']
-        self.__files: Collection[str] = []
+        self.__files: List[str] = []
 
         # init selection states
         self.Control.SelectionState.NONE = self.Control.SelectionState(color_dark, background, False, False)
         self.Control.SelectionState.FOCUSED = self.Control.SelectionState(color, background, True, False)
-        self.Control.SelectionState.SELECTED = self.Control.SelectionState(background, color_dark, False, True)
-        self.Control.SelectionState.FOCUSED_SELECTED = self.Control.SelectionState(background, color, True, True)
+        self.Control.SelectionState.SELECTED = self.Control.SelectionState(color_dark, color, False, True)
+        self.Control.SelectionState.FOCUSED_SELECTED = self.Control.SelectionState(color, color_dark, True, True)
 
         resources_path = 'resources'
         stop_icon = Image.open(os.path.join(resources_path, 'stop.png')).convert('1')
@@ -224,30 +234,93 @@ class RadioApp(App):
         order_icon = Image.open(os.path.join(resources_path, 'order.png')).convert('1')
         random_icon = Image.open(os.path.join(resources_path, 'random.png')).convert('1')
 
-        def stop_action():
-            print('stop')
-
-        def prev_action():
-            print('previous')
-
-        def skip_action():
-            print('skip')
+        def stream_callback(_1, frame_count, _2,  _3):
+            data = self.__wave.readframes(frame_count)
+            return data, pyaudio.paContinue
 
         def play_action():
-            print('play')
+            """
+            Loads current selected file if no stream is loaded.
+            Resumes playing a loaded stream.
+            """
+            if not self.__stream:
+                self.__wave = wave.open(os.path.join(self.__directory, self.__files[self.__selected_index]), 'rb')
+                self.__stream = self.__player.open(format=self.__player.get_format_from_width(
+                                                          self.__wave.getsampwidth()),
+                                                   channels=self.__wave.getnchannels(),
+                                                   rate=self.__wave.getframerate(),
+                                                   output=True,
+                                                   stream_callback=stream_callback)
+            self.__stream.start_stream()
+            self.__is_playing = True
 
         def pause_action():
-            print('pause')
+            """Pauses a currently loaded stream."""
+            if self.__stream:
+                self.__stream.stop_stream()
+                self.__is_playing = False
+
+        def stop_action():
+            """Stops and clears a currently loaded stream."""
+            if self.__stream:
+                self.__stream.stop_stream()
+                self.__stream.close()
+                self.__is_playing = False
+                self.__stream = None
+
+        def prev_action():
+            """
+            Stops and clears a stream, selects a previous track and plays it if a stream is loaded.
+            Just selects a previous track otherwise.
+            """
+            if self.__stream and self.__is_playing:
+                self.__stream.stop_stream()
+                self.__stream.close()
+                self.__stream = None
+                if self.__is_random:
+                    # TODO implement randomization
+                    pass
+                else:
+                    self.__selected_index = max(self.__selected_index - 1, 0)
+                play_action()
+            else:
+                if self.__is_random:
+                    # TODO implement randomization
+                    pass
+                else:
+                    self.__selected_index = max(self.__selected_index - 1, 0)
+
+        def skip_action():
+            """
+            Stops and clears a stream, selects a next track and plays it if a stream is loaded.
+            Just selects a next track otherwise.
+            """
+            if self.__stream and self.__is_playing:
+                self.__stream.stop_stream()
+                self.__stream.close()
+                self.__stream = None
+                if self.__is_random:
+                    # TODO implement randomization
+                    pass
+                else:
+                    self.__selected_index = min(self.__selected_index + 1, len(self.__files) - 1)
+                play_action()
+            else:
+                if self.__is_random:
+                    # TODO implement randomization
+                    pass
+                else:
+                    self.__selected_index = min(self.__selected_index + 1, len(self.__files) - 1)
 
         def random_action():
-            print('random')
+            self.__is_random = True
 
         def order_action():
-            print('order')
+            self.__is_random = False
 
         control_group = self.ControlGroup()
         self.__controls = [
-            self.SingleActionControl(stop_icon, stop_action, control_group),
+            self.InstantControl(stop_icon, stop_action, control_group),
             self.InstantControl(previous_icon, prev_action, control_group),
             self.SwitchControl(play_icon, pause_icon, pause_action, play_action, control_group),
             self.InstantControl(skip_icon, skip_action, control_group),
@@ -262,7 +335,6 @@ class RadioApp(App):
     def draw(self, image: Image, partial=False) -> (Image, int, int):
         draw = ImageDraw.Draw(image)
         width, height = self.__resolution
-        left_top = (self.__app_side_offset, self.__app_top_offset)
 
         # draw controls
         controls_total_width = sum([c.size[0] for c in self.__controls]) + self.__CONTROL_PADDING * (
@@ -275,11 +347,24 @@ class RadioApp(App):
             control.draw(draw, (cursor[0], cursor[1] + (max_control_height - c_height) // 2))
             cursor = (cursor[0] + c_width + self.__CONTROL_PADDING, cursor[1])
 
+        # draw track list
+        left_top = (self.__app_side_offset, self.__app_top_offset)
+        right_bottom = (width - self.__app_side_offset, cursor[1] - self.__CONTROL_BOTTOM_OFFSET)
+        right, bottom = right_bottom
+        # draw.rectangle(left_top + right_bottom, fill=self.__background, outline=self.__color, width=2)
+
+        cursor = left_top
+        for index, file in enumerate(self.__files):
+            if self.__selected_index == index:
+                draw.rectangle(cursor + (right, cursor[1] + self.__LINE_HEIGHT), self.__color_dark)
+            draw.text(cursor, file, self.__color, font=self.__font)
+            cursor = (cursor[0], cursor[1] + self.__LINE_HEIGHT)
+
         return image, 0, 0
 
     def __get_files(self):
-        return sorted([f for f in os.listdir('media') if os.path.splitext(f)[1] in self.__supported_extensions],
-                      key=str.lower)
+        return sorted([f for f in os.listdir(self.__directory) if os.path.splitext(f)[1] in
+                       self.__supported_extensions], key=str.lower)
 
     def on_key_left(self):
         self.__controls[self.__selected_control_index].on_blur()
@@ -292,10 +377,10 @@ class RadioApp(App):
         self.__controls[self.__selected_control_index].on_focus()
 
     def on_key_up(self):
-        pass
+        self.__selected_index = max(self.__selected_index - 1, 0)
 
     def on_key_down(self):
-        pass
+        self.__selected_index = min(self.__selected_index + 1, len(self.__files) - 1)
 
     def on_key_a(self):
         self.__controls[self.__selected_control_index].on_select()
