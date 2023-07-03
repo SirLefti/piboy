@@ -236,8 +236,9 @@ class RadioApp(App):
             Loads current selected file if no stream is loaded.
             Resumes playing a loaded stream.
             """
-            # TODO check this line
-            if self.__stream and self.__playlist[self.__playing_index] != self.__selected_index:
+            if self.__selected_index != self.__playlist[self.__playing_index]:
+                self.__playing_index = self.__playlist.index(self.__selected_index)
+            if self.__stream:
                 self.__stream.stop_stream()
                 self.__stream.close()
                 self.__stream = None
