@@ -6,6 +6,7 @@ import pyaudio
 import wave
 import os
 import re
+import random
 
 
 class RadioApp(App):
@@ -29,7 +30,7 @@ class RadioApp(App):
         def listen(self, control: 'RadioApp.Control'):
             self.__controls.append(control)
 
-        def clear_selection(self, control: 'RadioApp.Control'):
+        def clear_selection(self, control: Optional['RadioApp.Control']):
             for control in [c for c in self.__controls if c is not control]:
                 control.on_deselect()
 
@@ -135,22 +136,6 @@ class RadioApp(App):
                            fill=self._selection_state.background_color)
             draw.bitmap(left_top, self._icon_bitmap, fill=self._selection_state.color)
 
-    class SingleActionControl(Control):
-        """
-        Represents a UI control element. A single action control is a simple type of control. If it is already selected,
-        it cannot be selected again and has to be deselected in some way (either by a key or by a control group).
-        """
-
-        def __init__(self, icon_bitmap: Image, on_select: Callable[[], None],
-                     control_group: 'RadioApp.ControlGroup' = None):
-            super().__init__(icon_bitmap, on_select, control_group)
-
-        def on_select(self):
-            if not self.is_selected:
-                super()._handle_control_group()
-                self._selection_state = self.SelectionState.from_state(self.is_focused, True)
-                self._on_select()
-
     class SwitchControl(Control):
         """
         Represents a UI control element. A switch control has two textures, that can be switched on selection. Thus, it
@@ -212,17 +197,18 @@ class RadioApp(App):
         self.__app_bottom_offset = app_bottom_offset
         self.__font = font_standard
 
-        self.__selected_index = 0
-        self.__top_index = 0
-        self.__player = pyaudio.PyAudio()
-        self.__stream: Optional[pyaudio.Stream] = None
-        self.__wave = None
-        self.__is_playing = False
-        self.__is_random = False
-
         self.__directory = 'media'
         self.__supported_extensions = ['.wav']
         self.__files: List[str] = []
+
+        self.__selected_index = 0  # what we have selected with our cursor
+        self.__top_index = 0  # what is on top in case the list is greater than screen space
+        self.__playlist: List[int] = []  # order of the tracks to play
+        self.__playing_index = 0  # what we are currently playing from the playlist
+        self.__player = pyaudio.PyAudio()
+        self.__stream: Optional[pyaudio.Stream] = None
+        self.__wave = None
+        self.__is_random = False
 
         # init selection states
         self.Control.SelectionState.NONE = self.Control.SelectionState(color_dark, background, False, False)
@@ -250,8 +236,14 @@ class RadioApp(App):
             Loads current selected file if no stream is loaded.
             Resumes playing a loaded stream.
             """
+            # TODO check this line
+            if self.__stream and self.__playlist[self.__playing_index] != self.__selected_index:
+                self.__stream.stop_stream()
+                self.__stream.close()
+                self.__stream = None
             if not self.__stream:
-                self.__wave = wave.open(os.path.join(self.__directory, self.__files[self.__selected_index]), 'rb')
+                self.__wave = wave.open(os.path.join(self.__directory,
+                                                     self.__files[self.__playlist[self.__playing_index]]), 'rb')
                 self.__stream = self.__player.open(format=self.__player.get_format_from_width(
                                                           self.__wave.getsampwidth()),
                                                    channels=self.__wave.getnchannels(),
@@ -259,20 +251,17 @@ class RadioApp(App):
                                                    output=True,
                                                    stream_callback=stream_callback)
             self.__stream.start_stream()
-            self.__is_playing = True
 
         def pause_action():
             """Pauses a currently loaded stream."""
             if self.__stream:
                 self.__stream.stop_stream()
-                self.__is_playing = False
 
         def stop_action():
             """Stops and clears a currently loaded stream."""
             if self.__stream:
                 self.__stream.stop_stream()
                 self.__stream.close()
-                self.__is_playing = False
                 self.__stream = None
 
         def prev_action():
@@ -280,50 +269,40 @@ class RadioApp(App):
             Stops and clears a stream, selects a previous track and plays it if a stream is loaded.
             Just selects a previous track otherwise.
             """
-            if self.__stream and self.__is_playing:
+            self.__playing_index = (self.__playing_index - 1) % len(self.__files)
+            self.__selected_index = self.__playlist[self.__playing_index]
+
+            if self.__stream and self.__stream.is_active():
                 self.__stream.stop_stream()
                 self.__stream.close()
                 self.__stream = None
-                if self.__is_random:
-                    # TODO implement randomization
-                    pass
-                else:
-                    self.__selected_index = max(self.__selected_index - 1, 0)
                 play_action()
-            else:
-                if self.__is_random:
-                    # TODO implement randomization
-                    pass
-                else:
-                    self.__selected_index = max(self.__selected_index - 1, 0)
 
         def skip_action():
             """
             Stops and clears a stream, selects a next track and plays it if a stream is loaded.
             Just selects a next track otherwise.
             """
-            if self.__stream and self.__is_playing:
+            self.__playing_index = (self.__playing_index + 1) % len(self.__files)
+            self.__selected_index = self.__playlist[self.__playing_index]
+
+            if self.__stream and self.__stream.is_active():
                 self.__stream.stop_stream()
                 self.__stream.close()
                 self.__stream = None
-                if self.__is_random:
-                    # TODO implement randomization
-                    pass
-                else:
-                    self.__selected_index = min(self.__selected_index + 1, len(self.__files) - 1)
                 play_action()
-            else:
-                if self.__is_random:
-                    # TODO implement randomization
-                    pass
-                else:
-                    self.__selected_index = min(self.__selected_index + 1, len(self.__files) - 1)
 
         def random_action():
             self.__is_random = True
+            random.shuffle(self.__playlist)
+            # set playlist index to the track we are currently playing or looking at
+            self.__playing_index = self.__playlist.index(self.__selected_index)
 
         def order_action():
             self.__is_random = False
+            self.__playlist = list(range(0, len(self.__files)))
+            # set playlist index to the track we are currently playing or looking at
+            self.__playing_index = self.__selected_index
 
         def decrease_volume_action():
             current_value = self.__get_volume()
@@ -344,9 +323,9 @@ class RadioApp(App):
         control_group = self.ControlGroup()
         self.__controls = [
             self.InstantControl(stop_icon, stop_action, control_group),
-            self.InstantControl(previous_icon, prev_action, control_group),
+            self.InstantControl(previous_icon, prev_action),
             self.SwitchControl(play_icon, pause_icon, pause_action, play_action, control_group),
-            self.InstantControl(skip_icon, skip_action, control_group),
+            self.InstantControl(skip_icon, skip_action),
             self.SwitchControl(order_icon, random_icon, order_action, random_action),
             self.InstantControl(volume_decrease_icon, decrease_volume_action),
             self.InstantControl(volume_increase_icon, increase_volume_action)
@@ -405,9 +384,10 @@ class RadioApp(App):
 
         return image, 0, 0
 
-    def __get_files(self):
-        return sorted([f for f in os.listdir(self.__directory) if os.path.splitext(f)[1] in
-                       self.__supported_extensions], key=str.lower)
+    def __load_files(self):
+        self.__files = sorted([f for f in os.listdir(self.__directory) if os.path.splitext(f)[1] in
+                              self.__supported_extensions], key=str.lower)
+        self.__playlist = list(range(0, len(self.__files)))
 
     @staticmethod
     def __get_volume() -> int:
@@ -465,7 +445,7 @@ class RadioApp(App):
         pass
 
     def on_app_enter(self):
-        self.__files = self.__get_files()
+        self.__load_files()
         self.__controls[self.__selected_control_index].on_focus()
 
     def on_app_leave(self):
