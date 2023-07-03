@@ -436,8 +436,8 @@ class RadioApp(App):
         :param volume: volume value to set
         """
         # python allows this mathematical expression unlike other languages
-        if 0 <= volume <= 100:
-            raise ValueError('Error setting volume value: Volume must be between 0 and 100')
+        if not 0 <= volume <= 100:
+            raise ValueError(f'Error setting volume value: Volume must be between 0 and 100, was {volume}')
         result = run(['amixer', '-q', '-M', 'sset', 'PCM', f'{volume}%'], stdout=PIPE)
         if result.returncode != 0:
             raise ValueError(f'Error setting volume value: {result.returncode}')
