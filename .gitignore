@@ -13,3 +13,7 @@ __pycache__/
 .tiles
 FreeSansBold.ttf
 config.yaml
+
+# Log files
+log
+err

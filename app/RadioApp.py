@@ -1,9 +1,11 @@
 from app.App import App
 from PIL import Image, ImageDraw, ImageFont
 from typing import Tuple, List, Callable, Optional
+from subprocess import run, PIPE
 import pyaudio
 import wave
 import os
+import re
 
 
 class RadioApp(App):
@@ -324,10 +326,20 @@ class RadioApp(App):
             self.__is_random = False
 
         def decrease_volume_action():
-            pass
+            current_value = self.__get_volume()
+            if current_value % self.__VOLUME_STEP == 0:
+                self.__set_volume(max(current_value - self.__VOLUME_STEP, 0))
+            else:
+                aligned_value = current_value // self.__VOLUME_STEP * self.__VOLUME_STEP
+                self.__set_volume(max(aligned_value - self.__VOLUME_STEP, 0))
 
         def increase_volume_action():
-            pass
+            current_value = self.__get_volume()
+            if current_value % self.__VOLUME_STEP == 0:
+                self.__set_volume(min(current_value + self.__VOLUME_STEP, 100))
+            else:
+                aligned_value = (current_value + self.__VOLUME_STEP) // self.__VOLUME_STEP * self.__VOLUME_STEP
+                self.__set_volume(min(aligned_value + self.__VOLUME_STEP, 100))
 
         control_group = self.ControlGroup()
         self.__controls = [
@@ -396,6 +408,39 @@ class RadioApp(App):
     def __get_files(self):
         return sorted([f for f in os.listdir(self.__directory) if os.path.splitext(f)[1] in
                        self.__supported_extensions], key=str.lower)
+
+    @staticmethod
+    def __get_volume() -> int:
+        """
+        Returns the current volume value on the primary sound mixer. Works only on Linux (Raspberry OS).
+        :return: current volume value
+        """
+        result = run(['amixer', '-M', 'sget', 'PCM'], stdout=PIPE)
+        if result.returncode != 0:
+            raise ValueError(f'Error getting current volume value: {result.returncode}')
+        if result.stdout is not None:
+            content = result.stdout.decode('utf-8')
+            # (Python Zen #2) explicit is better than implicit, the second backslash should stay there
+            match = re.search(r'\[(\d+)%\]', content)
+            if match:
+                return int(match.group(1))
+            else:
+                raise ValueError('Error getting current volume: No match')
+        raise ValueError('Error getting current volume value: No content')
+
+    @staticmethod
+    def __set_volume(volume: int):
+        """
+        Updates the volume value on the primary sound mixer. Value must be between 0 and 100 (inclusive).
+        Works only on Linux (Raspberry OS).
+        :param volume: volume value to set
+        """
+        # python allows this mathematical expression unlike other languages
+        if 0 <= volume <= 100:
+            raise ValueError('Error setting volume value: Volume must be between 0 and 100')
+        result = run(['amixer', '-q', '-M', 'sset', 'PCM', f'{volume}%'], stdout=PIPE)
+        if result.returncode != 0:
+            raise ValueError(f'Error setting volume value: {result.returncode}')
 
     def on_key_left(self):
         self.__controls[self.__selected_control_index].on_blur()
