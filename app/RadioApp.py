@@ -199,11 +199,11 @@ class RadioApp(App):
 
         self.__directory = 'media'
         self.__supported_extensions = ['.wav']
-        self.__files: List[str] = []
+        self.__files: List[str] = self.__get_files()
 
         self.__selected_index = 0  # what we have selected with our cursor
         self.__top_index = 0  # what is on top in case the list is greater than screen space
-        self.__playlist: List[int] = []  # order of the tracks to play
+        self.__playlist: List[int] = list(range(0, len(self.__files)))  # order of the tracks to play
         self.__playing_index = 0  # what we are currently playing from the playlist
         self.__player = pyaudio.PyAudio()
         self.__stream: Optional[pyaudio.Stream] = None
@@ -384,10 +384,9 @@ class RadioApp(App):
 
         return image, 0, 0
 
-    def __load_files(self):
-        self.__files = sorted([f for f in os.listdir(self.__directory) if os.path.splitext(f)[1] in
-                              self.__supported_extensions], key=str.lower)
-        self.__playlist = list(range(0, len(self.__files)))
+    def __get_files(self):
+        return sorted([f for f in os.listdir(self.__directory) if os.path.splitext(f)[1] in
+                       self.__supported_extensions], key=str.lower)
 
     @staticmethod
     def __get_volume() -> int:
@@ -445,7 +444,6 @@ class RadioApp(App):
         pass
 
     def on_app_enter(self):
-        self.__load_files()
         self.__controls[self.__selected_control_index].on_focus()
 
     def on_app_leave(self):
