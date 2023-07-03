@@ -179,11 +179,11 @@ class ILI9486:
 
         self.command(CMD_VCOMCTL).send([0x00, 0x00, 0x00, 0x00], True, chunk_size=1)
 
-        self.command(CMD_PGAMCTL)\
+        self.command(CMD_PGAMCTL) \
             .send([0x0F, 0x1F, 0x1C, 0x0C, 0x0F, 0x08, 0x48, 0x98, 0x37, 0x0A, 0x13, 0x04, 0x11, 0x0D, 0x00], True,
                   chunk_size=1)  # values must be sent one by one, thus setting chunk size to 1
 
-        self.command(CMD_NGAMCTL)\
+        self.command(CMD_NGAMCTL) \
             .send([0x0F, 0x32, 0x2E, 0x0B, 0x0D, 0x05, 0x47, 0x75, 0x37, 0x06, 0x10, 0x03, 0x24, 0x20, 0x00], True,
                   chunk_size=1)  # values must be sent one by one, thus setting chunk size to 1
 
@@ -215,7 +215,7 @@ class ILI9486:
         self.data(y1 & 0xFF)
         return self
 
-    def display(self, image=None, x0 = 0, y0 = 0):
+    def display(self, image=None, x0=0, y0=0):
         """Writes the display buffer or provided image to the display. If no
         image is provided the display buffer will be written to the display.
         If an image is provided, it should be in RGB format and the same
