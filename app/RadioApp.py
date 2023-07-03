@@ -395,13 +395,13 @@ class RadioApp(App):
         Returns the current volume value on the primary sound mixer. Works only on Linux (Raspberry OS).
         :return: current volume value
         """
+        # noinspection SpellCheckingInspection
         result = run(['amixer', '-M', 'sget', 'PCM'], stdout=PIPE)
         if result.returncode != 0:
             raise ValueError(f'Error getting current volume value: {result.returncode}')
         if result.stdout is not None:
             content = result.stdout.decode('utf-8')
-            # (Python Zen #2) explicit is better than implicit, the second backslash should stay there
-            match = re.search(r'\[(\d+)%\]', content)
+            match = re.search(r'\[(\d+)%\]', content)  # noqa [Python Zen #2]: explicit is better than implicit
             if match:
                 return int(match.group(1))
             else:
@@ -418,6 +418,7 @@ class RadioApp(App):
         # python allows this mathematical expression unlike other languages
         if not 0 <= volume <= 100:
             raise ValueError(f'Error setting volume value: Volume must be between 0 and 100, was {volume}')
+        # noinspection SpellCheckingInspection
         result = run(['amixer', '-q', '-M', 'sset', 'PCM', f'{volume}%'], stdout=PIPE)
         if result.returncode != 0:
             raise ValueError(f'Error setting volume value: {result.returncode}')
