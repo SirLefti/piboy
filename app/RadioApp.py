@@ -12,8 +12,8 @@ import random
 class RadioApp(App):
     __CONTROL_PADDING = 4
     __CONTROL_BOTTOM_OFFSET = 20
-    __MAX_ENTRIES = 9
     __LINE_HEIGHT = 20
+    __META_INFO_HEIGHT = 20
     __VOLUME_STEP = 10
 
     class ControlGroup:
@@ -209,6 +209,12 @@ class RadioApp(App):
         self.__stream: Optional[pyaudio.Stream] = None
         self.__wave = None
         self.__is_random = False
+        self.__volume: Optional[int] = None
+        try:
+            # will only work on raspberry pi for no
+            self.__volume = self.__get_volume()
+        except (FileNotFoundError, ValueError):
+            pass
 
         # init selection states
         self.Control.SelectionState.NONE = self.Control.SelectionState(color_dark, background, False, False)
@@ -351,39 +357,57 @@ class RadioApp(App):
             c_width, c_height = control.size
             control.draw(draw, (cursor[0], cursor[1] + (max_control_height - c_height) // 2))
             cursor = (cursor[0] + c_width + self.__CONTROL_PADDING, cursor[1])
+        vertical_limit = cursor[1]
+
+        # draw volume
+        text = f'Volume: {self.__volume}%'
+        _, _, t_width, t_height = self.__font.getbbox(text)
+        draw.text((width // 2 - t_width // 2, vertical_limit - self.__META_INFO_HEIGHT // 2 - t_height // 2),
+                  text, self.__color, font=self.__font)
+        vertical_limit = vertical_limit - self.__META_INFO_HEIGHT
+
+        # draw currently playing track
+        max_width = width - 2 * self.__app_side_offset
+        text = f'Playing: {self.__files[self.__playlist[self.__playing_index]]}' if self.__stream else 'Empty'
+        while self.__font.getbbox(text)[2] > max_width:
+            text = text[:-1]  # cut off last char until it fits
+        _, _, t_width, t_height = self.__font.getbbox(text)
+        draw.text((width // 2 - t_width // 2, vertical_limit - self.__META_INFO_HEIGHT // 2 - t_height // 2),
+                  text, self.__color, font=self.__font)
+        vertical_limit = vertical_limit - self.__META_INFO_HEIGHT
 
         # draw track list
         left_top = (self.__app_side_offset, self.__app_top_offset)
         left, top = left_top
-        right_bottom = (width - self.__app_side_offset, top + self.__LINE_HEIGHT * self.__MAX_ENTRIES)
+        right_bottom = (width - self.__app_side_offset, vertical_limit)
         right, bottom = right_bottom
-
-        if len(self.__files) > self.__MAX_ENTRIES:
+        max_entries = (bottom - top) // self.__LINE_HEIGHT
+        if len(self.__files) > max_entries:
             if self.__selected_index < self.__top_index:
                 self.__top_index = self.__selected_index
-            elif self.__selected_index not in range(self.__top_index, self.__top_index + self.__MAX_ENTRIES):
-                self.__top_index = self.__selected_index - self.__MAX_ENTRIES + 1
+            elif self.__selected_index not in range(self.__top_index, self.__top_index + max_entries):
+                self.__top_index = self.__selected_index - max_entries + 1
         else:
             self.__top_index = 0
-
         cursor = left_top
         for index, file in enumerate(self.__files[self.__top_index:]):
             index += self.__top_index  # pad index if entries are skipped
             if self.__selected_index == index:
                 draw.rectangle(cursor + (right, cursor[1] + self.__LINE_HEIGHT), self.__color_dark)
-
-            if index == self.__MAX_ENTRIES + self.__top_index:
+            if index == max_entries + self.__top_index:
                 draw.text(cursor, '...', self.__color, font=self.__font)
                 break
-
             text = file
             while self.__font.getbbox(text)[2] > right - left:
                 text = text[:-1]  # cut off last char until it fits
-
             draw.text(cursor, text, self.__color, font=self.__font)
             cursor = (cursor[0], cursor[1] + self.__LINE_HEIGHT)
 
-        return image, 0, 0
+        if partial:
+            right_bottom = width - self.__app_side_offset, height - self.__app_bottom_offset
+            return image.crop(left_top + right_bottom), *left_top
+        else:
+            return image, 0, 0
 
     def __get_files(self):
         return sorted([f for f in os.listdir(self.__directory) if os.path.splitext(f)[1] in
