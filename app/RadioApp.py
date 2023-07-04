@@ -318,6 +318,7 @@ class RadioApp(App):
             else:
                 aligned_value = current_value // self.__VOLUME_STEP * self.__VOLUME_STEP
                 self.__set_volume(max(aligned_value - self.__VOLUME_STEP, 0))
+            self.__volume = self.__get_volume()
 
         def increase_volume_action():
             current_value = self.__get_volume()
@@ -326,6 +327,7 @@ class RadioApp(App):
             else:
                 aligned_value = (current_value + self.__VOLUME_STEP) // self.__VOLUME_STEP * self.__VOLUME_STEP
                 self.__set_volume(min(aligned_value + self.__VOLUME_STEP, 100))
+            self.__volume = self.__get_volume()
 
         control_group = self.ControlGroup()
         self.__controls = [
