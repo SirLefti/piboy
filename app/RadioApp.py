@@ -32,7 +32,7 @@ class RadioApp(App):
 
         def clear_selection(self, control: Optional['RadioApp.Control']):
             for control in [c for c in self.__controls if c is not control]:
-                control.on_deselect()
+                control.on_blur()
 
     class Control:
         """
@@ -48,8 +48,6 @@ class RadioApp(App):
             """
             NONE = None
             FOCUSED = None
-            SELECTED = None
-            FOCUSED_SELECTED = None
 
             def __init__(self, color: Tuple[int, int, int], background_color: Tuple[int, int, int],
                          is_focused: bool, is_selected: bool):
@@ -60,7 +58,7 @@ class RadioApp(App):
 
             @classmethod
             def from_state(cls, is_focused: bool, is_selected: bool):
-                values = [cls.NONE, cls.FOCUSED, cls.SELECTED, cls.FOCUSED_SELECTED]
+                values = [cls.NONE, cls.FOCUSED]
                 return [state for state in values
                         if state.is_focused == is_focused and state.is_selected == is_selected][0]
 
@@ -107,27 +105,17 @@ class RadioApp(App):
                 if self._control_group:
                     self._control_group.clear_selection(self)
 
-        def on_select(self):
-            """When pressing button A"""
-            self._handle_control_group()
-            self._selection_state = self.SelectionState.from_state(self.is_focused, True)
-            self._on_select()
-
-        def on_deselect(self):
-            """When pressing button B or selecting a different control in the same group"""
-            self._selection_state = self.SelectionState.from_state(self.is_focused, False)
-
         def on_focus(self):
             """When moving focus on this control"""
-            self._selection_state = self.SelectionState.from_state(True, self.is_selected)
+            self._selection_state = self.SelectionState.FOCUSED
 
         def on_blur(self):
             """When moving focus away from this control"""
-            self._selection_state = self.SelectionState.from_state(False, self.is_selected)
+            self._selection_state = self.SelectionState.NONE
 
         def reset(self):
-            """Resets the control to and unfocused and unselected state"""
-            self._selection_state = self.SelectionState.from_state(False, False)
+            """Resets the control to an unfocused state"""
+            self._selection_state = self.SelectionState.NONE
 
         def draw(self, draw: ImageDraw, left_top: Tuple[int, int]):
             width, height = self._icon_bitmap.size
@@ -219,8 +207,6 @@ class RadioApp(App):
         # init selection states
         self.Control.SelectionState.NONE = self.Control.SelectionState(color_dark, background, False, False)
         self.Control.SelectionState.FOCUSED = self.Control.SelectionState(color, background, True, False)
-        self.Control.SelectionState.SELECTED = self.Control.SelectionState(color_dark, color, False, True)
-        self.Control.SelectionState.FOCUSED_SELECTED = self.Control.SelectionState(color, color_dark, True, True)
 
         resources_path = 'resources'
         stop_icon = Image.open(os.path.join(resources_path, 'stop.png')).convert('1')
