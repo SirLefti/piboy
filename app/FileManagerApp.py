@@ -267,7 +267,7 @@ class FileManagerApp(App):
                     icon = Image.open(os.path.join(resources_path, directory_icon)).convert('1')
                     draw.bitmap(start, ImageOps.invert(icon), fill=self.__color)
 
-                while draw.textsize(file, font=font)[0] > right - left - symbol_dimensions - 2 * symbol_padding:
+                while font.getbbox(file)[2] > right - left - symbol_dimensions - 2 * symbol_padding:
                     file = file[:-1]  # cut off last char until it fits
                 draw.text((cursor_x + symbol_dimensions + 2 * symbol_padding, cursor_y), file, self.__color, font=font)
                 cursor = (cursor_x, cursor_y + line_height)
