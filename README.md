@@ -12,22 +12,32 @@ Provides basic functions for moving, copying and deleting files and directories.
 
 ![inv](./docs/inv.png)
 
-#### Map App
-Supports zooming and moving the map around. Don't get lost in the wasteland.
+#### System App
+Can fetch and install updates from the git repository.
 
-![map](./docs/map.png)
+![sys](./docs/sys.png)
 
-#### Clock App
-It just shows the time on a classic analog clock.
+#### Radio App
+Actually more like a classic music player. Stay tuned!
 
-![clk](./docs/clk.png)
+![rad](./docs/rad.png)
 
 #### Debug App
 Shows the last pressed key to help you check the key wiring.
 
 ![dbg](./docs/dbg.png)
 
-Other apps shown in the header are currently placeholders.
+#### Clock App
+It just shows the time on a classic analog clock.
+
+![clk](./docs/clk.png)
+
+#### Map App
+Supports zooming and moving the map around. Don't get lost in the wasteland.
+
+![map](./docs/map.png)
+
+Other shown apps are currently placeholders and not implemented yet.
 
 ## Hardware
 
@@ -74,13 +84,14 @@ To enable logging, use the following instead:
 @reboot cd /home/pi/piboy && (.venv/bin/python -u piboy.py >log 2>err) &
 ````
 
-You might have to make sure, that ``DEV_MODE`` in ``config.py`` is set to ``0``.
+To use the hardware input and display, set ``dev_move`` in ``config.yaml`` to `false` (file will be created after first
+start).
 
 ## Configuration
 
 On first run, the PiBoy script will create a ``config.yaml`` if not found. In that config file, you can configure
-everything that relates to appearance and wiring. When running on a Raspberry Pi, ``dev_move`` must be set to ``False``
-if not set by default. For development, it must be set to ``True`` instead, obviously. This setting automatically loads
+everything that relates to appearance and wiring. When running on a Raspberry Pi, ``dev_move`` must be set to ``false``
+if not set by default. For development, it must be set to ``true`` instead, obviously. This setting automatically loads
 the right input and display modules. On a Raspberry Pi, ``ILI9486Interface`` and ``GPIOInput`` are being used. For
 development, ``TkInterface`` or ``SelfManagedTkInterface`` can be used, both implement full input and display
 functionality.
@@ -104,8 +115,10 @@ See [instructions for prototype 1](./docs/PROTO1.md).
 * [x] case
 * [x] file manager app
 * [x] map app
-* [ ] radio app
+* [x] radio app
 * [ ] other apps (?)
+* [ ] environment sensors (temperature, humidity, ...)
 * [ ] GPS module
 * [ ] battery power
+* [ ] improved case
 * [ ] utilities
