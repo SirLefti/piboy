@@ -7,7 +7,8 @@ import math
 
 class ClockApp(SelfUpdatingApp):
 
-    def __init__(self, update_callback: Callable[[Any], None], resolution: Tuple[int, int], color: Tuple[int, int, int]):
+    def __init__(self, update_callback: Callable[[Any], None], resolution: Tuple[int, int],
+                 color: Tuple[int, int, int]):
         super().__init__(self.__draw_partial)
         self.__update_callback = update_callback
         self.__resolution = resolution

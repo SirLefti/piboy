@@ -18,7 +18,6 @@ class OSMTileProvider(TileProvider):
         self.__color = color
         self.__font = font
 
-
     @property
     def zoom_range(self) -> Iterable[int]:
         return range(0, 20)
