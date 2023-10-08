@@ -14,5 +14,5 @@ class BME280EnvironmentDataProvider(EnvironmentDataProvider):
         return EnvironmentData(
             data.temperature,
             data.pressure,
-            data.humidity
+            data.humidity / 100
         )
