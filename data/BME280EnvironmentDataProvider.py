@@ -1,4 +1,4 @@
-from EnvironmentDataProvider import EnvironmentDataProvider, EnvironmentData
+from data.EnvironmentDataProvider import EnvironmentDataProvider, EnvironmentData
 import bme280
 import smbus2
 
