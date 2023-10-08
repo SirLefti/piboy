@@ -69,7 +69,7 @@ class EnvironmentApp(SelfUpdatingApp):
         draw.text((pressure_xy[0] + self.__p_icon.width + icon_gap, pressure_xy[1]),
                   f'{self.__data.pressure:.2f} hPa', self.__color, font=self.__font)
         draw.text((humidity_xy[0] + self.__h_icon.width + icon_gap, humidity_xy[1]),
-                  f'{self.__data.humidity:.2%}', self.__color, font=self.__font)
+                  f'{self.__data.humidity:.2f}%', self.__color, font=self.__font)
 
         if partial:
             right_bottom = width - self.__app_side_offset, humidity_xy[1] + self.__h_icon.height
