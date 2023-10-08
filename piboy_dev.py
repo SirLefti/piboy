@@ -4,7 +4,8 @@ from app.FileManagerApp import FileManagerApp
 from app.RadioApp import RadioApp
 from app.UpdateApp import UpdateApp
 from app.MapApp import MapApp
-from app.NullApp import NullApp
+from app.EnvironmentApp import EnvironmentApp
+from data.FakeEnvironmentDataProvider import FakeEnvironmentDataProvider
 from data.IPLocationProvider import IPLocationProvider
 from data.OSMTileProvider import OSMTileProvider
 from interface import Interface, Input
@@ -65,7 +66,9 @@ if __name__ == '__main__':
                                      font_standard)) \
         .add_app(UpdateApp(resolution, background, color, color_dark, top_offset, side_offset, bottom_offset,
                            font_standard)) \
-        .add_app(NullApp('STAT')) \
+        .add_app(EnvironmentApp(update_display, FakeEnvironmentDataProvider(),
+                                resolution, background, color, color_dark, top_offset, side_offset, bottom_offset,
+                                font_standard)) \
         .add_app(RadioApp(resolution, background, color, color_dark, top_offset, side_offset, bottom_offset,
                           font_standard)) \
         .add_app(DebugApp(resolution, color, color_dark)) \
