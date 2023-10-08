@@ -71,7 +71,7 @@ python -m venv .venv
 
 Install python dependencies:
 ````bash
-.venv/bin/pip install -r requirements.txt
+.venv/bin/pip install -r requirements-pi.txt
 ````
 
 Edit the crontab with ``crontab -e`` and add the following:
