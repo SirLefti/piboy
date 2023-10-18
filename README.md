@@ -17,6 +17,11 @@ Can fetch and install updates from the git repository.
 
 ![sys](./docs/sys.png)
 
+#### Environment App
+Provides useful information about your environment like temperature, atmospheric pressure and humidity.
+
+![env](./docs/env.png)
+
 #### Radio App
 Actually more like a classic music player. Stay tuned!
 
