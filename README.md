@@ -48,6 +48,9 @@ Other shown apps are currently placeholders and not implemented yet.
 
  - Raspberry Pi (full size board with all 40 pins recommended)
  - 3.5" SPI display module (with an ILI9486 display driver chip)
+ - rotary encoder module (KY-040)
+ - BME280 environment sensor
+ - DS3231 RTC clock (optional)
 
 Additional parts depending on case variant.
 
@@ -111,6 +114,10 @@ to install it, place the ``FreeSansBold.ttf`` in the root directory as a workaro
 ## Assembly
 
 See [instructions for prototype 1](./docs/PROTO1.md).
+
+#### Module specific instructions
+
+* [DS3231 RTC clock](./docs/DS3231.md)
 
 ## Roadmap
 
