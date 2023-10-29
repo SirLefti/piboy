@@ -3,9 +3,10 @@ from app.FileManagerApp import FileManagerApp
 from app.RadioApp import RadioApp
 from app.UpdateApp import UpdateApp
 from app.MapApp import MapApp
-from app.NullApp import NullApp
 from app.DebugApp import DebugApp
 from app.ClockApp import ClockApp
+from app.EnvironmentApp import EnvironmentApp
+from data.EnvironmentDataProvider import EnvironmentDataProvider
 from interface.Interface import Interface
 from interface.Input import Input
 from data.IPLocationProvider import IPLocationProvider
@@ -251,11 +252,41 @@ if __name__ == '__main__':
     def update_display(partial=False):
         app_state.update_display(INTERFACE, partial)
 
+    ENVIRONMENT_DATA_PROVIDER: EnvironmentDataProvider
+
+    if env.dev_mode:
+        from interface.TkInterface import TkInterface
+        from data.FakeEnvironmentDataProvider import FakeEnvironmentDataProvider
+
+        __tk = TkInterface(on_key_left, on_key_right, on_key_up, on_key_down, on_key_a, on_key_b,
+                           on_rotary_increase, on_rotary_decrease,
+                           resolution, background, color_dark)
+        INTERFACE = __tk
+        INPUT = __tk
+        ENVIRONMENT_DATA_PROVIDER = FakeEnvironmentDataProvider()
+    else:
+        from interface.ILI9486Interface import ILI9486Interface
+        from interface.GPIOInput import GPIOInput
+        from data.BME280EnvironmentDataProvider import BME280EnvironmentDataProvider
+
+        display_spi = (env.display_config.bus, env.display_config.device)
+        INTERFACE = ILI9486Interface(display_spi, env.pin_config.dc_pin, env.pin_config.rst_pin, env.flip_display)
+        INPUT = GPIOInput(env.pin_config.left_pin, env.pin_config.up_pin,
+                          env.pin_config.right_pin, env.pin_config.down_pin,
+                          env.pin_config.a_pin, env.pin_config.b_pin,
+                          env.pin_config.clk_pin, env.pin_config.dt_pin, env.pin_config.sw_pin,
+                          on_key_left, on_key_right, on_key_up, on_key_down, on_key_a, on_key_b,
+                          on_rotary_increase, on_rotary_decrease)
+        ENVIRONMENT_DATA_PROVIDER = BME280EnvironmentDataProvider(env.env_sensor_config.port,
+                                                                  env.env_sensor_config.address)
+
     app_state.add_app(FileManagerApp(resolution, background, color, color_dark, top_offset, side_offset, bottom_offset,
                                      font_standard)) \
         .add_app(UpdateApp(resolution, background, color, color_dark, top_offset, side_offset, bottom_offset,
                            font_standard)) \
-        .add_app(NullApp('STAT')) \
+        .add_app(EnvironmentApp(update_display, ENVIRONMENT_DATA_PROVIDER,
+                                resolution, background, color, color_dark, top_offset, side_offset, bottom_offset,
+                                font_standard)) \
         .add_app(RadioApp(resolution, background, color, color_dark, top_offset, side_offset, bottom_offset,
                           font_standard)) \
         .add_app(DebugApp(resolution, color, color_dark)) \
@@ -267,27 +298,6 @@ if __name__ == '__main__':
                         font_standard
                         )
                  )
-
-    if env.dev_mode:
-        from interface.TkInterface import TkInterface
-
-        __tk = TkInterface(on_key_left, on_key_right, on_key_up, on_key_down, on_key_a, on_key_b,
-                           on_rotary_increase, on_rotary_decrease,
-                           resolution, background, color_dark)
-        INTERFACE = __tk
-        INPUT = __tk
-    else:
-        from interface.ILI9486Interface import ILI9486Interface
-        from interface.GPIOInput import GPIOInput
-
-        display_spi = (env.display_config.bus, env.display_config.device)
-        INTERFACE = ILI9486Interface(display_spi, env.pin_config.dc_pin, env.pin_config.rst_pin, env.flip_display)
-        INPUT = GPIOInput(env.pin_config.left_pin, env.pin_config.up_pin,
-                          env.pin_config.right_pin, env.pin_config.down_pin,
-                          env.pin_config.a_pin, env.pin_config.b_pin,
-                          env.pin_config.clk_pin, env.pin_config.dt_pin, env.pin_config.sw_pin,
-                          on_key_left, on_key_right, on_key_up, on_key_down, on_key_a, on_key_b,
-                          on_rotary_increase, on_rotary_decrease)
 
     # initial draw
     app_state.update_display(INTERFACE)

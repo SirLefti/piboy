@@ -17,6 +17,11 @@ Can fetch and install updates from the git repository.
 
 ![sys](./docs/sys.png)
 
+#### Environment App
+Provides useful information about your environment like temperature, atmospheric pressure and humidity.
+
+![env](./docs/env.png)
+
 #### Radio App
 Actually more like a classic music player. Stay tuned!
 
@@ -43,6 +48,9 @@ Other shown apps are currently placeholders and not implemented yet.
 
  - Raspberry Pi (full size board with all 40 pins recommended)
  - 3.5" SPI display module (with an ILI9486 display driver chip)
+ - rotary encoder module (KY-040)
+ - BME280 environment sensor
+ - DS3231 RTC clock (optional)
 
 Additional parts depending on case variant.
 
@@ -71,7 +79,7 @@ python -m venv .venv
 
 Install python dependencies:
 ````bash
-.venv/bin/pip install -r requirements.txt
+.venv/bin/pip install -r requirements-pi.txt
 ````
 
 Edit the crontab with ``crontab -e`` and add the following:
@@ -107,6 +115,10 @@ to install it, place the ``FreeSansBold.ttf`` in the root directory as a workaro
 
 See [instructions for prototype 1](./docs/PROTO1.md).
 
+#### Module specific instructions
+
+* [DS3231 RTC clock](./docs/DS3231.md)
+
 ## Roadmap
 
 * [x] display driver
@@ -116,8 +128,8 @@ See [instructions for prototype 1](./docs/PROTO1.md).
 * [x] file manager app
 * [x] map app
 * [x] radio app
+* [x] environment sensors (temperature, humidity, ...)
 * [ ] other apps (?)
-* [ ] environment sensors (temperature, humidity, ...)
 * [ ] GPS module
 * [ ] battery power
 * [ ] improved case

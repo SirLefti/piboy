@@ -1,0 +1,7 @@
+-r requirements.txt
+# The following requirements are used by only the hardware modules for Raspberry Pi.
+RPi.GPIO >= 0.7.1
+spidev >= 3.5
+numpy >= 1.22.3
+RPi.bme280 >= 0.2.4
+smbus2 >= 0.4.3

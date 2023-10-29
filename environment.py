@@ -12,6 +12,12 @@ class SPIConfig:
 
 
 @dataclass
+class I2CConfig:
+    port: int
+    address: int
+
+
+@dataclass
 class ColorConfig:
     background: Tuple[int, int, int]
     accent: Tuple[int, int, int]
@@ -101,6 +107,7 @@ class Environment:
     flip_display: bool = False
     display_config: SPIConfig = SPIConfig(0, 0)
     touch_config: SPIConfig = SPIConfig(0, 1)
+    env_sensor_config: I2CConfig = I2CConfig(1, 0x76)
     app_config: AppConfig = AppConfig()
     pin_config: PinConfig = PinConfig()
 
@@ -112,6 +119,15 @@ def spi_config_constructor(loader: Loader, node: Node) -> SPIConfig:
 
 def spi_config_representor(dumper: Dumper, data: SPIConfig) -> MappingNode:
     return dumper.represent_mapping('!SPIConfig', vars(data))
+
+
+def i2c_config_constructor(loader: Loader, node: Node) -> I2CConfig:
+    values = loader.construct_mapping(node)
+    return I2CConfig(**values)
+
+
+def i2c_config_representor(dumper: Dumper, data: I2CConfig) -> MappingNode:
+    return dumper.represent_mapping('!I2CConfig', vars(data))
 
 
 def color_config_constructor(loader: Loader, node: Node) -> ColorConfig:
@@ -152,11 +168,13 @@ def environment_representor(dumper: Dumper, data: Environment) -> MappingNode:
 
 def configure():
     yaml.add_constructor('!SPIConfig', spi_config_constructor)
+    yaml.add_constructor('!I2CConfig', i2c_config_constructor)
     yaml.add_constructor('!ColorConfig', color_config_constructor)
     yaml.add_constructor('!AppConfig', app_config_constructor)
     yaml.add_constructor('!PinConfig', pin_config_constructor)
     yaml.add_constructor('!Environment', environment_constructor)
     yaml.add_representer(SPIConfig, spi_config_representor)
+    yaml.add_representer(I2CConfig, i2c_config_representor)
     yaml.add_representer(ColorConfig, color_config_representor)
     yaml.add_representer(AppConfig, app_config_representor)
     yaml.add_representer(PinConfig, pin_config_representor)
