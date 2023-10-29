@@ -128,8 +128,8 @@ See [instructions for prototype 1](./docs/PROTO1.md).
 * [x] file manager app
 * [x] map app
 * [x] radio app
+* [x] environment sensors (temperature, humidity, ...)
 * [ ] other apps (?)
-* [ ] environment sensors (temperature, humidity, ...)
 * [ ] GPS module
 * [ ] battery power
 * [ ] improved case
