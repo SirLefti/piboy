@@ -115,7 +115,7 @@ to install it, place the ``FreeSansBold.ttf`` in the root directory as a workaro
 
 See [instructions for prototype 1](./docs/PROTO1.md).
 
-#### Module specific instructions
+### Module specific instructions
 
 * [DS3231 RTC clock](./docs/DS3231.md)
 
@@ -134,3 +134,16 @@ See [instructions for prototype 1](./docs/PROTO1.md).
 * [ ] battery power
 * [ ] improved case
 * [ ] utilities
+
+## Issues
+
+### PyAudio
+
+`pyaudio` might require system dependencies to be installed. On macOS, install the `portaudio` dependency with MacPorts:
+```bash
+sudo port install portaudio
+```
+Then install the package with pip and pass the directories where to find the dependencies:
+```bash
+CFLAGS="-I/opt/local/include -L/opt/local/lib" .venv/bin/pip install pyaudio
+```

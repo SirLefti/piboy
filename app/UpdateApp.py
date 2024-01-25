@@ -208,7 +208,7 @@ class UpdateApp(App):
             self.__result = None
 
             # clear existing logs
-            cursor = (width / 2 + self.CENTER_OFFSET, left_top[1])
+            cursor: Tuple[int, int] = (width // 2 + self.CENTER_OFFSET, left_top[1])
             rect_right_bottom = (width - self.__app_side_offset,
                                  cursor[1] +
                                  min(len(self.__results) * self.LINE_HEIGHT, height - self.__app_bottom_offset))
@@ -223,7 +223,7 @@ class UpdateApp(App):
             right_bottom = (width - self.__app_side_offset, cursor[1])
 
         # part: options
-        cursor = left_top
+        cursor: Tuple[int, int] = left_top
         for index, option in enumerate(self.__options):
             if index == self.__selected_index:
                 draw.rectangle(cursor + (width / 2, cursor[1] + self.LINE_HEIGHT), fill=self.__color_dark)

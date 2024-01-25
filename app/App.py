@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Optional, Callable, Any
+from typing import Optional, Callable
 from PIL import Image
 import threading
 import time
@@ -100,7 +100,7 @@ class SelfUpdatingApp(App, ABC):
             """Stops the inner thread function by setting a flag."""
             self.__alive = False
 
-    def __init__(self, update_callback: Callable[[Any], None]):
+    def __init__(self, update_callback: Callable[[], None]):
         self.__update_callback = update_callback
         self.__update_thread: Optional[SelfUpdatingApp.UpdateThread] = None
 

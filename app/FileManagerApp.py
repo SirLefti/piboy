@@ -112,7 +112,7 @@ class FileManagerApp(App):
 
         @property
         def files(self) -> List[str]:
-            return sorted([f for f in os.listdir(self.__directory)], key=str.lower)
+            return sorted([f for f in os.listdir(self.__directory)], key=lambda f: f.lower())
 
     def __init__(self, resolution: Tuple[int, int],
                  background: Tuple[int, int, int], color: Tuple[int, int, int], color_dark: Tuple[int, int, int],

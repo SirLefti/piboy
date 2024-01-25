@@ -119,7 +119,7 @@ class OSMTileProvider(TileProvider):
         old_x, old_y = img.size
         new_x, new_y = size
         scale = max(new_x / old_x, new_y / old_y)
-        resized = img.resize((int(old_x * scale), int(old_y * scale)), Image.ANTIALIAS)
+        resized = img.resize((int(old_x * scale), int(old_y * scale)), Image.LANCZOS)
         res_x, res_y = resized.size
         offset_x = int((res_x - new_x) / 2)
         offset_y = int((res_y - new_y) / 2)

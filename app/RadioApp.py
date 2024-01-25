@@ -219,7 +219,7 @@ class RadioApp(App):
         volume_decrease_icon = Image.open(os.path.join(resources_path, 'volume_decrease.png')).convert('1')
         volume_increase_icon = Image.open(os.path.join(resources_path, 'volume_increase.png')).convert('1')
 
-        def stream_callback(_1, frame_count, _2,  _3):
+        def stream_callback(_1, frame_count, _2, _3):
             data = self.__wave.readframes(frame_count)
             return data, pyaudio.paContinue
 
@@ -238,11 +238,11 @@ class RadioApp(App):
                 self.__wave = wave.open(os.path.join(self.__directory,
                                                      self.__files[self.__playlist[self.__playing_index]]), 'rb')
                 self.__stream = self.__player.open(format=self.__player.get_format_from_width(
-                                                          self.__wave.getsampwidth()),
-                                                   channels=self.__wave.getnchannels(),
-                                                   rate=self.__wave.getframerate(),
-                                                   output=True,
-                                                   stream_callback=stream_callback)
+                    self.__wave.getsampwidth()),
+                    channels=self.__wave.getnchannels(),
+                    rate=self.__wave.getframerate(),
+                    output=True,
+                    stream_callback=stream_callback)
             self.__stream.start_stream()
 
         def pause_action():
@@ -339,8 +339,9 @@ class RadioApp(App):
         controls_total_width = sum([c.size[0] for c in self.__controls]) + self.__CONTROL_PADDING * (
                 len(self.__controls) - 1)
         max_control_height = max([c.size[1] for c in self.__controls])
-        cursor = (width // 2 - controls_total_width // 2,
-                  height - self.__app_bottom_offset - max_control_height - self.__CONTROL_BOTTOM_OFFSET)
+        cursor: Tuple[int, int] = (width // 2 - controls_total_width // 2,
+                                   height - self.__app_bottom_offset - max_control_height
+                                   - self.__CONTROL_BOTTOM_OFFSET)
         for control in self.__controls:
             c_width, c_height = control.size
             control.draw(draw, (cursor[0], cursor[1] + (max_control_height - c_height) // 2))
@@ -397,9 +398,9 @@ class RadioApp(App):
         else:
             return image, 0, 0
 
-    def __get_files(self):
+    def __get_files(self) -> List[str]:
         return sorted([f for f in os.listdir(self.__directory) if os.path.splitext(f)[1] in
-                       self.__supported_extensions], key=str.lower)
+                       self.__supported_extensions], key=lambda f: f.lower())
 
     @staticmethod
     def __get_volume() -> int:
