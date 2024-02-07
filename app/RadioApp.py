@@ -46,8 +46,8 @@ class RadioApp(App):
             a background color, and also values determining if it represents focused and selected.
             Initially, the state members are all none, replace them before usage or create new ones for a specific use.
             """
-            NONE = None
-            FOCUSED = None
+            NONE: 'RadioApp.Control.SelectionState' = None
+            FOCUSED: 'RadioApp.Control.SelectionState' = None
 
             def __init__(self, color: Tuple[int, int, int], background_color: Tuple[int, int, int],
                          is_focused: bool, is_selected: bool):
@@ -57,17 +57,17 @@ class RadioApp(App):
                 self.__is_selected = is_selected
 
             @classmethod
-            def from_state(cls, is_focused: bool, is_selected: bool):
+            def from_state(cls, is_focused: bool, is_selected: bool) -> 'RadioApp.Control.SelectionState':
                 values = [cls.NONE, cls.FOCUSED]
                 return [state for state in values
                         if state.is_focused == is_focused and state.is_selected == is_selected][0]
 
             @property
-            def is_focused(self):
+            def is_focused(self) -> bool:
                 return self.__is_focused
 
             @property
-            def is_selected(self):
+            def is_selected(self) -> bool:
                 return self.__is_selected
 
             @property
@@ -75,7 +75,7 @@ class RadioApp(App):
                 return self.__color
 
             @property
-            def background_color(self):
+            def background_color(self) -> Tuple[int, int, int]:
                 return self.__background_color
 
         def __init__(self, icon_bitmap: Image, on_select: Callable[[], None],
@@ -195,7 +195,7 @@ class RadioApp(App):
         self.__playing_index = 0  # what we are currently playing from the playlist
         self.__player = pyaudio.PyAudio()
         self.__stream: Optional[pyaudio.Stream] = None
-        self.__wave = None
+        self.__wave: Optional[wave.Wave_read] = None
         self.__is_random = False
         self.__volume: Optional[int] = None
         try:
@@ -219,7 +219,7 @@ class RadioApp(App):
         volume_decrease_icon = Image.open(os.path.join(resources_path, 'volume_decrease.png')).convert('1')
         volume_increase_icon = Image.open(os.path.join(resources_path, 'volume_increase.png')).convert('1')
 
-        def stream_callback(_1, frame_count, _2, _3):
+        def stream_callback(_1, frame_count, _2, _3) -> Tuple[bytes, int]:
             data = self.__wave.readframes(frame_count)
             return data, pyaudio.paContinue
 
