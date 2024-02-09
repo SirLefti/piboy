@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from app.App import App
 from PIL import Image, ImageDraw, ImageFont
 from typing import Tuple, List, Callable, Optional
@@ -34,7 +35,7 @@ class RadioApp(App):
             for control in [c for c in self.__controls if c is not control]:
                 control.on_blur()
 
-    class Control:
+    class Control(ABC):
         """
         Represents a UI control element. A control has a texture, a callback and might have a control group that
         unselects other controls in the same group, if this control gets selected.
@@ -78,11 +79,9 @@ class RadioApp(App):
             def background_color(self) -> Tuple[int, int, int]:
                 return self.__background_color
 
-        def __init__(self, icon_bitmap: Image, on_select: Callable[[], bool],
-                     control_group: 'RadioApp.ControlGroup' = None):
+        def __init__(self, icon_bitmap: Image, control_group: 'RadioApp.ControlGroup' = None):
             self._icon_bitmap = icon_bitmap
             self._selection_state = self.SelectionState.NONE
-            self._on_select = on_select
             self._control_group = control_group
             if self._control_group:
                 self._control_group.listen(self)
@@ -104,6 +103,11 @@ class RadioApp(App):
             if not self.is_selected:
                 if self._control_group:
                     self._control_group.clear_selection(self)
+
+        @abstractmethod
+        def on_select(self):
+            """When pressing the A button while focussing this control"""
+            raise NotImplementedError
 
         def on_focus(self):
             """When moving focus on this control"""
@@ -135,7 +139,8 @@ class RadioApp(App):
                      on_select: Callable[[], bool],
                      on_switched_select: Callable[[], bool],
                      control_group: 'RadioApp.ControlGroup' = None):
-            super().__init__(icon_bitmap, on_select, control_group)
+            super().__init__(icon_bitmap, control_group)
+            self._on_select = on_select
             self._on_switched_select = on_switched_select
             self._switched_icon_bitmap = switched_icon_bitmap
             self._is_switched = False
@@ -167,9 +172,10 @@ class RadioApp(App):
         callback but stays in the same state, allowing to call the action again.
         """
 
-        def __init__(self, icon_bitmap: Image, on_select: Callable[[], bool],
+        def __init__(self, icon_bitmap: Image, on_select: Callable[[], None],
                      control_group: 'RadioApp.ControlGroup' = None):
-            super().__init__(icon_bitmap, on_select, control_group)
+            super().__init__(icon_bitmap, control_group)
+            self._on_select = on_select
 
         def on_select(self):
             super()._handle_control_group()
@@ -261,22 +267,19 @@ class RadioApp(App):
                 return True
             return False
 
-        def stop_action() -> bool:
+        def stop_action():
             """
             Stops and clears a currently loaded stream.
-            :return: always `True`, even if there was no stream
             """
             if self.__stream:
                 self.__stream.stop_stream()
                 self.__stream.close()
                 self.__stream = None
-            return True
 
-        def prev_action() -> bool:
+        def prev_action():
             """
             Stops and clears a stream, selects a previous track and plays it if a stream is loaded.
             Just selects a previous track otherwise.
-            :return: always `True`
             """
             self.__playing_index = (self.__playing_index - 1) % len(self.__files)
             self.__selected_index = self.__playlist[self.__playing_index]
@@ -286,13 +289,11 @@ class RadioApp(App):
                 self.__stream.close()
                 self.__stream = None
                 play_action()
-            return True
 
-        def skip_action() -> bool:
+        def skip_action():
             """
             Stops and clears a stream, selects a next track and plays it if a stream is loaded.
             Just selects a next track otherwise.
-            :return: always `True`
             """
             self.__playing_index = (self.__playing_index + 1) % len(self.__files)
             self.__selected_index = self.__playlist[self.__playing_index]
@@ -302,9 +303,8 @@ class RadioApp(App):
                 self.__stream.close()
                 self.__stream = None
                 play_action()
-            return True
 
-        def random_action() -> bool:
+        def random_action() -> True:
             """
             Shuffles the playlist and places the current index at the track we are currently playing or looking at.
             :return: always `True`
@@ -315,7 +315,7 @@ class RadioApp(App):
             self.__playing_index = self.__playlist.index(self.__selected_index)
             return True
 
-        def order_action() -> bool:
+        def order_action() -> True:
             """
             Creates an ordered playlist and places the current index at the track we are currently playing or looking
             at.
@@ -327,10 +327,9 @@ class RadioApp(App):
             self.__playing_index = self.__selected_index
             return True
 
-        def decrease_volume_action() -> bool:
+        def decrease_volume_action():
             """
             Decreases the volume by one volume step. Only works on Linux with `amixer`
-            :return: always `True`
             """
             current_value = self.__get_volume()
             if current_value % self.__VOLUME_STEP == 0:
@@ -339,12 +338,10 @@ class RadioApp(App):
                 aligned_value = current_value // self.__VOLUME_STEP * self.__VOLUME_STEP
                 self.__set_volume(max(aligned_value - self.__VOLUME_STEP, 0))
             self.__volume = self.__get_volume()
-            return True
 
-        def increase_volume_action() -> bool:
+        def increase_volume_action():
             """
             Increases the volume by one volume step. Only works on Linux with `amixer`
-            :return: always `True`
             """
             current_value = self.__get_volume()
             if current_value % self.__VOLUME_STEP == 0:
@@ -353,7 +350,6 @@ class RadioApp(App):
                 aligned_value = (current_value + self.__VOLUME_STEP) // self.__VOLUME_STEP * self.__VOLUME_STEP
                 self.__set_volume(min(aligned_value + self.__VOLUME_STEP, 100))
             self.__volume = self.__get_volume()
-            return True
 
         control_group = self.ControlGroup()
         self.__controls = [
