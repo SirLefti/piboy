@@ -1,15 +1,15 @@
 Case Prototype 1
 ================
 
-![proto1_final](./proto1_6.jpg)
+![proto1_final](proto1_6.jpg)
 
 ## Parts
-* [base part](./parts/proto1/Proto1.1-base.stl)
-* [top part](./parts/proto1/Proto1.1-top.stl)
+* [base part](parts/proto1/Proto1.1-base.stl)
+* [top part](parts/proto1/Proto1.1-top.stl)
 * 3x M2x25
 * 6x micro push buttons (6mm x 6mm)
 * rotary encoder (KY-040 module)
-* perfboard/protoboard (14x9 holes required)
+* perf board/proto board (14x9 holes required)
 * wires, general soldering stuff
 * rotary encoder knob (optional)
 
@@ -49,24 +49,24 @@ upside down
 
 ### 1. Prepare parts
 
-![proto1_parts](./proto1_parts.jpg)
+![proto1_parts](proto1_parts.jpg)
 The first version of the 3d-printed parts have some issues. There is no cutout for the audio jack and the support posts
 for the Pi board are misplaced. 
 
-### 2. Solder daughterboard
+### 2. Solder daughter board
 
-![proto1_1](./proto1_1.jpg)
+![proto1_1](proto1_1.jpg)
 Mount and solder the micro push buttons as shown.
 
-![proto1_2](./proto1_2.jpg)
+![proto1_2](proto1_2.jpg)
 Solder a common ground wire.
 
 Cut the edges of the board if it is too big to fit.
 
 ### 3. Solder to Pi board
 
-![proto1_3](./proto1_3.jpg)
-Solder wires to the bottom of the Pi board to connect the daughterboard and rotary encoder. 
+![proto1_3](proto1_3.jpg)
+Solder wires to the bottom of the Pi board to connect the daughter board and rotary encoder. 
 
 | #pin | pin name  | connects                       |
 |------|-----------|--------------------------------|
@@ -81,16 +81,16 @@ Solder wires to the bottom of the Pi board to connect the daughterboard and rota
 | 37   | GPIO 26   | button B                       |
 | 39   | GND       | rotary encoder GND, button GND |
 
-Keep in mind, that wiring diagrams and pinouts for the Pi are usually from a top view, which means you have mirror the
+Keep in mind, that wiring diagrams and pin-outs for the Pi are usually from a top view, which means you have mirror the
 pinout, as seen in the image.
 
 ### 4. Assembly
 
-![proto1_4](./proto1_4.jpg)
-Mount the rotary encoder and glue in the daughterboard (I used hot glue due to the gaps).
+![proto1_4](proto1_4.jpg)
+Mount the rotary encoder and glue in the daughter board (I used hot glue due to the gaps).
 
-![proto1_5](./proto1_5.jpg)
+![proto1_5](proto1_5.jpg)
 Flip the Pi board and attach the display module.
 
-![proto1_6](./proto1_6.jpg)
+![proto1_6](proto1_6.jpg)
 Put both parts together. Add a knob if you have and use screws to hold the parts in place.
