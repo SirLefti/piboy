@@ -112,7 +112,7 @@ class Environment:
     pin_config: PinConfig = PinConfig()
 
 
-def spi_config_constructor(loader: Loader, node: MappingNode | Node) -> SPIConfig:
+def spi_config_constructor(loader: Loader, node: Node) -> SPIConfig:
     values = loader.construct_mapping(node)
     return SPIConfig(**values)
 
@@ -121,7 +121,7 @@ def spi_config_representor(dumper: Dumper, data: SPIConfig) -> MappingNode:
     return dumper.represent_mapping('!SPIConfig', vars(data))
 
 
-def i2c_config_constructor(loader: Loader, node: MappingNode | Node) -> I2CConfig:
+def i2c_config_constructor(loader: Loader, node: Node) -> I2CConfig:
     values = loader.construct_mapping(node)
     return I2CConfig(**values)
 
@@ -130,7 +130,7 @@ def i2c_config_representor(dumper: Dumper, data: I2CConfig) -> MappingNode:
     return dumper.represent_mapping('!I2CConfig', vars(data))
 
 
-def color_config_constructor(loader: Loader, node: MappingNode | Node) -> ColorConfig:
+def color_config_constructor(loader: Loader, node: Node) -> ColorConfig:
     values = loader.construct_mapping(node)
     return ColorConfig(**values)
 
@@ -139,7 +139,7 @@ def color_config_representor(dumper: Dumper, data: ColorConfig) -> MappingNode:
     return dumper.represent_mapping('!ColorConfig', vars(data))
 
 
-def app_config_constructor(loader: Loader, node: MappingNode | Node) -> AppConfig:
+def app_config_constructor(loader: Loader, node: Node) -> AppConfig:
     values = loader.construct_mapping(node)
     return AppConfig(**values)
 
@@ -148,7 +148,7 @@ def app_config_representor(dumper: Dumper, data: AppConfig) -> MappingNode:
     return dumper.represent_mapping('!AppConfig', vars(data))
 
 
-def pin_config_constructor(loader: Loader, node: MappingNode | Node) -> PinConfig:
+def pin_config_constructor(loader: Loader, node: Node) -> PinConfig:
     values = loader.construct_mapping(node)
     return PinConfig(**values)
 
@@ -157,7 +157,7 @@ def pin_config_representor(dumper: Dumper, data: PinConfig) -> MappingNode:
     return dumper.represent_mapping('!PinConfig', vars(data))
 
 
-def environment_constructor(loader: Loader, node: MappingNode | Node) -> Environment:
+def environment_constructor(loader: Loader, node: Node) -> Environment:
     values = loader.construct_mapping(node)
     return Environment(**values)
 
