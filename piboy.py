@@ -198,12 +198,21 @@ def draw_base(image: Image, state: AppState) -> Image:
     return image
 
 
+def is_raspberry_pi() -> bool:
+    try:
+        with open('/sys/firmware/devicetree/base/model', 'r') as model_info:
+            return 'Raspberry Pi' in model_info.read()
+    except FileNotFoundError:
+        return False
+
+
 def load_environment() -> Environment:
     environment.configure()
     try:
         return environment.load()
     except FileNotFoundError:
         e = Environment()
+        e.dev_mode = not is_raspberry_pi()
         environment.save(e)
         return e
 
