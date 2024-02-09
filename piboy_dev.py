@@ -101,5 +101,4 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         pass
     finally:
-        INTERFACE.close()
-        INPUT.close()
+        __tk.close()
