@@ -96,6 +96,11 @@ class UpdateApp(App):
                 return 'no updates to install'
             return 'updates installed, restart next'
 
+        def result_text_shutdown(result: CompletedProcess) -> str:
+            if result.returncode != 0:
+                return 'error shutting down'
+            else: 'shutting down...'
+
         def result_text_restart(result: CompletedProcess) -> str:
             if result.returncode != 0:
                 return 'error restarting'
@@ -109,6 +114,7 @@ class UpdateApp(App):
             self.Option('fetch updates', self.__run_fetch, result_text_fetch),
             self.Option('install updates', self.__run_install, result_text_install,
                         count_action=get_commits_to_update, count_name='commits'),
+            self.Option('shutdown', self.__run_shutdown, result_text_shutdown),
             self.Option('restart', self.__run_restart, result_text_restart)
         ]
         self.__result = None
@@ -133,6 +139,10 @@ class UpdateApp(App):
     @staticmethod
     def __run_install() -> CompletedProcess:
         return run(['git', 'pull'], stdout=PIPE)
+
+    @staticmethod
+    def __run_shutdown() -> CompletedProcess:
+        return run(['sudo', 'shutdown', 'now'], stdout=PIPE)
 
     @staticmethod
     def __run_restart() -> CompletedProcess:
