@@ -26,9 +26,9 @@ class MapApp(SelfUpdatingApp):
             a background color.
             Initially, the state members are all none, replace them before usage or create new ones for a specific use.
             """
-            NONE = None
-            FOCUSED = None
-            SELECTED = None
+            NONE: 'SelectionState' = None  # type: ignore
+            FOCUSED: 'SelectionState' = None  # type: ignore
+            SELECTED: 'SelectionState' = None  # type: ignore
 
             # skip first argument, it is the value for the enum
             def __init__(self, color: Tuple[int, int, int], background_color: Tuple[int, int, int]):
@@ -36,11 +36,11 @@ class MapApp(SelfUpdatingApp):
                 self.__background_color = background_color
 
             @property
-            def color(self):
+            def color(self) -> Tuple[int, int, int]:
                 return self.__color
 
             @property
-            def background_color(self):
+            def background_color(self) -> Tuple[int, int, int]:
                 return self.__background_color
 
         def __init__(self, icon_bitmap: Image.Image, initial_state: SelectionState,
