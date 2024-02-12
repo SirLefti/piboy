@@ -10,12 +10,12 @@ class ClockApp(SelfUpdatingApp):
     def __init__(self, update_callback: Callable[[Any], None], resolution: tuple[int, int],
                  color: tuple[int, int, int]):
         super().__init__(self.__draw_partial)
-        self.__update_callback = update_callback
+        self.__update_callback: Callable[[Any], None] = update_callback
         self.__resolution = resolution
         self.__color = color
 
     def __draw_partial(self):
-        self.__update_callback({'partial': True})
+        self.__update_callback(dict(partial=True))
 
     @property
     def title(self) -> str:
