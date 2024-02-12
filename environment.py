@@ -57,11 +57,11 @@ class AppConfig:
         return self.width, self.height
 
     @property
-    def font_header(self) -> ImageFont:
+    def font_header(self) -> ImageFont.FreeTypeFont:
         return ImageFont.truetype(self.font_name, self.font_header_size)
 
     @property
-    def font_standard(self) -> ImageFont:
+    def font_standard(self) -> ImageFont.FreeTypeFont:
         return ImageFont.truetype(self.font_name, self.font_standard_size)
 
     @property
