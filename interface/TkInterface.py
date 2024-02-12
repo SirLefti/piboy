@@ -1,6 +1,6 @@
 from interface.Interface import Interface
 from interface.Input import Input
-from typing import Callable, Tuple
+from typing import Callable, Tuple, Optional
 from PIL import Image, ImageTk
 from tkinter import Tk, Canvas, Button, constants, TclError
 import threading
@@ -17,14 +17,14 @@ class TkInterface(Interface, Input):
                        on_rotary_increase, on_rotary_decrease)
         self.__resolution = resolution
         self.__background = background
-        self.__image: Image = None
-        self.__buffer: Image = None
+        self.__image: Optional[Image.Image] = None
+        self.__buffer: Optional[Image.Image] = None
         threading.Thread(target=_tk_thread, args=(self, resolution, ui_background), daemon=True).start()
 
     def close(self):
         pass
 
-    def take_image(self) -> Image.Image:
+    def take_image(self) -> Optional[Image.Image]:
         image = self.__image
         self.__image = None
         return image
