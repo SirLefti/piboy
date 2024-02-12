@@ -1,7 +1,7 @@
 from app.App import SelfUpdatingApp
 from data.LocationProvider import LocationProvider, LocationException
 from data.TileProvider import TileProvider
-from typing import Callable, Tuple, List, Any
+from typing import Callable, Tuple, List, Any, Optional, Union
 from PIL import Image, ImageDraw, ImageOps, ImageFont
 import os.path
 import math
@@ -43,10 +43,11 @@ class MapApp(SelfUpdatingApp):
             def background_color(self):
                 return self.__background_color
 
-        def __init__(self, icon_bitmap: Image, initial_state: SelectionState,
-                     on_select: Callable[[], None] = None, on_deselect: Callable[[], None] = None,
-                     on_key_left: Callable[[], None] = None, on_key_right: Callable[[], None] = None,
-                     on_key_up: Callable[[], None] = None, on_key_down: Callable[[], None] = None,
+        def __init__(self, icon_bitmap: Image.Image, initial_state: SelectionState,
+                     on_select: Optional[Callable[[], None]] = None, on_deselect: Optional[Callable[[], None]] = None,
+                     on_key_left: Optional[Callable[[], None]] = None,
+                     on_key_right: Optional[Callable[[], None]] = None,
+                     on_key_up: Optional[Callable[[], None]] = None, on_key_down: Optional[Callable[[], None]] = None,
                      instant_action=False):
             self.__icon_bitmap = icon_bitmap
             self.__on_select = on_select
@@ -96,7 +97,7 @@ class MapApp(SelfUpdatingApp):
             """When moving focus away from this control"""
             self.__selection_state = self.SelectionState.NONE
 
-        def draw(self, draw: ImageDraw, left_top: Tuple[int, int]):
+        def draw(self, draw: ImageDraw.ImageDraw, left_top: Tuple[int, int]):
             width, height = self.__icon_bitmap.size
             left, top = left_top
             draw.rectangle(left_top + (left + width - 1, top + height - 1),
@@ -109,7 +110,8 @@ class MapApp(SelfUpdatingApp):
     def __init__(self, draw_callback: Callable[[Any], None],
                  location_provider: LocationProvider, tile_provider: TileProvider, resolution: Tuple[int, int],
                  background: Tuple[int, int, int], color: Tuple[int, int, int], color_dark: Tuple[int, int, int],
-                 app_top_offset: int, app_side_offset: int, app_bottom_offset: int, font_standard: ImageFont):
+                 app_top_offset: int, app_side_offset: int, app_bottom_offset: int,
+                 font_standard: ImageFont.FreeTypeFont):
         super().__init__(self.__update_location)
         self.__resolution = resolution
         self.__background = background
@@ -132,10 +134,11 @@ class MapApp(SelfUpdatingApp):
         self.__zoom = 15
         self.__x_offset = 0
         self.__y_offset = 0
+        self.__position: Union[Tuple[float, float], Tuple[None, None]] = (None, None)
         try:
-            self.__position: Tuple[float | None, float | None] = self.__location_provider.get_location()
+            self.__position = self.__location_provider.get_location()
         except LocationException:
-            self.__position: Tuple[float | None, float | None] = (None, None)
+            pass  # already set position to a default value
 
         resources_path = 'resources'
         minus_icon = Image.open(os.path.join(resources_path, 'minus.png')).convert('1')
@@ -199,7 +202,7 @@ class MapApp(SelfUpdatingApp):
                 pass
             self.__draw_callback(**self.__draw_callback_kwargs)
 
-    def draw(self, image: Image, partial=False) -> (Image, int, int):
+    def draw(self, image: Image.Image, partial=False) -> Tuple[Image.Image, int, int]:
         draw = ImageDraw.Draw(image)
         width, height = self.__resolution
         left_top = (self.__app_side_offset, self.__app_top_offset)

@@ -15,7 +15,7 @@ class App(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def draw(self, image: Image, partial=False) -> Tuple[Image.Image, int, int]:
+    def draw(self, image: Image.Image, partial=False) -> Tuple[Image.Image, int, int]:
         """
         Draws the app content and returns the full or partial frame.
 
