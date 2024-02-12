@@ -11,7 +11,7 @@ from interface.Interface import Interface
 from interface.Input import Input
 from data.IPLocationProvider import IPLocationProvider
 from data.OSMTileProvider import OSMTileProvider
-from typing import List
+from typing import List, Tuple
 from PIL import Image, ImageDraw
 from datetime import datetime
 from environment import Environment
@@ -24,17 +24,17 @@ class AppState:
     def __init__(self, e: Environment):
         self.__environment = e
         self.__image_buffer = self.__init_buffer()
-        self.__apps = []
+        self.__apps: List[App] = []
         self.__active_app = 0
 
-    def __init_buffer(self) -> Image:
+    def __init_buffer(self) -> Image.Image:
         return Image.new('RGB', self.__environment.app_config.resolution, self.__environment.app_config.background)
 
-    def clear_buffer(self) -> Image:
+    def clear_buffer(self) -> Image.Image:
         self.__image_buffer = self.__init_buffer()
         return self.__image_buffer
 
-    def add_app(self, app: App):
+    def add_app(self, app: App) -> 'AppState':
         self.__apps.append(app)
         return self
 
@@ -43,7 +43,7 @@ class AppState:
         return self.__environment
 
     @property
-    def image_buffer(self) -> Image:
+    def image_buffer(self) -> Image.Image:
         return self.__image_buffer
 
     @property
@@ -122,7 +122,7 @@ class AppState:
         self.update_display(interface, partial=False)
 
 
-def draw_footer(image: Image, state: AppState) -> (Image, int, int):
+def draw_footer(image: Image.Image, state: AppState) -> Tuple[Image.Image, int, int]:
     width, height = state.environment.app_config.resolution
     footer_height = 20  # height of the footer
     footer_bottom_offset = 3  # spacing to the bottom
@@ -144,7 +144,7 @@ def draw_footer(image: Image, state: AppState) -> (Image, int, int):
     return image.crop(start + end), x0, y0
 
 
-def draw_header(image: Image, state: AppState) -> (Image, int, int):
+def draw_header(image: Image.Image, state: AppState) -> Tuple[Image.Image, int, int]:
     width, height = state.environment.app_config.resolution
     vertical_line = 5  # vertical limiter line
     header_top_offset = state.environment.app_config.app_top_offset - vertical_line  # base for header
@@ -170,7 +170,7 @@ def draw_header(image: Image, state: AppState) -> (Image, int, int):
     font = state.environment.app_config.font_header
     max_text_width = width - (2 * header_side_offset)
     app_text_width = sum(font.getbbox(app.title)[2] for app in state.apps) + (len(state.apps) - 1) * app_spacing
-    cursor = header_side_offset + (max_text_width - app_text_width) / 2
+    cursor = header_side_offset + (max_text_width - app_text_width) // 2
     for app in state.apps:
         _, _, text_width, text_height = font.getbbox(app.title)
         draw.text((cursor, header_top_offset - text_height - app_padding), app.title, color_accent, font=font)
@@ -192,7 +192,7 @@ def draw_header(image: Image, state: AppState) -> (Image, int, int):
     return image.crop(partial_start + partial_end), x0, y0
 
 
-def draw_base(image: Image, state: AppState) -> Image:
+def draw_base(image: Image.Image, state: AppState) -> Image.Image:
     draw_header(image, state)
     draw_footer(image, state)
     return image
