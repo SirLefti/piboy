@@ -116,7 +116,8 @@ class FileManagerApp(App):
 
     def __init__(self, resolution: Tuple[int, int],
                  background: Tuple[int, int, int], color: Tuple[int, int, int], color_dark: Tuple[int, int, int],
-                 app_top_offset: int, app_side_offset: int, app_bottom_offset: int, font_standard: ImageFont):
+                 app_top_offset: int, app_side_offset: int, app_bottom_offset: int,
+                 font_standard: ImageFont.FreeTypeFont):
         self.__resolution = resolution
         self.__background = background
         self.__color = color
@@ -162,7 +163,7 @@ class FileManagerApp(App):
         else:
             return value
 
-    def __draw_popup(self, draw: ImageDraw, left_top: Tuple[int, int], right_bottom: Tuple[int, int],
+    def __draw_popup(self, draw: ImageDraw.ImageDraw, left_top: Tuple[int, int], right_bottom: Tuple[int, int],
                      popup: DirectoryState.Popup):
         """Draws a popup with the given options."""
         line_height = self.LINE_HEIGHT
@@ -193,7 +194,8 @@ class FileManagerApp(App):
             draw.text(cursor, text, self.__color, font=font)
             cursor = cursor[0], cursor[1] + line_height
 
-    def __draw_error(self, draw: ImageDraw, left_top: Tuple[int, int], right_bottom: Tuple[int, int], text: str):
+    def __draw_error(self, draw: ImageDraw.ImageDraw, left_top: Tuple[int, int], right_bottom: Tuple[int, int],
+                     text: str):
         left, top = left_top  # unpacking top left anchor point
         right, bottom = right_bottom  # unpacking bottom right anchor point
         font = self.__font
@@ -211,7 +213,7 @@ class FileManagerApp(App):
         draw.rectangle(start + end, fill=self.__background)
         draw.text((center[0] - int(text_width / 2), center[1] - int(text_height / 2)), text, self.__color, font=font)
 
-    def __draw_directory(self, draw: ImageDraw, left_top: Tuple[int, int], right_bottom: Tuple[int, int],
+    def __draw_directory(self, draw: ImageDraw.ImageDraw, left_top: Tuple[int, int], right_bottom: Tuple[int, int],
                          state: DirectoryState, is_selected: bool) -> None:
         """Draws the given directory to the given ImageDraw and returns the new top_index."""
         line_height = self.LINE_HEIGHT  # height of a line entry in the directory
@@ -280,7 +282,7 @@ class FileManagerApp(App):
         except PermissionError:
             self.__draw_error(draw, left_top, right_bottom, 'Permission denied')
 
-    def draw(self, image: Image, partial=False) -> (Image, int, int):
+    def draw(self, image: Image.Image, partial=False) -> Tuple[Image.Image, int, int]:
         width, height = self.__resolution
         is_left_tab = self.__selected_tab == 0
         is_right_tab = self.__selected_tab == 1

@@ -20,7 +20,7 @@ class DebugApp(App):
     def title(self) -> str:
         return 'DBG'
 
-    def draw(self, image: Image, partial=False) -> (Image, int, int):
+    def draw(self, image: Image.Image, partial=False) -> Tuple[Image.Image, int, int]:
         width, height = self.__resolution
         center_x, center_y = int(width / 2), int(height / 2)
 
@@ -70,10 +70,10 @@ class DebugApp(App):
 
         if partial:
             points_all = [*points_left, *points_right, *points_up, *points_down, *points_a, *points_b]
-            max_x = max(points_all, key=lambda e: e[0])[0]
-            max_y = max(points_all, key=lambda e: e[1])[1]
-            min_x = min(points_all, key=lambda e: e[0])[0]
-            min_y = min(points_all, key=lambda e: e[1])[1]
+            max_x: int = max(points_all, key=lambda e: e[0])[0]
+            max_y: int = max(points_all, key=lambda e: e[1])[1]
+            min_x: int = min(points_all, key=lambda e: e[0])[0]
+            min_y: int = min(points_all, key=lambda e: e[1])[1]
             return image.crop((min_x, min_y) + (max_x, max_y)), min_x, min_y
         else:
             return image, 0, 0

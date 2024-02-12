@@ -1,7 +1,7 @@
 from app.App import App
 from PIL import Image, ImageDraw, ImageFont
 from subprocess import run, CompletedProcess, PIPE
-from typing import Callable, Optional, Tuple
+from typing import Callable, Optional, Tuple, List
 
 
 class UpdateApp(App):
@@ -42,7 +42,8 @@ class UpdateApp(App):
 
     def __init__(self, resolution: Tuple[int, int],
                  background: Tuple[int, int, int], color: Tuple[int, int, int], color_dark: Tuple[int, int, int],
-                 app_top_offset: int, app_side_offset: int, app_bottom_offset: int, font_standard: ImageFont):
+                 app_top_offset: int, app_side_offset: int, app_bottom_offset: int,
+                 font_standard: ImageFont.FreeTypeFont):
         self.__resolution = resolution
         self.__background = background
         self.__color = color
@@ -99,7 +100,8 @@ class UpdateApp(App):
         def result_text_shutdown(result: CompletedProcess) -> str:
             if result.returncode != 0:
                 return 'error shutting down'
-            else: 'shutting down...'
+            else:
+                return 'shutting down...'
 
         def result_text_restart(result: CompletedProcess) -> str:
             if result.returncode != 0:
@@ -117,8 +119,8 @@ class UpdateApp(App):
             self.Option('shutdown', self.__run_shutdown, result_text_shutdown),
             self.Option('restart', self.__run_restart, result_text_restart)
         ]
-        self.__result = None
-        self.__results = []
+        self.__result: Optional[CompletedProcess] = None
+        self.__results: List[str] = []
 
     @staticmethod
     def __run_fetch() -> CompletedProcess:
@@ -202,12 +204,12 @@ class UpdateApp(App):
     def title(self) -> str:
         return 'SYS'
 
-    def draw(self, image: Image, partial=False) -> (Image, int, int):
+    def draw(self, image: Image.Image, partial=False) -> Tuple[Image.Image, int, int]:
         width, height = self.__resolution
         font = self.__font
 
         left_top = (self.__app_side_offset, self.__app_top_offset)
-        right_bottom = (width / 2, self.__app_top_offset)
+        right_bottom = (width // 2, self.__app_top_offset)
         draw = ImageDraw.Draw(image)
 
         # part: result history
@@ -218,19 +220,19 @@ class UpdateApp(App):
             self.__result = None
 
             # clear existing logs
-            cursor: Tuple[int, int] = (width // 2 + self.CENTER_OFFSET, left_top[1])
+            history_cursor: Tuple[int, int] = (width // 2 + self.CENTER_OFFSET, left_top[1])
             rect_right_bottom = (width - self.__app_side_offset,
-                                 cursor[1] +
+                                 history_cursor[1] +
                                  min(len(self.__results) * self.LINE_HEIGHT, height - self.__app_bottom_offset))
-            draw.rectangle(cursor + rect_right_bottom, fill=self.__background)
+            draw.rectangle(history_cursor + rect_right_bottom, fill=self.__background)
             # and draw history in reverse order
             for text in reversed(self.__results):
                 _, _, _, text_height = font.getbbox(text)
-                if cursor[1] + text_height > height - self.__app_bottom_offset:
+                if history_cursor[1] + text_height > height - self.__app_bottom_offset:
                     break
-                draw.text(cursor, text, fill=self.__color, font=font)
-                cursor = (cursor[0], cursor[1] + self.LINE_HEIGHT)
-            right_bottom = (width - self.__app_side_offset, cursor[1])
+                draw.text(history_cursor, text, fill=self.__color, font=font)
+                history_cursor = (history_cursor[0], history_cursor[1] + self.LINE_HEIGHT)
+            right_bottom = (width - self.__app_side_offset, history_cursor[1])
 
         # part: options
         cursor: Tuple[int, int] = left_top
@@ -263,7 +265,6 @@ class UpdateApp(App):
                       f'remote: {self.__remote_name or unknown}', fill=self.__color, font=font)
 
         if partial:
-            # right_bottom = (width / 2, cursor[1])
             return image.crop(left_top + right_bottom), *left_top
         else:
             return image, 0, 0

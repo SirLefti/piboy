@@ -79,7 +79,7 @@ class RadioApp(App):
             def background_color(self) -> Tuple[int, int, int]:
                 return self.__background_color
 
-        def __init__(self, icon_bitmap: Image, control_group: 'RadioApp.ControlGroup' = None):
+        def __init__(self, icon_bitmap: Image.Image, control_group: 'RadioApp.ControlGroup' = None):
             self._icon_bitmap = icon_bitmap
             self._selection_state = self.SelectionState.NONE
             self._control_group = control_group
@@ -121,7 +121,7 @@ class RadioApp(App):
             """Resets the control to an unfocused state"""
             self._selection_state = self.SelectionState.NONE
 
-        def draw(self, draw: ImageDraw, left_top: Tuple[int, int]):
+        def draw(self, draw: ImageDraw.ImageDraw, left_top: Tuple[int, int]):
             width, height = self._icon_bitmap.size
             left, top = left_top
             draw.rectangle(left_top + (left + width - 1, top + height - 1),
@@ -135,7 +135,7 @@ class RadioApp(App):
         depending on this state.
         """
 
-        def __init__(self, icon_bitmap: Image, switched_icon_bitmap: Image,
+        def __init__(self, icon_bitmap: Image.Image, switched_icon_bitmap: Image.Image,
                      on_select: Callable[[], bool],
                      on_switched_select: Callable[[], bool],
                      control_group: 'RadioApp.ControlGroup' = None):
@@ -158,7 +158,7 @@ class RadioApp(App):
         def on_deselect(self):
             self._is_switched = False
 
-        def draw(self, draw: ImageDraw, left_top: Tuple[int, int]):
+        def draw(self, draw: ImageDraw.ImageDraw, left_top: Tuple[int, int]):
             width, height = self._icon_bitmap.size
             left, top = left_top
             draw.rectangle(left_top + (left + width - 1, top + height - 1),
@@ -172,7 +172,7 @@ class RadioApp(App):
         callback but stays in the same state, allowing to call the action again.
         """
 
-        def __init__(self, icon_bitmap: Image, on_select: Callable[[], None],
+        def __init__(self, icon_bitmap: Image.Image, on_select: Callable[[], None],
                      control_group: 'RadioApp.ControlGroup' = None):
             super().__init__(icon_bitmap, control_group)
             self._on_select = on_select
@@ -183,7 +183,8 @@ class RadioApp(App):
 
     def __init__(self, resolution: Tuple[int, int],
                  background: Tuple[int, int, int], color: Tuple[int, int, int], color_dark: Tuple[int, int, int],
-                 app_top_offset: int, app_side_offset: int, app_bottom_offset: int, font_standard: ImageFont):
+                 app_top_offset: int, app_side_offset: int, app_bottom_offset: int,
+                 font_standard: ImageFont.FreeTypeFont):
         self.__resolution = resolution
         self.__background = background
         self.__color = color
@@ -367,7 +368,7 @@ class RadioApp(App):
     def title(self) -> str:
         return 'RAD'
 
-    def draw(self, image: Image, partial=False) -> (Image, int, int):
+    def draw(self, image: Image.Image, partial=False) -> Tuple[Image.Image, int, int]:
         draw = ImageDraw.Draw(image)
         width, height = self.__resolution
 

@@ -13,7 +13,7 @@ class OSMTileProvider(TileProvider):
     __CACHE_DURATION = 1000 * 60 * 60 * 24 * 365  # one year in ms
     __OSM_TILE_SIZE = (256, 256)  # size of a tile image from OSM
 
-    def __init__(self, background: Tuple[int, int, int], color: Tuple[int, int, int], font: ImageFont):
+    def __init__(self, background: Tuple[int, int, int], color: Tuple[int, int, int], font: ImageFont.FreeTypeFont):
         self.__background = background
         self.__color = color
         self.__font = font
@@ -25,7 +25,7 @@ class OSMTileProvider(TileProvider):
     def get_tile(self, lat: float, lon: float, zoom: int, size: Tuple[int, int] = (256, 256), x_offset: int = 0,
                  y_offset: int = 0) -> TileInfo:
         x_tile, y_tile = self._deg_to_num(lat, lon, zoom)
-        tile: Image
+        tile: Image.Image
         try:
             tile = self._fetch_tile(zoom, x_tile, y_tile)
         except (ValueError, FileNotFoundError, ConnectionError, UnidentifiedImageError):
@@ -46,7 +46,7 @@ class OSMTileProvider(TileProvider):
         top_tiles = int((target_height / 2 - y_position + tile_height) / tile_height)
         bottom_tiles = int((target_height / 2 - (tile_height - y_position) + tile_height) / tile_height)
 
-        grid: list[list[Image]] = [
+        grid: list[list[Image.Image]] = [
             [None for _ in range(top_tiles + 1 + bottom_tiles)] for _ in range(left_tiles + 1 + right_tiles)
         ]
         grid[left_tiles][top_tiles] = tile
@@ -80,7 +80,7 @@ class OSMTileProvider(TileProvider):
         bottom_right = lat + (height_deg / 2), lon + (width_deg / 2)
         return TileInfo(top_left, bottom_right, cropped_tile)
 
-    def _get_placeholder_tile(self) -> Image:
+    def _get_placeholder_tile(self) -> Image.Image:
         font = self.__font
         tile = Image.new('RGB', self.__OSM_TILE_SIZE, self.__background)
         text_w, text_h = font.getbbox('?')[-2:]
@@ -91,7 +91,7 @@ class OSMTileProvider(TileProvider):
         return tile
 
     @classmethod
-    def _fetch_tile(cls, zoom: int, x_tile: int, y_tile: int) -> Image:
+    def _fetch_tile(cls, zoom: int, x_tile: int, y_tile: int) -> Image.Image:
         """Fetches the requested tile either from cache or from OSM tile API"""
         tile_cache = '.tiles'
         cache_template = '{zoom}-{x}-{y}.png'
@@ -113,7 +113,7 @@ class OSMTileProvider(TileProvider):
                 raise ValueError(f'Fetching OSM tile ({zoom}-{x_tile}-{y_tile}) failed ({response.status_code})')
 
     @classmethod
-    def _resize(cls, img: Image, size: Tuple[int, int]) -> Image:
+    def _resize(cls, img: Image.Image, size: Tuple[int, int]) -> Image.Image:
         if img.size == size:
             return img
         old_x, old_y = img.size

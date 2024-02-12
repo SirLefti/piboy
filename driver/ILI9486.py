@@ -59,7 +59,7 @@ CMD_PGAMCTL = 0xE0
 CMD_NGAMCTL = 0xE1
 
 
-def image_to_data(image: Image) -> object:
+def image_to_data(image: Image.Image) -> object:
     """Converts a PIL image to 666RGB format that can be drawn on the LCD."""
     pb = np.array(image.convert('RGB')).astype('uint16')
     # cut of the two least significant / rightmost bits to convert 8-bit color to 6-bit color
@@ -243,7 +243,7 @@ class ILI9486:
         self.__buffer.putdata([color] * (width * height))
         return self
 
-    def draw(self) -> ImageDraw:
+    def draw(self) -> ImageDraw.ImageDraw:
         """Returns a PIL ImageDraw instance for 2D drawing on the image buffer."""
         return ImageDraw.Draw(self.__buffer)
 

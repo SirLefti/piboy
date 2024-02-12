@@ -10,7 +10,8 @@ class EnvironmentApp(SelfUpdatingApp):
     def __init__(self, draw_callback: Callable[[Any], None],
                  data_provider: EnvironmentDataProvider, resolution: Tuple[int, int],
                  background: Tuple[int, int, int], color: Tuple[int, int, int], color_dark: Tuple[int, int, int],
-                 app_top_offset: int, app_side_offset: int, app_bottom_offset: int, font_standard: ImageFont):
+                 app_top_offset: int, app_side_offset: int, app_bottom_offset: int,
+                 font_standard: ImageFont.FreeTypeFont):
         super().__init__(self.__update_data)
         self.__resolution = resolution
         self.__background = background
@@ -43,7 +44,7 @@ class EnvironmentApp(SelfUpdatingApp):
         self.__data = self.__data_provider.get_environment_data()
         self.__draw_callback(**self.__draw_callback_kwargs)
 
-    def draw(self, image: Image, partial=False) -> (Image, int, int):
+    def draw(self, image: Image.Image, partial=False) -> Tuple[Image.Image, int, int]:
         draw = ImageDraw.Draw(image)
         width, height = self.__resolution
         icon_gap = 10

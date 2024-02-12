@@ -21,7 +21,7 @@ class ClockApp(SelfUpdatingApp):
     def title(self) -> str:
         return 'CLK'
 
-    def draw(self, image: Image, partial=False) -> (Image, int, int):
+    def draw(self, image: Image.Image, partial=False) -> Tuple[Image.Image, int, int]:
         width, height = self.__resolution
         center_x, center_y = int(width / 2), int(height / 2)
         size = 200
