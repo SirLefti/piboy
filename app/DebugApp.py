@@ -1,11 +1,10 @@
 from app.App import App
 from PIL import Image, ImageDraw
-from typing import Tuple
 
 
 class DebugApp(App):
 
-    def __init__(self, resolution: Tuple[int, int], color: Tuple[int, int, int], color_dark: Tuple[int, int, int]):
+    def __init__(self, resolution: tuple[int, int], color: tuple[int, int, int], color_dark: tuple[int, int, int]):
         self.__button_left = False
         self.__button_right = False
         self.__button_up = False
@@ -20,7 +19,7 @@ class DebugApp(App):
     def title(self) -> str:
         return 'DBG'
 
-    def draw(self, image: Image.Image, partial=False) -> Tuple[Image.Image, int, int]:
+    def draw(self, image: Image.Image, partial=False) -> tuple[Image.Image, int, int]:
         width, height = self.__resolution
         center_x, center_y = int(width / 2), int(height / 2)
 

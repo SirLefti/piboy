@@ -1,7 +1,7 @@
 from app.App import SelfUpdatingApp
 from data.LocationProvider import LocationProvider, LocationException
 from data.TileProvider import TileProvider
-from typing import Callable, Tuple, List, Any, Optional, Union
+from typing import Callable, Any, Optional, Union
 from PIL import Image, ImageDraw, ImageOps, ImageFont
 import os.path
 import math
@@ -31,16 +31,16 @@ class MapApp(SelfUpdatingApp):
             SELECTED: 'SelectionState' = None  # type: ignore
 
             # skip first argument, it is the value for the enum
-            def __init__(self, color: Tuple[int, int, int], background_color: Tuple[int, int, int]):
+            def __init__(self, color: tuple[int, int, int], background_color: tuple[int, int, int]):
                 self.__color = color
                 self.__background_color = background_color
 
             @property
-            def color(self) -> Tuple[int, int, int]:
+            def color(self) -> tuple[int, int, int]:
                 return self.__color
 
             @property
-            def background_color(self) -> Tuple[int, int, int]:
+            def background_color(self) -> tuple[int, int, int]:
                 return self.__background_color
 
         def __init__(self, icon_bitmap: Image.Image, initial_state: SelectionState,
@@ -97,7 +97,7 @@ class MapApp(SelfUpdatingApp):
             """When moving focus away from this control"""
             self.__selection_state = self.SelectionState.NONE
 
-        def draw(self, draw: ImageDraw.ImageDraw, left_top: Tuple[int, int]):
+        def draw(self, draw: ImageDraw.ImageDraw, left_top: tuple[int, int]):
             width, height = self.__icon_bitmap.size
             left, top = left_top
             draw.rectangle(left_top + (left + width - 1, top + height - 1),
@@ -108,8 +108,8 @@ class MapApp(SelfUpdatingApp):
             return self.__selection_state == self.SelectionState.SELECTED
 
     def __init__(self, draw_callback: Callable[[Any], None],
-                 location_provider: LocationProvider, tile_provider: TileProvider, resolution: Tuple[int, int],
-                 background: Tuple[int, int, int], color: Tuple[int, int, int], color_dark: Tuple[int, int, int],
+                 location_provider: LocationProvider, tile_provider: TileProvider, resolution: tuple[int, int],
+                 background: tuple[int, int, int], color: tuple[int, int, int], color_dark: tuple[int, int, int],
                  app_top_offset: int, app_side_offset: int, app_bottom_offset: int,
                  font_standard: ImageFont.FreeTypeFont):
         super().__init__(self.__update_location)
@@ -134,7 +134,7 @@ class MapApp(SelfUpdatingApp):
         self.__zoom = 15
         self.__x_offset = 0
         self.__y_offset = 0
-        self.__position: Union[Tuple[float, float], Tuple[None, None]] = (None, None)
+        self.__position: Union[tuple[float, float], tuple[None, None]] = (None, None)
         try:
             self.__position = self.__location_provider.get_location()
         except LocationException:
@@ -170,7 +170,7 @@ class MapApp(SelfUpdatingApp):
         def move_down():
             self.__y_offset += 1
 
-        self.__controls: List[MapApp.Control] = [
+        self.__controls: list[MapApp.Control] = [
             self.Control(ImageOps.invert(minus_icon), initial_state=self.Control.SelectionState.NONE,
                          on_select=zoom_out, instant_action=True),
             self.Control(ImageOps.invert(plus_icon), initial_state=self.Control.SelectionState.NONE,
@@ -202,7 +202,7 @@ class MapApp(SelfUpdatingApp):
                 pass
             self.__draw_callback(**self.__draw_callback_kwargs)
 
-    def draw(self, image: Image.Image, partial=False) -> Tuple[Image.Image, int, int]:
+    def draw(self, image: Image.Image, partial=False) -> tuple[Image.Image, int, int]:
         draw = ImageDraw.Draw(image)
         width, height = self.__resolution
         left_top = (self.__app_side_offset, self.__app_top_offset)
@@ -246,7 +246,7 @@ class MapApp(SelfUpdatingApp):
                               (marker_center[0] + int(marker_size / 2), marker_center[1] - marker_size)],
                              fill=self.__color_dark)
             else:
-                def draw_outside_marker(edge_position: Tuple[int, int], center_position: Tuple[int, int]):
+                def draw_outside_marker(edge_position: tuple[int, int], center_position: tuple[int, int]):
                     marker_width = 3
                     marker_length_percentage = .2
                     tip_length_percentage = marker_length_percentage * .75
@@ -257,11 +257,11 @@ class MapApp(SelfUpdatingApp):
                                edge_position[1] - diff_y * marker_length_percentage) +
                               edge_position, fill=self.__color, width=marker_width)  # line towards center
 
-                    def dot(v1: Tuple[float, float], v2: Tuple[float, float]) -> float:
+                    def dot(v1: tuple[float, float], v2: tuple[float, float]) -> float:
                         """ vector dot product """
                         return sum([i * j for (i, j) in zip(v1, v2)])
 
-                    def mag(v: Tuple[float, float]) -> float:
+                    def mag(v: tuple[float, float]) -> float:
                         """ vector magnitude/length """
                         return math.sqrt(dot(v, v))
 

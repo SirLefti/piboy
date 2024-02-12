@@ -1,14 +1,14 @@
 from app.App import SelfUpdatingApp
 from PIL import Image, ImageDraw
-from typing import Callable, Any, Tuple
+from typing import Callable, Any
 from datetime import datetime
 import math
 
 
 class ClockApp(SelfUpdatingApp):
 
-    def __init__(self, update_callback: Callable[[Any], None], resolution: Tuple[int, int],
-                 color: Tuple[int, int, int]):
+    def __init__(self, update_callback: Callable[[Any], None], resolution: tuple[int, int],
+                 color: tuple[int, int, int]):
         super().__init__(self.__draw_partial)
         self.__update_callback = update_callback
         self.__resolution = resolution
@@ -21,7 +21,7 @@ class ClockApp(SelfUpdatingApp):
     def title(self) -> str:
         return 'CLK'
 
-    def draw(self, image: Image.Image, partial=False) -> Tuple[Image.Image, int, int]:
+    def draw(self, image: Image.Image, partial=False) -> tuple[Image.Image, int, int]:
         width, height = self.__resolution
         center_x, center_y = int(width / 2), int(height / 2)
         size = 200

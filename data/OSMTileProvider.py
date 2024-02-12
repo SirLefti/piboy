@@ -1,5 +1,5 @@
 from data.TileProvider import TileProvider, TileInfo
-from typing import Tuple, Iterable
+from typing import Iterable
 from PIL import Image, ImageDraw, ImageFont, UnidentifiedImageError
 from requests.exceptions import ConnectionError
 import os
@@ -13,7 +13,7 @@ class OSMTileProvider(TileProvider):
     __CACHE_DURATION = 1000 * 60 * 60 * 24 * 365  # one year in ms
     __OSM_TILE_SIZE = (256, 256)  # size of a tile image from OSM
 
-    def __init__(self, background: Tuple[int, int, int], color: Tuple[int, int, int], font: ImageFont.FreeTypeFont):
+    def __init__(self, background: tuple[int, int, int], color: tuple[int, int, int], font: ImageFont.FreeTypeFont):
         self.__background = background
         self.__color = color
         self.__font = font
@@ -22,7 +22,7 @@ class OSMTileProvider(TileProvider):
     def zoom_range(self) -> Iterable[int]:
         return range(0, 20)
 
-    def get_tile(self, lat: float, lon: float, zoom: int, size: Tuple[int, int] = (256, 256), x_offset: int = 0,
+    def get_tile(self, lat: float, lon: float, zoom: int, size: tuple[int, int] = (256, 256), x_offset: int = 0,
                  y_offset: int = 0) -> TileInfo:
         x_tile, y_tile = self._deg_to_num(lat, lon, zoom)
         tile: Image.Image
@@ -113,7 +113,7 @@ class OSMTileProvider(TileProvider):
                 raise ValueError(f'Fetching OSM tile ({zoom}-{x_tile}-{y_tile}) failed ({response.status_code})')
 
     @classmethod
-    def _resize(cls, img: Image.Image, size: Tuple[int, int]) -> Image.Image:
+    def _resize(cls, img: Image.Image, size: tuple[int, int]) -> Image.Image:
         if img.size == size:
             return img
         old_x, old_y = img.size
@@ -126,7 +126,7 @@ class OSMTileProvider(TileProvider):
         return resized.crop((offset_x, offset_y, offset_x + new_x, offset_y + new_y))
 
     @classmethod
-    def _deg_to_num(cls, lat_deg: float, lon_deg: float, zoom: int) -> Tuple[int, int]:
+    def _deg_to_num(cls, lat_deg: float, lon_deg: float, zoom: int) -> tuple[int, int]:
         """Code from: https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames"""
         lat_rad = math.radians(lat_deg)
         n = 2.0 ** zoom
@@ -135,7 +135,7 @@ class OSMTileProvider(TileProvider):
         return x_tile, y_tile
 
     @classmethod
-    def _num_to_deg(cls, x_tile: int, y_tile: int, zoom: int) -> Tuple[float, float]:
+    def _num_to_deg(cls, x_tile: int, y_tile: int, zoom: int) -> tuple[float, float]:
         """Code from: https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames"""
         n = 2.0 ** zoom
         lon_deg = x_tile / n * 360.0 - 180.0

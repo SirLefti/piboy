@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Tuple, List
 from PIL import ImageFont
 from yaml import Loader, Dumper, MappingNode, Node, FullLoader
 import yaml
@@ -19,9 +18,9 @@ class I2CConfig:
 
 @dataclass
 class ColorConfig:
-    background: Tuple[int, int, int]
-    accent: Tuple[int, int, int]
-    accent_dark: Tuple[int, int, int]
+    background: tuple[int, int, int]
+    accent: tuple[int, int, int]
+    accent_dark: tuple[int, int, int]
 
 
 @dataclass
@@ -35,7 +34,7 @@ class AppConfig:
     color_mode: int = 0
     width: int = 480
     height: int = 320
-    modes: List[ColorConfig] = None
+    modes: list[ColorConfig] = None
 
     def __post_init__(self):
         if self.modes is None:
@@ -53,7 +52,7 @@ class AppConfig:
             ]
 
     @property
-    def resolution(self) -> Tuple[int, int]:
+    def resolution(self) -> tuple[int, int]:
         return self.width, self.height
 
     @property
@@ -65,15 +64,15 @@ class AppConfig:
         return ImageFont.truetype(self.font_name, self.font_standard_size)
 
     @property
-    def background(self) -> Tuple[int, int, int]:
+    def background(self) -> tuple[int, int, int]:
         return self.modes[self.color_mode].background
 
     @property
-    def accent(self) -> Tuple[int, int, int]:
+    def accent(self) -> tuple[int, int, int]:
         return self.modes[self.color_mode].accent
 
     @property
-    def accent_dark(self) -> Tuple[int, int, int]:
+    def accent_dark(self) -> tuple[int, int, int]:
         return self.modes[self.color_mode].accent_dark
 
 

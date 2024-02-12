@@ -1,14 +1,13 @@
 from interface.Interface import Interface
 from PIL import Image
 from driver.ILI9486 import ILI9486, Origin
-from typing import Tuple
 from spidev import SpiDev
 import RPi.GPIO as GPIO
 
 
 class ILI9486Interface(Interface):
 
-    def __init__(self, spi_config: Tuple[int, int], dc_pin: int, rst_pin: int, flip_display: bool = False):
+    def __init__(self, spi_config: tuple[int, int], dc_pin: int, rst_pin: int, flip_display: bool = False):
         GPIO.setmode(GPIO.BCM)
         bus, device = spi_config
         spi = SpiDev(bus, device)

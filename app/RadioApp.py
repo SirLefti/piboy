@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from app.App import App
 from PIL import Image, ImageDraw, ImageFont
-from typing import Tuple, List, Callable, Optional
+from typing import Callable, Optional
 from subprocess import run, PIPE
 import pyaudio
 import wave
@@ -26,7 +26,7 @@ class RadioApp(App):
         """
 
         def __init__(self):
-            self.__controls: List['RadioApp.Control'] = []
+            self.__controls: list['RadioApp.Control'] = []
 
         def listen(self, control: 'RadioApp.Control'):
             self.__controls.append(control)
@@ -50,7 +50,7 @@ class RadioApp(App):
             NONE: 'RadioApp.Control.SelectionState' = None
             FOCUSED: 'RadioApp.Control.SelectionState' = None
 
-            def __init__(self, color: Tuple[int, int, int], background_color: Tuple[int, int, int],
+            def __init__(self, color: tuple[int, int, int], background_color: tuple[int, int, int],
                          is_focused: bool, is_selected: bool):
                 self.__color = color
                 self.__background_color = background_color
@@ -72,11 +72,11 @@ class RadioApp(App):
                 return self.__is_selected
 
             @property
-            def color(self) -> Tuple[int, int, int]:
+            def color(self) -> tuple[int, int, int]:
                 return self.__color
 
             @property
-            def background_color(self) -> Tuple[int, int, int]:
+            def background_color(self) -> tuple[int, int, int]:
                 return self.__background_color
 
         def __init__(self, icon_bitmap: Image.Image, control_group: 'RadioApp.ControlGroup' = None):
@@ -87,7 +87,7 @@ class RadioApp(App):
                 self._control_group.listen(self)
 
         @property
-        def size(self) -> Tuple[int, int]:
+        def size(self) -> tuple[int, int]:
             return self._icon_bitmap.size
 
         @property
@@ -121,7 +121,7 @@ class RadioApp(App):
             """Resets the control to an unfocused state"""
             self._selection_state = self.SelectionState.NONE
 
-        def draw(self, draw: ImageDraw.ImageDraw, left_top: Tuple[int, int]):
+        def draw(self, draw: ImageDraw.ImageDraw, left_top: tuple[int, int]):
             width, height = self._icon_bitmap.size
             left, top = left_top
             draw.rectangle(left_top + (left + width - 1, top + height - 1),
@@ -158,7 +158,7 @@ class RadioApp(App):
         def on_deselect(self):
             self._is_switched = False
 
-        def draw(self, draw: ImageDraw.ImageDraw, left_top: Tuple[int, int]):
+        def draw(self, draw: ImageDraw.ImageDraw, left_top: tuple[int, int]):
             width, height = self._icon_bitmap.size
             left, top = left_top
             draw.rectangle(left_top + (left + width - 1, top + height - 1),
@@ -181,8 +181,8 @@ class RadioApp(App):
             super()._handle_control_group()
             self._on_select()
 
-    def __init__(self, resolution: Tuple[int, int],
-                 background: Tuple[int, int, int], color: Tuple[int, int, int], color_dark: Tuple[int, int, int],
+    def __init__(self, resolution: tuple[int, int],
+                 background: tuple[int, int, int], color: tuple[int, int, int], color_dark: tuple[int, int, int],
                  app_top_offset: int, app_side_offset: int, app_bottom_offset: int,
                  font_standard: ImageFont.FreeTypeFont):
         self.__resolution = resolution
@@ -196,11 +196,11 @@ class RadioApp(App):
 
         self.__directory = 'media'
         self.__supported_extensions = ['.wav']
-        self.__files: List[str] = self.__get_files()
+        self.__files: list[str] = self.__get_files()
 
         self.__selected_index = 0  # what we have selected with our cursor
         self.__top_index = 0  # what is on top in case the list is greater than screen space
-        self.__playlist: List[int] = list(range(0, len(self.__files)))  # order of the tracks to play
+        self.__playlist: list[int] = list(range(0, len(self.__files)))  # order of the tracks to play
         self.__playing_index = 0  # what we are currently playing from the playlist
         self.__player = pyaudio.PyAudio()
         self.__stream: Optional[pyaudio.Stream] = None
@@ -228,7 +228,7 @@ class RadioApp(App):
         volume_decrease_icon = Image.open(os.path.join(resources_path, 'volume_decrease.png')).convert('1')
         volume_increase_icon = Image.open(os.path.join(resources_path, 'volume_increase.png')).convert('1')
 
-        def stream_callback(_1, frame_count, _2, _3) -> Tuple[bytes, int]:
+        def stream_callback(_1, frame_count, _2, _3) -> tuple[bytes, int]:
             data = self.__wave.readframes(frame_count)
             return data, pyaudio.paContinue
 
@@ -368,7 +368,7 @@ class RadioApp(App):
     def title(self) -> str:
         return 'RAD'
 
-    def draw(self, image: Image.Image, partial=False) -> Tuple[Image.Image, int, int]:
+    def draw(self, image: Image.Image, partial=False) -> tuple[Image.Image, int, int]:
         draw = ImageDraw.Draw(image)
         width, height = self.__resolution
 
@@ -376,7 +376,7 @@ class RadioApp(App):
         controls_total_width = sum([c.size[0] for c in self.__controls]) + self.__CONTROL_PADDING * (
                 len(self.__controls) - 1)
         max_control_height = max([c.size[1] for c in self.__controls])
-        cursor: Tuple[int, int] = (width // 2 - controls_total_width // 2,
+        cursor: tuple[int, int] = (width // 2 - controls_total_width // 2,
                                    height - self.__app_bottom_offset - max_control_height
                                    - self.__CONTROL_BOTTOM_OFFSET)
         for control in self.__controls:
@@ -435,7 +435,7 @@ class RadioApp(App):
         else:
             return image, 0, 0
 
-    def __get_files(self) -> List[str]:
+    def __get_files(self) -> list[str]:
         return sorted([f for f in os.listdir(self.__directory) if os.path.splitext(f)[1] in
                        self.__supported_extensions], key=lambda f: f.lower())
 

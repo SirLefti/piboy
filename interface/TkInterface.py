@@ -1,6 +1,6 @@
 from interface.Interface import Interface
 from interface.Input import Input
-from typing import Callable, Tuple, Optional
+from typing import Callable, Optional
 from PIL import Image, ImageTk
 from tkinter import Tk, Canvas, Button, constants, TclError
 import threading
@@ -12,7 +12,7 @@ class TkInterface(Interface, Input):
     def __init__(self, on_key_left: Callable, on_key_right: Callable,
                  on_key_up: Callable, on_key_down: Callable, on_key_a: Callable, on_key_b: Callable,
                  on_rotary_increase: Callable, on_rotary_decrease: Callable,
-                 resolution: Tuple[int, int], background: Tuple[int, int, int], ui_background: Tuple[int, int, int]):
+                 resolution: tuple[int, int], background: tuple[int, int, int], ui_background: tuple[int, int, int]):
         Input.__init__(self, on_key_left, on_key_right, on_key_up, on_key_down, on_key_a, on_key_b,
                        on_rotary_increase, on_rotary_decrease)
         self.__resolution = resolution
@@ -40,7 +40,7 @@ BUTTON_W = 15
 BUTTON_H = 6
 
 
-def _tk_thread(tk_interface: TkInterface, resolution: Tuple[int, int], ui_background: Tuple[int, int, int]):
+def _tk_thread(tk_interface: TkInterface, resolution: tuple[int, int], ui_background: tuple[int, int, int]):
     root = Tk()
     root.title('PiBoy Simulator - Tkinter')
     bg_color_hex = '#%02x%02x%02x' % ui_background

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Optional, Callable, Tuple
+from typing import Optional, Callable
 from PIL import Image
 import threading
 import time
@@ -15,7 +15,7 @@ class App(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def draw(self, image: Image.Image, partial=False) -> Tuple[Image.Image, int, int]:
+    def draw(self, image: Image.Image, partial=False) -> tuple[Image.Image, int, int]:
         """
         Draws the app content and returns the full or partial frame.
 

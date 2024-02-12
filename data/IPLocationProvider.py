@@ -1,5 +1,5 @@
 from data.LocationProvider import LocationProvider, LocationException
-from typing import Tuple, Callable, Type, Collection
+from typing import Callable, Type, Collection
 import time
 import requests
 import json
@@ -30,7 +30,7 @@ class IPLocationProvider(LocationProvider):
         self.__apply_inaccuracy = apply_inaccuracy
 
     @retry(exceptions=(requests.exceptions.ConnectionError,), delay=2, tries=5)
-    def get_location(self) -> Tuple[float, float]:
+    def get_location(self) -> tuple[float, float]:
         response = requests.get('https://ipinfo.io/json')
         if response.status_code == 200:
             data = json.loads(response.content)

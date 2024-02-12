@@ -11,7 +11,6 @@ from interface.Interface import Interface
 from interface.Input import Input
 from data.IPLocationProvider import IPLocationProvider
 from data.OSMTileProvider import OSMTileProvider
-from typing import List, Tuple
 from PIL import Image, ImageDraw
 from datetime import datetime
 from environment import Environment
@@ -24,7 +23,7 @@ class AppState:
     def __init__(self, e: Environment):
         self.__environment = e
         self.__image_buffer = self.__init_buffer()
-        self.__apps: List[App] = []
+        self.__apps: list[App] = []
         self.__active_app = 0
 
     def __init_buffer(self) -> Image.Image:
@@ -47,7 +46,7 @@ class AppState:
         return self.__image_buffer
 
     @property
-    def apps(self) -> List[App]:
+    def apps(self) -> list[App]:
         return self.__apps
 
     @property
@@ -122,7 +121,7 @@ class AppState:
         self.update_display(interface, partial=False)
 
 
-def draw_footer(image: Image.Image, state: AppState) -> Tuple[Image.Image, int, int]:
+def draw_footer(image: Image.Image, state: AppState) -> tuple[Image.Image, int, int]:
     width, height = state.environment.app_config.resolution
     footer_height = 20  # height of the footer
     footer_bottom_offset = 3  # spacing to the bottom
@@ -144,7 +143,7 @@ def draw_footer(image: Image.Image, state: AppState) -> Tuple[Image.Image, int, 
     return image.crop(start + end), x0, y0
 
 
-def draw_header(image: Image.Image, state: AppState) -> Tuple[Image.Image, int, int]:
+def draw_header(image: Image.Image, state: AppState) -> tuple[Image.Image, int, int]:
     width, height = state.environment.app_config.resolution
     vertical_line = 5  # vertical limiter line
     header_top_offset = state.environment.app_config.app_top_offset - vertical_line  # base for header

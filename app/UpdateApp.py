@@ -1,7 +1,7 @@
 from app.App import App
 from PIL import Image, ImageDraw, ImageFont
 from subprocess import run, CompletedProcess, PIPE
-from typing import Callable, Optional, Tuple, List
+from typing import Callable, Optional
 
 
 class UpdateApp(App):
@@ -40,8 +40,8 @@ class UpdateApp(App):
         def count_name(self) -> Optional[str]:
             return self.__count_name
 
-    def __init__(self, resolution: Tuple[int, int],
-                 background: Tuple[int, int, int], color: Tuple[int, int, int], color_dark: Tuple[int, int, int],
+    def __init__(self, resolution: tuple[int, int],
+                 background: tuple[int, int, int], color: tuple[int, int, int], color_dark: tuple[int, int, int],
                  app_top_offset: int, app_side_offset: int, app_bottom_offset: int,
                  font_standard: ImageFont.FreeTypeFont):
         self.__resolution = resolution
@@ -120,7 +120,7 @@ class UpdateApp(App):
             self.Option('restart', self.__run_restart, result_text_restart)
         ]
         self.__result: Optional[CompletedProcess] = None
-        self.__results: List[str] = []
+        self.__results: list[str] = []
 
     @staticmethod
     def __run_fetch() -> CompletedProcess:
@@ -204,7 +204,7 @@ class UpdateApp(App):
     def title(self) -> str:
         return 'SYS'
 
-    def draw(self, image: Image.Image, partial=False) -> Tuple[Image.Image, int, int]:
+    def draw(self, image: Image.Image, partial=False) -> tuple[Image.Image, int, int]:
         width, height = self.__resolution
         font = self.__font
 
@@ -220,7 +220,7 @@ class UpdateApp(App):
             self.__result = None
 
             # clear existing logs
-            history_cursor: Tuple[int, int] = (width // 2 + self.CENTER_OFFSET, left_top[1])
+            history_cursor: tuple[int, int] = (width // 2 + self.CENTER_OFFSET, left_top[1])
             rect_right_bottom = (width - self.__app_side_offset,
                                  history_cursor[1] +
                                  min(len(self.__results) * self.LINE_HEIGHT, height - self.__app_bottom_offset))
@@ -235,7 +235,7 @@ class UpdateApp(App):
             right_bottom = (width - self.__app_side_offset, history_cursor[1])
 
         # part: options
-        cursor: Tuple[int, int] = left_top
+        cursor: tuple[int, int] = left_top
         for index, option in enumerate(self.__options):
             if index == self.__selected_index:
                 draw.rectangle(cursor + (width / 2, cursor[1] + self.LINE_HEIGHT), fill=self.__color_dark)

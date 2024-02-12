@@ -1,15 +1,15 @@
 from app.App import SelfUpdatingApp
 from data.EnvironmentDataProvider import EnvironmentDataProvider, EnvironmentData
 from PIL import Image, ImageDraw, ImageFont
-from typing import Callable, Any, Tuple
+from typing import Callable, Any
 import os
 
 
 class EnvironmentApp(SelfUpdatingApp):
 
     def __init__(self, draw_callback: Callable[[Any], None],
-                 data_provider: EnvironmentDataProvider, resolution: Tuple[int, int],
-                 background: Tuple[int, int, int], color: Tuple[int, int, int], color_dark: Tuple[int, int, int],
+                 data_provider: EnvironmentDataProvider, resolution: tuple[int, int],
+                 background: tuple[int, int, int], color: tuple[int, int, int], color_dark: tuple[int, int, int],
                  app_top_offset: int, app_side_offset: int, app_bottom_offset: int,
                  font_standard: ImageFont.FreeTypeFont):
         super().__init__(self.__update_data)
@@ -44,7 +44,7 @@ class EnvironmentApp(SelfUpdatingApp):
         self.__data = self.__data_provider.get_environment_data()
         self.__draw_callback(**self.__draw_callback_kwargs)
 
-    def draw(self, image: Image.Image, partial=False) -> Tuple[Image.Image, int, int]:
+    def draw(self, image: Image.Image, partial=False) -> tuple[Image.Image, int, int]:
         draw = ImageDraw.Draw(image)
         width, height = self.__resolution
         icon_gap = 10
