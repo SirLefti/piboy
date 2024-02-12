@@ -204,7 +204,6 @@ class RadioApp(App):
         self.__playing_index = 0  # what we are currently playing from the playlist
         self.__player = pyaudio.PyAudio()
         self.__stream: Optional[pyaudio.Stream] = None
-        self.__wave: Optional[wave.Wave_read] = None
         self.__is_random = False
         self.__volume: Optional[int] = None
         try:
@@ -228,10 +227,6 @@ class RadioApp(App):
         volume_decrease_icon = Image.open(os.path.join(resources_path, 'volume_decrease.png')).convert('1')
         volume_increase_icon = Image.open(os.path.join(resources_path, 'volume_increase.png')).convert('1')
 
-        def stream_callback(_1, frame_count, _2, _3) -> tuple[bytes, int]:
-            data = self.__wave.readframes(frame_count)
-            return data, pyaudio.paContinue
-
         def play_action() -> bool:
             """
             Loads current selected file if no stream is loaded.
@@ -247,12 +242,17 @@ class RadioApp(App):
                 self.__stream.close()
                 self.__stream = None
             if not self.__stream:
-                self.__wave = wave.open(os.path.join(self.__directory,
-                                                     self.__files[self.__playlist[self.__playing_index]]), 'rb')
+                wave_read = wave.open(os.path.join(self.__directory,
+                                                   self.__files[self.__playlist[self.__playing_index]]), 'rb')
+
+                def stream_callback(_1, frame_count, _2, _3) -> tuple[bytes, int]:
+                    data = wave_read.readframes(frame_count)
+                    return data, pyaudio.paContinue
+
                 self.__stream = self.__player.open(format=self.__player.get_format_from_width(
-                    self.__wave.getsampwidth()),
-                    channels=self.__wave.getnchannels(),
-                    rate=self.__wave.getframerate(),
+                    wave_read.getsampwidth()),
+                    channels=wave_read.getnchannels(),
+                    rate=wave_read.getframerate(),
                     output=True,
                     stream_callback=stream_callback)
             self.__stream.start_stream()
