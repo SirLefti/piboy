@@ -305,7 +305,7 @@ class RadioApp(App):
                 self.__stream = None
                 play_action()
 
-        def random_action() -> True:
+        def random_action() -> bool:
             """
             Shuffles the playlist and places the current index at the track we are currently playing or looking at.
             :return: always `True`
@@ -316,7 +316,7 @@ class RadioApp(App):
             self.__playing_index = self.__playlist.index(self.__selected_index)
             return True
 
-        def order_action() -> True:
+        def order_action() -> bool:
             """
             Creates an ordered playlist and places the current index at the track we are currently playing or looking
             at.
