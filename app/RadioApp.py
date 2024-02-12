@@ -79,7 +79,7 @@ class RadioApp(App):
             def background_color(self) -> tuple[int, int, int]:
                 return self.__background_color
 
-        def __init__(self, icon_bitmap: Image.Image, control_group: 'RadioApp.ControlGroup' = None):
+        def __init__(self, icon_bitmap: Image.Image, control_group: Optional['RadioApp.ControlGroup'] = None):
             self._icon_bitmap = icon_bitmap
             self._selection_state = self.SelectionState.NONE
             self._control_group = control_group
@@ -138,7 +138,7 @@ class RadioApp(App):
         def __init__(self, icon_bitmap: Image.Image, switched_icon_bitmap: Image.Image,
                      on_select: Callable[[], bool],
                      on_switched_select: Callable[[], bool],
-                     control_group: 'RadioApp.ControlGroup' = None):
+                     control_group: Optional['RadioApp.ControlGroup'] = None):
             super().__init__(icon_bitmap, control_group)
             self._on_select = on_select
             self._on_switched_select = on_switched_select
@@ -173,7 +173,7 @@ class RadioApp(App):
         """
 
         def __init__(self, icon_bitmap: Image.Image, on_select: Callable[[], None],
-                     control_group: 'RadioApp.ControlGroup' = None):
+                     control_group: Optional['RadioApp.ControlGroup'] = None):
             super().__init__(icon_bitmap, control_group)
             self._on_select = on_select
 
