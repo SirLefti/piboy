@@ -6,7 +6,7 @@ from PIL import Image
 class TileInfo:
     """Representation of a map tile."""
 
-    def __init__(self, top_left: Tuple[float, float], bottom_right: Tuple[float, float], image: Image):
+    def __init__(self, top_left: Tuple[float, float], bottom_right: Tuple[float, float], image: Image.Image):
         self.__top_left = top_left
         self.__bottom_right = bottom_right
         self.__image = image
@@ -22,7 +22,7 @@ class TileInfo:
         return self.__bottom_right
 
     @property
-    def image(self) -> Image:
+    def image(self) -> Image.Image:
         """Tile image"""
         return self.__image
 

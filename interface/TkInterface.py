@@ -24,12 +24,12 @@ class TkInterface(Interface, Input):
     def close(self):
         pass
 
-    def take_image(self) -> Image:
+    def take_image(self) -> Image.Image:
         image = self.__image
         self.__image = None
         return image
 
-    def show(self, image: Image, x0, y0):
+    def show(self, image: Image.Image, x0, y0):
         if self.__buffer is None:
             self.__buffer = Image.new('RGB', self.__resolution, self.__background)
         self.__buffer.paste(image, (x0, y0))  # overwrites __buffer
