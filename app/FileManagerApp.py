@@ -190,7 +190,7 @@ class FileManagerApp(App):
         cursor = start
         for index, text in enumerate(popup.options):
             if index == popup.selected_index:
-                draw.rectangle(cursor + (cursor[0] + popup_width, cursor[1] + line_height), fill=self.__color_dark)
+                draw.rectangle((cursor, (cursor[0] + popup_width, cursor[1] + line_height)), fill=self.__color_dark)
             draw.text(cursor, text, self.__color, font=font)
             cursor = cursor[0], cursor[1] + line_height
 
@@ -297,14 +297,14 @@ class FileManagerApp(App):
             right_bottom = (int(width / 2) - 1, height - self.__app_bottom_offset)
             self.__draw_directory(draw, left_top, right_bottom, self.__left_directory, is_selected=is_left_tab)
             if partial and not tab_changed:
-                return image.crop(left_top + right_bottom), *left_top  # tuple unpacking for return
+                return image.crop(left_top + right_bottom), *left_top  # noqa (unpacking type check fail)
 
         if draw_right:
             left_top = (int(width / 2) + 1, self.__app_top_offset)
             right_bottom = (width - self.__app_side_offset, height - self.__app_bottom_offset)
             self.__draw_directory(draw, left_top, right_bottom, self.__right_directory, is_selected=is_right_tab)
             if partial and not tab_changed:
-                return image.crop(left_top + right_bottom), *left_top  # tuple unpacking for return
+                return image.crop(left_top + right_bottom), *left_top   # noqa (unpacking type check fail)
 
         # split line
         start = (width / 2 - 1, self.__app_top_offset)

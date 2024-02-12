@@ -86,7 +86,7 @@ class EnvironmentApp(SelfUpdatingApp):
         if partial:
             right_bottom = (humidity_xy[0] + (self.__h_icon.width - h_text_width) // 2 + h_text_width,
                             draw_area_left_top[1] + icon_gap + max(t_text_height, p_text_height, h_text_height))
-            return image.crop(draw_area_left_top + right_bottom), *draw_area_left_top
+            return image.crop(draw_area_left_top + right_bottom), *draw_area_left_top  # noqa (unpacking type check fail)
         else:
             return image, 0, 0
 

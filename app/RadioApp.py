@@ -431,7 +431,7 @@ class RadioApp(App):
 
         if partial:
             right_bottom = width - self.__app_side_offset, height - self.__app_bottom_offset
-            return image.crop(left_top + right_bottom), *left_top
+            return image.crop(left_top + right_bottom), *left_top  # noqa (unpacking type check fail)
         else:
             return image, 0, 0
 

@@ -26,9 +26,6 @@ class MapApp(SelfUpdatingApp):
             a background color.
             Initially, the state members are all none, replace them before usage or create new ones for a specific use.
             """
-            NONE: 'SelectionState' = None  # type: ignore
-            FOCUSED: 'SelectionState' = None  # type: ignore
-            SELECTED: 'SelectionState' = None  # type: ignore
 
             # skip first argument, it is the value for the enum
             def __init__(self, color: tuple[int, int, int], background_color: tuple[int, int, int]):
@@ -42,6 +39,10 @@ class MapApp(SelfUpdatingApp):
             @property
             def background_color(self) -> tuple[int, int, int]:
                 return self.__background_color
+
+        NONE: SelectionState = None
+        FOCUSED: SelectionState = None
+        SELECTED: SelectionState = None
 
         def __init__(self, icon_bitmap: Image.Image, initial_state: SelectionState,
                      on_select: Optional[Callable[[], None]] = None, on_deselect: Optional[Callable[[], None]] = None,
@@ -78,24 +79,24 @@ class MapApp(SelfUpdatingApp):
         def on_select(self):
             """When pressing button A"""
             if not self.__instant_action:
-                self.__selection_state = self.SelectionState.SELECTED
+                self.__selection_state = self.SELECTED
             if self.__on_select is not None:
                 self.__on_select()
 
         def on_deselect(self):
             """When pressing button B"""
             if not self.__instant_action:
-                self.__selection_state = self.SelectionState.FOCUSED
+                self.__selection_state = self.FOCUSED
             if self.__on_deselect is not None:
                 self.__on_deselect()
 
         def on_focus(self):
             """When moving focus on this control"""
-            self.__selection_state = self.SelectionState.FOCUSED
+            self.__selection_state = self.FOCUSED
 
         def on_blur(self):
             """When moving focus away from this control"""
-            self.__selection_state = self.SelectionState.NONE
+            self.__selection_state = self.NONE
 
         def draw(self, draw: ImageDraw.ImageDraw, left_top: tuple[int, int]):
             width, height = self.__icon_bitmap.size
@@ -105,7 +106,7 @@ class MapApp(SelfUpdatingApp):
             draw.bitmap(left_top, self.__icon_bitmap, fill=self.__selection_state.color)
 
         def is_selected(self) -> bool:
-            return self.__selection_state == self.SelectionState.SELECTED
+            return self.__selection_state == self.SELECTED
 
     def __init__(self, draw_callback: Callable[[Any], None],
                  location_provider: LocationProvider, tile_provider: TileProvider, resolution: tuple[int, int],
@@ -123,9 +124,9 @@ class MapApp(SelfUpdatingApp):
         self.__font = font_standard
 
         # init selection states
-        self.Control.SelectionState.NONE = self.Control.SelectionState(color_dark, background)
-        self.Control.SelectionState.FOCUSED = self.Control.SelectionState(color, background)
-        self.Control.SelectionState.SELECTED = self.Control.SelectionState(background, color)
+        self.Control.NONE = self.Control.SelectionState(color_dark, background)
+        self.Control.FOCUSED = self.Control.SelectionState(color, background)
+        self.Control.SELECTED = self.Control.SelectionState(background, color)
 
         self.__draw_callback = draw_callback
         self.__draw_callback_kwargs = {'partial': True}
@@ -171,15 +172,15 @@ class MapApp(SelfUpdatingApp):
             self.__y_offset += 1
 
         self.__controls: list[MapApp.Control] = [
-            self.Control(ImageOps.invert(minus_icon), initial_state=self.Control.SelectionState.NONE,
+            self.Control(ImageOps.invert(minus_icon), initial_state=self.Control.NONE,
                          on_select=zoom_out, instant_action=True),
-            self.Control(ImageOps.invert(plus_icon), initial_state=self.Control.SelectionState.NONE,
+            self.Control(ImageOps.invert(plus_icon), initial_state=self.Control.NONE,
                          on_select=zoom_in, instant_action=True),
-            self.Control(ImageOps.invert(move_icon), initial_state=self.Control.SelectionState.NONE,
+            self.Control(ImageOps.invert(move_icon), initial_state=self.Control.NONE,
                          on_key_left=move_left, on_key_right=move_right,
                          on_key_up=move_up, on_key_down=move_down,
                          on_select=self.stop_updating, on_deselect=self.start_updating),
-            self.Control(ImageOps.invert(focus_icon), initial_state=self.Control.SelectionState.NONE,
+            self.Control(ImageOps.invert(focus_icon), initial_state=self.Control.NONE,
                          on_select=reset_offset, instant_action=True)
         ]
         self.__focused_control_index = 0
@@ -351,7 +352,7 @@ class MapApp(SelfUpdatingApp):
 
         if partial:
             right_bottom = width - self.__app_side_offset, height - self.__app_bottom_offset
-            return image.crop(left_top + right_bottom), *left_top
+            return image.crop(left_top + right_bottom), *left_top  # noqa (unpacking type check fail)
         else:
             return image, 0, 0
 

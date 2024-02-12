@@ -265,7 +265,7 @@ class UpdateApp(App):
                       f'remote: {self.__remote_name or unknown}', fill=self.__color, font=font)
 
         if partial:
-            return image.crop(left_top + right_bottom), *left_top
+            return image.crop(left_top + right_bottom), *left_top  # noqa (unpacking type check fail)
         else:
             return image, 0, 0
 
