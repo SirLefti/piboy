@@ -238,9 +238,9 @@ class UpdateApp(App):
         cursor: tuple[int, int] = left_top
         for index, option in enumerate(self.__options):
             if index == self.__selected_index:
-                draw.rectangle(cursor + (width / 2, cursor[1] + self.LINE_HEIGHT), fill=self.__color_dark)
+                draw.rectangle(cursor + (width // 2, cursor[1] + self.LINE_HEIGHT), fill=self.__color_dark)
             else:
-                draw.rectangle(cursor + (width / 2, cursor[1] + self.LINE_HEIGHT), fill=self.__background)
+                draw.rectangle(cursor + (width // 2, cursor[1] + self.LINE_HEIGHT), fill=self.__background)
             text = option.name
             if option.count_action is not None and option.count_name:
                 count = option.count_action()
@@ -250,8 +250,8 @@ class UpdateApp(App):
                     text = f'{text} (error)'
             draw.text(cursor, text, fill=self.__color, font=font)
             cursor = (cursor[0], cursor[1] + self.LINE_HEIGHT)
-            right_bottom = (max(right_bottom[0], width / 2), max(right_bottom[1], cursor[1]))
-        draw.line((width / 2, left_top[1]) + (width / 2, cursor[1]), fill=self.__color, width=1)
+            right_bottom = (max(right_bottom[0], width // 2), max(right_bottom[1], cursor[1]))
+        draw.line((width // 2, left_top[1]) + (width // 2, cursor[1]), fill=self.__color, width=1)
 
         # part: repository and branch information
         if not partial:
