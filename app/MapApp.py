@@ -308,27 +308,27 @@ class MapApp(SelfUpdatingApp):
                     # positive ratio means top-left or bottom-right sector, negativ means others
                     vertical_limit = size[0] / size[1]  # x / y
                     horizontal_limit = size[1] / size[0]  # y / x
-                    vertical_ratio = self.__x_offset // self.__y_offset
-                    horizontal_ratio = self.__y_offset // self.__x_offset
+                    vertical_ratio = self.__x_offset / self.__y_offset
+                    horizontal_ratio = self.__y_offset / self.__x_offset
                     # calculate edge_center by taking the center of the edge and adding or subtracting the product of
                     # the other edge's half-length and the ratio
                     if -vertical_limit <= vertical_ratio <= vertical_limit:
                         if self.__y_offset > 0:
-                            edge_center = (left_top[0] + size[0] // 2 - (size[1] // 2) * vertical_ratio,
+                            edge_center = (int(left_top[0] + size[0] // 2 - (size[1] // 2) * vertical_ratio),
                                            left_top[1])
                             draw_outside_marker(edge_center, map_center)
                         else:
-                            edge_center = (left_top[0] + size[0] // 2 + (size[1] // 2) * vertical_ratio,
+                            edge_center = (int(left_top[0] + size[0] // 2 + (size[1] // 2) * vertical_ratio),
                                            left_top[1] + size[1])
                             draw_outside_marker(edge_center, map_center)
                     elif -horizontal_limit <= horizontal_ratio <= horizontal_limit:
                         if self.__x_offset > 0:
                             edge_center = (left_top[0],
-                                           left_top[1] + size[1] // 2 - (size[0] // 2) * horizontal_ratio)
+                                           int(left_top[1] + size[1] // 2 - (size[0] // 2) * horizontal_ratio))
                             draw_outside_marker(edge_center, map_center)
                         else:
                             edge_center = (left_top[0] + size[0],
-                                           left_top[1] + size[1] // 2 + (size[0] // 2) * horizontal_ratio)
+                                           int(left_top[1] + size[1] // 2 + (size[0] // 2) * horizontal_ratio))
                             draw_outside_marker(edge_center, map_center)
 
         # draw location info
