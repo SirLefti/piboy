@@ -32,47 +32,47 @@ class DebugApp(App):
         draw = ImageDraw.Draw(image)
 
         points_left = [
-            (center_x - dpad_offset - dpad_spacing, center_y - button_size / 2),
-            (center_x - dpad_offset - dpad_spacing, center_y + button_size / 2),
+            (center_x - dpad_offset - dpad_spacing, center_y - button_size // 2),
+            (center_x - dpad_offset - dpad_spacing, center_y + button_size // 2),
             (center_x - dpad_offset - dpad_spacing - button_size, center_y)
         ]
         draw.polygon(points_left, fill=(self.__color if self.__button_left else self.__color_dark))
 
         points_right = [
-            (center_x - dpad_offset + dpad_spacing, center_y - button_size / 2),
-            (center_x - dpad_offset + dpad_spacing, center_y + button_size / 2),
+            (center_x - dpad_offset + dpad_spacing, center_y - button_size // 2),
+            (center_x - dpad_offset + dpad_spacing, center_y + button_size // 2),
             (center_x - dpad_offset + dpad_spacing + button_size, center_y)
         ]
         draw.polygon(points_right, fill=(self.__color if self.__button_right else self.__color_dark))
 
         points_up = [
-            (center_x - dpad_offset - button_size / 2, center_y - dpad_spacing),
-            (center_x - dpad_offset + button_size / 2, center_y - dpad_spacing),
+            (center_x - dpad_offset - button_size // 2, center_y - dpad_spacing),
+            (center_x - dpad_offset + button_size // 2, center_y - dpad_spacing),
             (center_x - dpad_offset, center_y - dpad_spacing - button_size)
         ]
         draw.polygon(points_up, fill=(self.__color if self.__button_up else self.__color_dark))
 
         points_down = [
-            (center_x - dpad_offset - button_size / 2, center_y + dpad_spacing),
-            (center_x - dpad_offset + button_size / 2, center_y + dpad_spacing),
+            (center_x - dpad_offset - button_size // 2, center_y + dpad_spacing),
+            (center_x - dpad_offset + button_size // 2, center_y + dpad_spacing),
             (center_x - dpad_offset, center_y + dpad_spacing + button_size)
         ]
         draw.polygon(points_down, fill=(self.__color if self.__button_down else self.__color_dark))
 
-        points_a = ((center_x + action_offset - button_size / 2, center_y - button_size - action_spacing / 2),
-                    (center_x + action_offset + button_size / 2, center_y - action_spacing / 2))
+        points_a = ((center_x + action_offset - button_size // 2, center_y - button_size - action_spacing // 2),
+                    (center_x + action_offset + button_size // 2, center_y - action_spacing // 2))
         draw.rectangle(points_a, fill=(self.__color if self.__button_a else self.__color_dark))
 
-        points_b = ((center_x + action_offset - button_size / 2, center_y + action_spacing / 2),
-                    (center_x + action_offset + button_size / 2, center_y + button_size + action_spacing / 2))
+        points_b = ((center_x + action_offset - button_size // 2, center_y + action_spacing // 2),
+                    (center_x + action_offset + button_size // 2, center_y + button_size + action_spacing // 2))
         draw.rectangle(points_b, fill=(self.__color if self.__button_b else self.__color_dark))
 
         if partial:
             points_all = [*points_left, *points_right, *points_up, *points_down, *points_a, *points_b]
-            max_x: int = max(points_all, key=lambda e: e[0])[0]
-            max_y: int = max(points_all, key=lambda e: e[1])[1]
-            min_x: int = min(points_all, key=lambda e: e[0])[0]
-            min_y: int = min(points_all, key=lambda e: e[1])[1]
+            max_x = max(points_all, key=lambda e: e[0])[0]
+            max_y = max(points_all, key=lambda e: e[1])[1]
+            min_x = min(points_all, key=lambda e: e[0])[0]
+            min_y = min(points_all, key=lambda e: e[1])[1]
             return image.crop((min_x, min_y) + (max_x, max_y)), min_x, min_y
         else:
             return image, 0, 0
