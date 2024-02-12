@@ -46,22 +46,19 @@ class OSMTileProvider(TileProvider):
         top_tiles = int((target_height / 2 - y_position + tile_height) / tile_height)
         bottom_tiles = int((target_height / 2 - (tile_height - y_position) + tile_height) / tile_height)
 
-        grid: list[list[Image.Image]] = [
-            [None for _ in range(top_tiles + 1 + bottom_tiles)] for _ in range(left_tiles + 1 + right_tiles)
-        ]
-        grid[left_tiles][top_tiles] = tile
+        def generate_tile(x, y) -> Image.Image:
+            if y_tile - top_tiles + y < 0 or y_tile - top_tiles + y == math.pow(2, zoom):
+                # empty image if tile ends on top or bottom and there is no further tile
+                return Image.new('RGB', size, self.__background)
+            else:
+                try:
+                    return self._fetch_tile(zoom, (x_tile - left_tiles + x) % int(math.pow(2, zoom)),
+                                                  (y_tile - top_tiles + y) % int(math.pow(2, zoom)))
+                except (ValueError, FileNotFoundError, ConnectionError, UnidentifiedImageError):
+                    return self._get_placeholder_tile()
 
-        for x, row in enumerate(grid):
-            for y, _ in enumerate(row):
-                if y_tile - top_tiles + y < 0 or y_tile - top_tiles + y == math.pow(2, zoom):
-                    # empty image if tile ends on top or bottom and there is no further tile
-                    grid[x][y] = Image.new('RGB', size, self.__background)
-                else:
-                    try:
-                        grid[x][y] = self._fetch_tile(zoom, (x_tile - left_tiles + x) % int(math.pow(2, zoom)),
-                                                      (y_tile - top_tiles + y) % int(math.pow(2, zoom)))
-                    except (ValueError, FileNotFoundError, ConnectionError, UnidentifiedImageError):
-                        grid[x][y] = grid[x][y] = self._get_placeholder_tile()
+        grid = [[generate_tile(x, y) for y in range(top_tiles + 1 + bottom_tiles)]
+                for x in range(left_tiles + 1 + right_tiles)]
 
         merged_tile = Image.new('RGB', (len(grid) * tile_width, len(grid[0]) * tile_height), (255, 255, 255))
         for row_index, row in enumerate(grid):
