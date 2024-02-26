@@ -112,8 +112,10 @@ class Environment:
 
 
 def spi_config_constructor(loader: Loader, node: Node) -> SPIConfig:
-    values = loader.construct_mapping(node)
-    return SPIConfig(**values)
+    if isinstance(node, MappingNode):
+        values = loader.construct_mapping(node)
+        return SPIConfig(**values)
+    raise TypeError("node is not of type MappingNode")
 
 
 def spi_config_representor(dumper: Dumper, data: SPIConfig) -> MappingNode:
@@ -121,8 +123,10 @@ def spi_config_representor(dumper: Dumper, data: SPIConfig) -> MappingNode:
 
 
 def i2c_config_constructor(loader: Loader, node: Node) -> I2CConfig:
-    values = loader.construct_mapping(node)
-    return I2CConfig(**values)
+    if isinstance(node, MappingNode):
+        values = loader.construct_mapping(node)
+        return I2CConfig(**values)
+    raise TypeError("node is not of type MappingNode")
 
 
 def i2c_config_representor(dumper: Dumper, data: I2CConfig) -> MappingNode:
@@ -130,8 +134,10 @@ def i2c_config_representor(dumper: Dumper, data: I2CConfig) -> MappingNode:
 
 
 def color_config_constructor(loader: Loader, node: Node) -> ColorConfig:
-    values = loader.construct_mapping(node)
-    return ColorConfig(**values)
+    if isinstance(node, MappingNode):
+        values = loader.construct_mapping(node)
+        return ColorConfig(**values)
+    raise TypeError("node is not of type MappingNode")
 
 
 def color_config_representor(dumper: Dumper, data: ColorConfig) -> MappingNode:
@@ -139,8 +145,10 @@ def color_config_representor(dumper: Dumper, data: ColorConfig) -> MappingNode:
 
 
 def app_config_constructor(loader: Loader, node: Node) -> AppConfig:
-    values = loader.construct_mapping(node)
-    return AppConfig(**values)
+    if isinstance(node, MappingNode):
+        values = loader.construct_mapping(node)
+        return AppConfig(**values)
+    raise TypeError("node is not of type MappingNode")
 
 
 def app_config_representor(dumper: Dumper, data: AppConfig) -> MappingNode:
@@ -148,8 +156,10 @@ def app_config_representor(dumper: Dumper, data: AppConfig) -> MappingNode:
 
 
 def pin_config_constructor(loader: Loader, node: Node) -> PinConfig:
-    values = loader.construct_mapping(node)
-    return PinConfig(**values)
+    if isinstance(node, MappingNode):
+        values = loader.construct_mapping(node)
+        return PinConfig(**values)
+    raise TypeError("node is not of type MappingNode")
 
 
 def pin_config_representor(dumper: Dumper, data: PinConfig) -> MappingNode:
@@ -157,8 +167,10 @@ def pin_config_representor(dumper: Dumper, data: PinConfig) -> MappingNode:
 
 
 def environment_constructor(loader: Loader, node: Node) -> Environment:
-    values = loader.construct_mapping(node)
-    return Environment(**values)
+    if isinstance(node, MappingNode):
+        values = loader.construct_mapping(node)
+        return Environment(**values)
+    raise TypeError("node is not of type MappingNode")
 
 
 def environment_representor(dumper: Dumper, data: Environment) -> MappingNode:
