@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Optional
 
 
 class LocationProvider(ABC):
@@ -12,6 +13,6 @@ class LocationProvider(ABC):
 
 class LocationException(Exception):
 
-    def __init__(self, message: str, inner_exception: Exception):
+    def __init__(self, message: str, inner_exception: Optional[Exception]=None):
         self.message = message
         self.inner_exception = inner_exception

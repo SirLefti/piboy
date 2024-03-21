@@ -1,4 +1,4 @@
-from data.LocationProvider import LocationProvider
+from data.LocationProvider import LocationProvider, LocationException
 from typing import Union
 import serial
 import io
@@ -25,11 +25,16 @@ class SerialGPSLocationProvider(LocationProvider):
                     if message.lat != '' and message.lon != '':
                         self.__lat = message.latitude
                         self.__lon = message.longitude
+                    else:
+                        self.__lat = None
+                        self.__lon = None
             except serial.SerialException:
                 pass
             except pynmea2.ParseError:
                 pass
 
     def get_location(self) -> tuple[float, float]:
+        if self.__lat is None or self.__lon is None:
+            raise LocationException('GPS module has currently no signal')
         return self.__lat, self.__lon
 
