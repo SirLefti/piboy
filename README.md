@@ -118,6 +118,7 @@ See [instructions for prototype 1](./docs/PROTO1.md).
 ### Module specific instructions
 
 * [DS3231 RTC clock](./docs/DS3231.md)
+* [NEO-6M GPS module](./docs/NEO-6M.md)
 
 ## Roadmap
 
