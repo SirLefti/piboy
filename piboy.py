@@ -6,10 +6,10 @@ from app.MapApp import MapApp
 from app.DebugApp import DebugApp
 from app.ClockApp import ClockApp
 from app.EnvironmentApp import EnvironmentApp
+from data.LocationProvider import LocationProvider
 from data.EnvironmentDataProvider import EnvironmentDataProvider
 from interface.Interface import Interface
 from interface.Input import Input
-from data.IPLocationProvider import IPLocationProvider
 from data.OSMTileProvider import OSMTileProvider
 from PIL import Image, ImageDraw
 from datetime import datetime
@@ -261,10 +261,12 @@ if __name__ == '__main__':
         app_state.update_display(INTERFACE, partial)
 
     ENVIRONMENT_DATA_PROVIDER: EnvironmentDataProvider
+    LOCATION_PROVIDER: LocationProvider
 
     if env.dev_mode:
         from interface.TkInterface import TkInterface
         from data.FakeEnvironmentDataProvider import FakeEnvironmentDataProvider
+        from data.IPLocationProvider import IPLocationProvider
 
         __tk = TkInterface(on_key_left, on_key_right, on_key_up, on_key_down, on_key_a, on_key_b,
                            on_rotary_increase, on_rotary_decrease,
@@ -272,10 +274,12 @@ if __name__ == '__main__':
         INTERFACE = __tk
         INPUT = __tk
         ENVIRONMENT_DATA_PROVIDER = FakeEnvironmentDataProvider()
+        LOCATION_PROVIDER = IPLocationProvider(apply_inaccuracy=True)
     else:
         from interface.ILI9486Interface import ILI9486Interface
         from interface.GPIOInput import GPIOInput
         from data.BME280EnvironmentDataProvider import BME280EnvironmentDataProvider
+        from data.SerialGPSLocationProvider import SerialGPSLocationProvider
 
         display_spi = (env.display_config.bus, env.display_config.device)
         INTERFACE = ILI9486Interface(display_spi, env.pin_config.dc_pin, env.pin_config.rst_pin, env.flip_display)
@@ -287,6 +291,7 @@ if __name__ == '__main__':
                           on_rotary_increase, on_rotary_decrease)
         ENVIRONMENT_DATA_PROVIDER = BME280EnvironmentDataProvider(env.env_sensor_config.port,
                                                                   env.env_sensor_config.address)
+        LOCATION_PROVIDER = SerialGPSLocationProvider('/dev/ttyAMA0', 9600)
 
     app_state.add_app(FileManagerApp(resolution, background, color, color_dark, top_offset, side_offset, bottom_offset,
                                      font_standard)) \
@@ -299,9 +304,7 @@ if __name__ == '__main__':
                           font_standard)) \
         .add_app(DebugApp(resolution, color, color_dark)) \
         .add_app(ClockApp(update_display, resolution, color)) \
-        .add_app(MapApp(update_display,
-                        IPLocationProvider(apply_inaccuracy=True),
-                        OSMTileProvider(background, color, font_standard),
+        .add_app(MapApp(update_display, LOCATION_PROVIDER, OSMTileProvider(background, color, font_standard),
                         resolution, background, color, color_dark, top_offset, side_offset, bottom_offset,
                         font_standard
                         )

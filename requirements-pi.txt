@@ -5,3 +5,5 @@ spidev >= 3.5
 numpy >= 1.22.3
 RPi.bme280 >= 0.2.4
 smbus2 >= 0.4.3
+pyserial >= 3.5
+pynmea2 >= 1.19.0
