@@ -129,8 +129,8 @@ See [instructions for prototype 1](./docs/PROTO1.md).
 * [x] map app
 * [x] radio app
 * [x] environment sensors (temperature, humidity, ...)
+* [x] GPS module
 * [ ] other apps (?)
-* [ ] GPS module
 * [ ] battery power
 * [ ] improved case
 * [ ] utilities
