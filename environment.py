@@ -16,6 +16,12 @@ class I2CConfig:
     address: int
 
 
+@dataclass()
+class SerialConfig:
+    port: str
+    baudrate: int
+
+
 @dataclass
 class ColorConfig:
     background: tuple[int, int, int]
@@ -107,6 +113,7 @@ class Environment:
     display_config: SPIConfig = SPIConfig(0, 0)
     touch_config: SPIConfig = SPIConfig(0, 1)
     env_sensor_config: I2CConfig = I2CConfig(1, 0x76)
+    gps_module_config: SerialConfig = SerialConfig('/dev/ttyAMA0', 9600)
     app_config: AppConfig = AppConfig()
     pin_config: PinConfig = PinConfig()
 
@@ -131,6 +138,17 @@ def i2c_config_constructor(loader: Loader, node: Node) -> I2CConfig:
 
 def i2c_config_representor(dumper: Dumper, data: I2CConfig) -> MappingNode:
     return dumper.represent_mapping('!I2CConfig', vars(data))
+
+
+def serial_config_constructor(loader: Loader, node: Node) -> SerialConfig:
+    if isinstance(node, MappingNode):
+        values = loader.construct_mapping(node)
+        return SerialConfig(**values)
+    raise TypeError("node if not of type MappingNode")
+
+
+def serial_config_representor(dumper: Dumper, data: SerialConfig) -> MappingNode:
+    return dumper.represent_mapping('!SerialConfig', vars(data))
 
 
 def color_config_constructor(loader: Loader, node: Node) -> ColorConfig:
@@ -180,12 +198,14 @@ def environment_representor(dumper: Dumper, data: Environment) -> MappingNode:
 def configure():
     yaml.add_constructor('!SPIConfig', spi_config_constructor)
     yaml.add_constructor('!I2CConfig', i2c_config_constructor)
+    yaml.add_constructor('!SerialConfig', serial_config_constructor)
     yaml.add_constructor('!ColorConfig', color_config_constructor)
     yaml.add_constructor('!AppConfig', app_config_constructor)
     yaml.add_constructor('!PinConfig', pin_config_constructor)
     yaml.add_constructor('!Environment', environment_constructor)
     yaml.add_representer(SPIConfig, spi_config_representor)
     yaml.add_representer(I2CConfig, i2c_config_representor)
+    yaml.add_representer(SerialConfig, serial_config_representor)
     yaml.add_representer(ColorConfig, color_config_representor)
     yaml.add_representer(AppConfig, app_config_representor)
     yaml.add_representer(PinConfig, pin_config_representor)

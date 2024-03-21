@@ -291,7 +291,7 @@ if __name__ == '__main__':
                           on_rotary_increase, on_rotary_decrease)
         ENVIRONMENT_DATA_PROVIDER = BME280EnvironmentDataProvider(env.env_sensor_config.port,
                                                                   env.env_sensor_config.address)
-        LOCATION_PROVIDER = SerialGPSLocationProvider('/dev/ttyAMA0', 9600)
+        LOCATION_PROVIDER = SerialGPSLocationProvider(env.gps_module_config.port, env.gps_module_config.baudrate)
 
     app_state.add_app(FileManagerApp(resolution, background, color, color_dark, top_offset, side_offset, bottom_offset,
                                      font_standard)) \
