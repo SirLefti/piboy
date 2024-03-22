@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from PIL import ImageFont
 from yaml import Loader, Dumper, MappingNode, Node, FullLoader
 import yaml
@@ -110,12 +110,12 @@ class PinConfig:
 class Environment:
     dev_mode: bool = True
     flip_display: bool = False
-    display_config: SPIConfig = SPIConfig(0, 0)
-    touch_config: SPIConfig = SPIConfig(0, 1)
-    env_sensor_config: I2CConfig = I2CConfig(1, 0x76)
-    gps_module_config: SerialConfig = SerialConfig('/dev/ttyAMA0', 9600)
-    app_config: AppConfig = AppConfig()
-    pin_config: PinConfig = PinConfig()
+    display_config: SPIConfig = field(default_factory=lambda: SPIConfig(0, 0))
+    touch_config: SPIConfig = field(default_factory=lambda: SPIConfig(0, 1))
+    env_sensor_config: I2CConfig = field(default_factory=lambda: I2CConfig(1, 0x76))
+    gps_module_config: SerialConfig = field(default_factory=lambda: SerialConfig('/dev/ttyAMA0', 9600))
+    app_config: AppConfig = field(default_factory=lambda: AppConfig())
+    pin_config: PinConfig = field(default_factory=lambda: PinConfig())
 
 
 def spi_config_constructor(loader: Loader, node: Node) -> SPIConfig:
