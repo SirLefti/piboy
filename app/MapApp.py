@@ -138,8 +138,9 @@ class MapApp(SelfUpdatingApp):
         self.__position: Union[Location, None] = None
         try:
             self.__position = self.__location_provider.get_location()
+            self.__connection_lost = False
         except LocationException:
-            pass  # already set position to a default value
+            self.__connection_lost = True
 
         resources_path = 'resources'
         minus_icon = Image.open(os.path.join(resources_path, 'minus.png')).convert('1')
@@ -199,8 +200,9 @@ class MapApp(SelfUpdatingApp):
         if self.__x_offset == 0 and self.__y_offset == 0:
             try:
                 self.__position = self.__location_provider.get_location()
+                self.__connection_lost = False
             except LocationException:
-                pass
+                self.__connection_lost = True
             self.__draw_callback(**self.__draw_callback_kwargs)
 
     def draw(self, image: Image.Image, partial=False) -> tuple[Image.Image, int, int]:
@@ -345,6 +347,9 @@ class MapApp(SelfUpdatingApp):
         if self.__x_offset != 0 or self.__y_offset != 0:
             cursor = (cursor[0], cursor[1] + line_height)
             draw.text(cursor, f'x: {self.__x_offset}, y: {self.__y_offset}', self.__color, font=font)
+        if self.__connection_lost:
+            cursor = (cursor[0], cursor[1] + line_height)
+            draw.text(cursor, f'connection lost', self.__color, font=font)
 
         # draw controls
         cursor = (left_top[0] + size[0] - self.__CONTROL_SIZE - self.__CONTROL_PADDING,
