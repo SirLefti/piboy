@@ -6,12 +6,11 @@ from app.MapApp import MapApp
 from app.DebugApp import DebugApp
 from app.ClockApp import ClockApp
 from app.EnvironmentApp import EnvironmentApp
+from data.LocationProvider import LocationProvider
 from data.EnvironmentDataProvider import EnvironmentDataProvider
 from interface.Interface import Interface
 from interface.Input import Input
-from data.IPLocationProvider import IPLocationProvider
 from data.OSMTileProvider import OSMTileProvider
-from typing import List
 from PIL import Image, ImageDraw
 from datetime import datetime
 from environment import Environment
@@ -24,17 +23,17 @@ class AppState:
     def __init__(self, e: Environment):
         self.__environment = e
         self.__image_buffer = self.__init_buffer()
-        self.__apps = []
+        self.__apps: list[App] = []
         self.__active_app = 0
 
-    def __init_buffer(self) -> Image:
+    def __init_buffer(self) -> Image.Image:
         return Image.new('RGB', self.__environment.app_config.resolution, self.__environment.app_config.background)
 
-    def clear_buffer(self) -> Image:
+    def clear_buffer(self) -> Image.Image:
         self.__image_buffer = self.__init_buffer()
         return self.__image_buffer
 
-    def add_app(self, app: App):
+    def add_app(self, app: App) -> 'AppState':
         self.__apps.append(app)
         return self
 
@@ -43,11 +42,11 @@ class AppState:
         return self.__environment
 
     @property
-    def image_buffer(self) -> Image:
+    def image_buffer(self) -> Image.Image:
         return self.__image_buffer
 
     @property
-    def apps(self) -> List[App]:
+    def apps(self) -> list[App]:
         return self.__apps
 
     @property
@@ -122,7 +121,7 @@ class AppState:
         self.update_display(interface, partial=False)
 
 
-def draw_footer(image: Image, state: AppState) -> (Image, int, int):
+def draw_footer(image: Image.Image, state: AppState) -> tuple[Image.Image, int, int]:
     width, height = state.environment.app_config.resolution
     footer_height = 20  # height of the footer
     footer_bottom_offset = 3  # spacing to the bottom
@@ -144,7 +143,7 @@ def draw_footer(image: Image, state: AppState) -> (Image, int, int):
     return image.crop(start + end), x0, y0
 
 
-def draw_header(image: Image, state: AppState) -> (Image, int, int):
+def draw_header(image: Image.Image, state: AppState) -> tuple[Image.Image, int, int]:
     width, height = state.environment.app_config.resolution
     vertical_line = 5  # vertical limiter line
     header_top_offset = state.environment.app_config.app_top_offset - vertical_line  # base for header
@@ -170,7 +169,7 @@ def draw_header(image: Image, state: AppState) -> (Image, int, int):
     font = state.environment.app_config.font_header
     max_text_width = width - (2 * header_side_offset)
     app_text_width = sum(font.getbbox(app.title)[2] for app in state.apps) + (len(state.apps) - 1) * app_spacing
-    cursor = header_side_offset + (max_text_width - app_text_width) / 2
+    cursor = header_side_offset + (max_text_width - app_text_width) // 2
     for app in state.apps:
         _, _, text_width, text_height = font.getbbox(app.title)
         draw.text((cursor, header_top_offset - text_height - app_padding), app.title, color_accent, font=font)
@@ -192,10 +191,18 @@ def draw_header(image: Image, state: AppState) -> (Image, int, int):
     return image.crop(partial_start + partial_end), x0, y0
 
 
-def draw_base(image: Image, state: AppState) -> Image:
+def draw_base(image: Image.Image, state: AppState) -> Image.Image:
     draw_header(image, state)
     draw_footer(image, state)
     return image
+
+
+def is_raspberry_pi() -> bool:
+    try:
+        with open('/sys/firmware/devicetree/base/model', 'r') as model_info:
+            return 'Raspberry Pi' in model_info.read()
+    except FileNotFoundError:
+        return False
 
 
 def load_environment() -> Environment:
@@ -204,6 +211,7 @@ def load_environment() -> Environment:
         return environment.load()
     except FileNotFoundError:
         e = Environment()
+        e.dev_mode = not is_raspberry_pi()
         environment.save(e)
         return e
 
@@ -253,10 +261,12 @@ if __name__ == '__main__':
         app_state.update_display(INTERFACE, partial)
 
     ENVIRONMENT_DATA_PROVIDER: EnvironmentDataProvider
+    LOCATION_PROVIDER: LocationProvider
 
     if env.dev_mode:
         from interface.TkInterface import TkInterface
         from data.FakeEnvironmentDataProvider import FakeEnvironmentDataProvider
+        from data.IPLocationProvider import IPLocationProvider
 
         __tk = TkInterface(on_key_left, on_key_right, on_key_up, on_key_down, on_key_a, on_key_b,
                            on_rotary_increase, on_rotary_decrease,
@@ -264,10 +274,12 @@ if __name__ == '__main__':
         INTERFACE = __tk
         INPUT = __tk
         ENVIRONMENT_DATA_PROVIDER = FakeEnvironmentDataProvider()
+        LOCATION_PROVIDER = IPLocationProvider(apply_inaccuracy=True)
     else:
         from interface.ILI9486Interface import ILI9486Interface
         from interface.GPIOInput import GPIOInput
         from data.BME280EnvironmentDataProvider import BME280EnvironmentDataProvider
+        from data.SerialGPSLocationProvider import SerialGPSLocationProvider
 
         display_spi = (env.display_config.bus, env.display_config.device)
         INTERFACE = ILI9486Interface(display_spi, env.pin_config.dc_pin, env.pin_config.rst_pin, env.flip_display)
@@ -279,6 +291,7 @@ if __name__ == '__main__':
                           on_rotary_increase, on_rotary_decrease)
         ENVIRONMENT_DATA_PROVIDER = BME280EnvironmentDataProvider(env.env_sensor_config.port,
                                                                   env.env_sensor_config.address)
+        LOCATION_PROVIDER = SerialGPSLocationProvider(env.gps_module_config.port, env.gps_module_config.baudrate)
 
     app_state.add_app(FileManagerApp(resolution, background, color, color_dark, top_offset, side_offset, bottom_offset,
                                      font_standard)) \
@@ -291,9 +304,7 @@ if __name__ == '__main__':
                           font_standard)) \
         .add_app(DebugApp(resolution, color, color_dark)) \
         .add_app(ClockApp(update_display, resolution, color)) \
-        .add_app(MapApp(update_display,
-                        IPLocationProvider(apply_inaccuracy=True),
-                        OSMTileProvider(background, color, font_standard),
+        .add_app(MapApp(update_display, LOCATION_PROVIDER, OSMTileProvider(background, color, font_standard),
                         resolution, background, color, color_dark, top_offset, side_offset, bottom_offset,
                         font_standard
                         )

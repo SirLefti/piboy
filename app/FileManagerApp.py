@@ -1,6 +1,6 @@
 from app.App import App
 from PIL import Image, ImageDraw, ImageOps, ImageFont
-from typing import Tuple, List, Callable, Optional
+from typing import Callable, Optional
 import os
 import shutil
 
@@ -22,7 +22,7 @@ class FileManagerApp(App):
 
         class Popup:
 
-            def __init__(self, options: List[str], actions: List[Callable]):
+            def __init__(self, options: list[str], actions: list[Callable]):
                 if len(options) != len(actions):
                     raise ValueError(
                         'There must be as many options as actions ({0}, {1})'.format(len(options), len(actions)))
@@ -31,7 +31,7 @@ class FileManagerApp(App):
                 self.__actions = actions
 
             @property
-            def options(self) -> List[str]:
+            def options(self) -> list[str]:
                 return self.__options
 
             @property
@@ -111,12 +111,13 @@ class FileManagerApp(App):
             return len(self.files)
 
         @property
-        def files(self) -> List[str]:
-            return sorted([f for f in os.listdir(self.__directory)], key=str.lower)
+        def files(self) -> list[str]:
+            return sorted([f for f in os.listdir(self.__directory)], key=lambda f: f.lower())
 
-    def __init__(self, resolution: Tuple[int, int],
-                 background: Tuple[int, int, int], color: Tuple[int, int, int], color_dark: Tuple[int, int, int],
-                 app_top_offset: int, app_side_offset: int, app_bottom_offset: int, font_standard: ImageFont):
+    def __init__(self, resolution: tuple[int, int],
+                 background: tuple[int, int, int], color: tuple[int, int, int], color_dark: tuple[int, int, int],
+                 app_top_offset: int, app_side_offset: int, app_bottom_offset: int,
+                 font_standard: ImageFont.FreeTypeFont):
         self.__resolution = resolution
         self.__background = background
         self.__color = color
@@ -162,7 +163,7 @@ class FileManagerApp(App):
         else:
             return value
 
-    def __draw_popup(self, draw: ImageDraw, left_top: Tuple[int, int], right_bottom: Tuple[int, int],
+    def __draw_popup(self, draw: ImageDraw.ImageDraw, left_top: tuple[int, int], right_bottom: tuple[int, int],
                      popup: DirectoryState.Popup):
         """Draws a popup with the given options."""
         line_height = self.LINE_HEIGHT
@@ -189,11 +190,12 @@ class FileManagerApp(App):
         cursor = start
         for index, text in enumerate(popup.options):
             if index == popup.selected_index:
-                draw.rectangle(cursor + (cursor[0] + popup_width, cursor[1] + line_height), fill=self.__color_dark)
+                draw.rectangle((cursor, (cursor[0] + popup_width, cursor[1] + line_height)), fill=self.__color_dark)
             draw.text(cursor, text, self.__color, font=font)
             cursor = cursor[0], cursor[1] + line_height
 
-    def __draw_error(self, draw: ImageDraw, left_top: Tuple[int, int], right_bottom: Tuple[int, int], text: str):
+    def __draw_error(self, draw: ImageDraw.ImageDraw, left_top: tuple[int, int], right_bottom: tuple[int, int],
+                     text: str):
         left, top = left_top  # unpacking top left anchor point
         right, bottom = right_bottom  # unpacking bottom right anchor point
         font = self.__font
@@ -211,7 +213,7 @@ class FileManagerApp(App):
         draw.rectangle(start + end, fill=self.__background)
         draw.text((center[0] - int(text_width / 2), center[1] - int(text_height / 2)), text, self.__color, font=font)
 
-    def __draw_directory(self, draw: ImageDraw, left_top: Tuple[int, int], right_bottom: Tuple[int, int],
+    def __draw_directory(self, draw: ImageDraw.ImageDraw, left_top: tuple[int, int], right_bottom: tuple[int, int],
                          state: DirectoryState, is_selected: bool) -> None:
         """Draws the given directory to the given ImageDraw and returns the new top_index."""
         line_height = self.LINE_HEIGHT  # height of a line entry in the directory
@@ -280,7 +282,7 @@ class FileManagerApp(App):
         except PermissionError:
             self.__draw_error(draw, left_top, right_bottom, 'Permission denied')
 
-    def draw(self, image: Image, partial=False) -> (Image, int, int):
+    def draw(self, image: Image.Image, partial=False) -> tuple[Image.Image, int, int]:
         width, height = self.__resolution
         is_left_tab = self.__selected_tab == 0
         is_right_tab = self.__selected_tab == 1
@@ -295,14 +297,14 @@ class FileManagerApp(App):
             right_bottom = (int(width / 2) - 1, height - self.__app_bottom_offset)
             self.__draw_directory(draw, left_top, right_bottom, self.__left_directory, is_selected=is_left_tab)
             if partial and not tab_changed:
-                return image.crop(left_top + right_bottom), *left_top  # tuple unpacking for return
+                return image.crop(left_top + right_bottom), *left_top  # noqa (unpacking type check fail)
 
         if draw_right:
             left_top = (int(width / 2) + 1, self.__app_top_offset)
             right_bottom = (width - self.__app_side_offset, height - self.__app_bottom_offset)
             self.__draw_directory(draw, left_top, right_bottom, self.__right_directory, is_selected=is_right_tab)
             if partial and not tab_changed:
-                return image.crop(left_top + right_bottom), *left_top  # tuple unpacking for return
+                return image.crop(left_top + right_bottom), *left_top   # noqa (unpacking type check fail)
 
         # split line
         start = (width / 2 - 1, self.__app_top_offset)

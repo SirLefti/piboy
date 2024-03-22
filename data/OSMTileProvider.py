@@ -1,5 +1,5 @@
 from data.TileProvider import TileProvider, TileInfo
-from typing import Tuple, Iterable
+from typing import Iterable
 from PIL import Image, ImageDraw, ImageFont, UnidentifiedImageError
 from requests.exceptions import ConnectionError
 import os
@@ -13,7 +13,7 @@ class OSMTileProvider(TileProvider):
     __CACHE_DURATION = 1000 * 60 * 60 * 24 * 365  # one year in ms
     __OSM_TILE_SIZE = (256, 256)  # size of a tile image from OSM
 
-    def __init__(self, background: Tuple[int, int, int], color: Tuple[int, int, int], font: ImageFont):
+    def __init__(self, background: tuple[int, int, int], color: tuple[int, int, int], font: ImageFont.FreeTypeFont):
         self.__background = background
         self.__color = color
         self.__font = font
@@ -22,10 +22,10 @@ class OSMTileProvider(TileProvider):
     def zoom_range(self) -> Iterable[int]:
         return range(0, 20)
 
-    def get_tile(self, lat: float, lon: float, zoom: int, size: Tuple[int, int] = (256, 256), x_offset: int = 0,
+    def get_tile(self, lat: float, lon: float, zoom: int, size: tuple[int, int] = (256, 256), x_offset: int = 0,
                  y_offset: int = 0) -> TileInfo:
         x_tile, y_tile = self._deg_to_num(lat, lon, zoom)
-        tile: Image
+        tile: Image.Image
         try:
             tile = self._fetch_tile(zoom, x_tile, y_tile)
         except (ValueError, FileNotFoundError, ConnectionError, UnidentifiedImageError):
@@ -46,22 +46,19 @@ class OSMTileProvider(TileProvider):
         top_tiles = int((target_height / 2 - y_position + tile_height) / tile_height)
         bottom_tiles = int((target_height / 2 - (tile_height - y_position) + tile_height) / tile_height)
 
-        grid: list[list[Image]] = [
-            [None for _ in range(top_tiles + 1 + bottom_tiles)] for _ in range(left_tiles + 1 + right_tiles)
-        ]
-        grid[left_tiles][top_tiles] = tile
+        def generate_tile(x, y) -> Image.Image:
+            if y_tile - top_tiles + y < 0 or y_tile - top_tiles + y == math.pow(2, zoom):
+                # empty image if tile ends on top or bottom and there is no further tile
+                return Image.new('RGB', size, self.__background)
+            else:
+                try:
+                    return self._fetch_tile(zoom, (x_tile - left_tiles + x) % int(math.pow(2, zoom)),
+                                                  (y_tile - top_tiles + y) % int(math.pow(2, zoom)))
+                except (ValueError, FileNotFoundError, ConnectionError, UnidentifiedImageError):
+                    return self._get_placeholder_tile()
 
-        for x, row in enumerate(grid):
-            for y, _ in enumerate(row):
-                if y_tile - top_tiles + y < 0 or y_tile - top_tiles + y == math.pow(2, zoom):
-                    # empty image if tile ends on top or bottom and there is no further tile
-                    grid[x][y] = Image.new('RGB', size, self.__background)
-                else:
-                    try:
-                        grid[x][y] = self._fetch_tile(zoom, (x_tile - left_tiles + x) % int(math.pow(2, zoom)),
-                                                      (y_tile - top_tiles + y) % int(math.pow(2, zoom)))
-                    except (ValueError, FileNotFoundError, ConnectionError, UnidentifiedImageError):
-                        grid[x][y] = grid[x][y] = self._get_placeholder_tile()
+        grid = [[generate_tile(x, y) for y in range(top_tiles + 1 + bottom_tiles)]
+                for x in range(left_tiles + 1 + right_tiles)]
 
         merged_tile = Image.new('RGB', (len(grid) * tile_width, len(grid[0]) * tile_height), (255, 255, 255))
         for row_index, row in enumerate(grid):
@@ -80,7 +77,7 @@ class OSMTileProvider(TileProvider):
         bottom_right = lat + (height_deg / 2), lon + (width_deg / 2)
         return TileInfo(top_left, bottom_right, cropped_tile)
 
-    def _get_placeholder_tile(self) -> Image:
+    def _get_placeholder_tile(self) -> Image.Image:
         font = self.__font
         tile = Image.new('RGB', self.__OSM_TILE_SIZE, self.__background)
         text_w, text_h = font.getbbox('?')[-2:]
@@ -91,7 +88,7 @@ class OSMTileProvider(TileProvider):
         return tile
 
     @classmethod
-    def _fetch_tile(cls, zoom: int, x_tile: int, y_tile: int) -> Image:
+    def _fetch_tile(cls, zoom: int, x_tile: int, y_tile: int) -> Image.Image:
         """Fetches the requested tile either from cache or from OSM tile API"""
         tile_cache = '.tiles'
         cache_template = '{zoom}-{x}-{y}.png'
@@ -113,20 +110,20 @@ class OSMTileProvider(TileProvider):
                 raise ValueError(f'Fetching OSM tile ({zoom}-{x_tile}-{y_tile}) failed ({response.status_code})')
 
     @classmethod
-    def _resize(cls, img: Image, size: Tuple[int, int]) -> Image:
+    def _resize(cls, img: Image.Image, size: tuple[int, int]) -> Image.Image:
         if img.size == size:
             return img
         old_x, old_y = img.size
         new_x, new_y = size
         scale = max(new_x / old_x, new_y / old_y)
-        resized = img.resize((int(old_x * scale), int(old_y * scale)), Image.ANTIALIAS)
+        resized = img.resize((int(old_x * scale), int(old_y * scale)), Image.LANCZOS)
         res_x, res_y = resized.size
         offset_x = int((res_x - new_x) / 2)
         offset_y = int((res_y - new_y) / 2)
         return resized.crop((offset_x, offset_y, offset_x + new_x, offset_y + new_y))
 
     @classmethod
-    def _deg_to_num(cls, lat_deg: float, lon_deg: float, zoom: int) -> Tuple[int, int]:
+    def _deg_to_num(cls, lat_deg: float, lon_deg: float, zoom: int) -> tuple[int, int]:
         """Code from: https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames"""
         lat_rad = math.radians(lat_deg)
         n = 2.0 ** zoom
@@ -135,7 +132,7 @@ class OSMTileProvider(TileProvider):
         return x_tile, y_tile
 
     @classmethod
-    def _num_to_deg(cls, x_tile: int, y_tile: int, zoom: int) -> Tuple[float, float]:
+    def _num_to_deg(cls, x_tile: int, y_tile: int, zoom: int) -> tuple[float, float]:
         """Code from: https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames"""
         n = 2.0 ** zoom
         lon_deg = x_tile / n * 360.0 - 180.0

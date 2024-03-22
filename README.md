@@ -1,7 +1,7 @@
 PiBoy
 =========================
-[![commit activity](https://img.shields.io/github/commit-activity/m/SirLefti/piboy)](https://github.com/SirLefti/piboy)
-[![last commit](https://img.shields.io/github/last-commit/SirLefti/piboy)](https://github.com/SirLefti/piboy)
+[![commit activity](https://img.shields.io/github/commit-activity/m/SirLefti/piboy/develop)](https://github.com/SirLefti/piboy)
+[![last commit](https://img.shields.io/github/last-commit/SirLefti/piboy/develop)](https://github.com/SirLefti/piboy)
 ![image](./docs/proto1_6.jpg)
 Build your own Pip-Boy with some useful features for real-life using your Raspberry Pi.
 
@@ -115,9 +115,10 @@ to install it, place the ``FreeSansBold.ttf`` in the root directory as a workaro
 
 See [instructions for prototype 1](./docs/PROTO1.md).
 
-#### Module specific instructions
+### Module specific instructions
 
 * [DS3231 RTC clock](./docs/DS3231.md)
+* [NEO-6M GPS module](./docs/NEO-6M.md)
 
 ## Roadmap
 
@@ -129,8 +130,21 @@ See [instructions for prototype 1](./docs/PROTO1.md).
 * [x] map app
 * [x] radio app
 * [x] environment sensors (temperature, humidity, ...)
+* [x] GPS module
 * [ ] other apps (?)
-* [ ] GPS module
 * [ ] battery power
 * [ ] improved case
 * [ ] utilities
+
+## Issues
+
+### PyAudio
+
+`pyaudio` might require system dependencies to be installed. On macOS, install the `portaudio` dependency with MacPorts:
+```bash
+sudo port install portaudio
+```
+Then install the package with pip and pass the directories where to find the dependencies:
+```bash
+CFLAGS="-I/opt/local/include -L/opt/local/lib" .venv/bin/pip install pyaudio
+```

@@ -1,6 +1,6 @@
 from interface.Interface import Interface
 from interface.Input import Input
-from typing import Callable, Tuple
+from typing import Callable
 from PIL import Image, ImageTk
 import tkinter as tk
 
@@ -13,7 +13,7 @@ class SelfManagedTkInterface(Interface, Input):
     def __init__(self, on_key_left: Callable, on_key_right: Callable,
                  on_key_up: Callable, on_key_down: Callable, on_key_a: Callable, on_key_b: Callable,
                  on_rotary_increase: Callable, on_rotary_decrease: Callable,
-                 resolution: Tuple[int, int], background: Tuple[int, int, int], ui_background: Tuple[int, int, int]):
+                 resolution: tuple[int, int], background: tuple[int, int, int], ui_background: tuple[int, int, int]):
         Input.__init__(self, on_key_left, on_key_right, on_key_up, on_key_down, on_key_a, on_key_b,
                        on_rotary_increase, on_rotary_decrease)
         self.__on_key_left = on_key_left
@@ -60,7 +60,7 @@ class SelfManagedTkInterface(Interface, Input):
                                     command=self.__on_rotary_increase)
         button_increase.grid(row=0, column=5)
 
-    def show(self, image: Image, x0, y0):
+    def show(self, image: Image.Image, x0, y0):
         self.__image.paste(image, (x0, y0))
         self.__image_tk = ImageTk.PhotoImage(self.__image)
         self.__label.configure(image=self.__image_tk)

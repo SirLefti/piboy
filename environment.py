@@ -1,5 +1,4 @@
-from dataclasses import dataclass
-from typing import Tuple, List
+from dataclasses import dataclass, field
 from PIL import ImageFont
 from yaml import Loader, Dumper, MappingNode, Node, FullLoader
 import yaml
@@ -18,10 +17,16 @@ class I2CConfig:
 
 
 @dataclass
+class SerialConfig:
+    port: str
+    baudrate: int
+
+
+@dataclass
 class ColorConfig:
-    background: Tuple[int, int, int]
-    accent: Tuple[int, int, int]
-    accent_dark: Tuple[int, int, int]
+    background: tuple[int, int, int]
+    accent: tuple[int, int, int]
+    accent_dark: tuple[int, int, int]
 
 
 @dataclass
@@ -35,7 +40,7 @@ class AppConfig:
     color_mode: int = 0
     width: int = 480
     height: int = 320
-    modes: List[ColorConfig] = None
+    modes: list[ColorConfig] = None
 
     def __post_init__(self):
         if self.modes is None:
@@ -53,27 +58,27 @@ class AppConfig:
             ]
 
     @property
-    def resolution(self) -> Tuple[int, int]:
+    def resolution(self) -> tuple[int, int]:
         return self.width, self.height
 
     @property
-    def font_header(self) -> ImageFont:
+    def font_header(self) -> ImageFont.FreeTypeFont:
         return ImageFont.truetype(self.font_name, self.font_header_size)
 
     @property
-    def font_standard(self) -> ImageFont:
+    def font_standard(self) -> ImageFont.FreeTypeFont:
         return ImageFont.truetype(self.font_name, self.font_standard_size)
 
     @property
-    def background(self) -> Tuple[int, int, int]:
+    def background(self) -> tuple[int, int, int]:
         return self.modes[self.color_mode].background
 
     @property
-    def accent(self) -> Tuple[int, int, int]:
+    def accent(self) -> tuple[int, int, int]:
         return self.modes[self.color_mode].accent
 
     @property
-    def accent_dark(self) -> Tuple[int, int, int]:
+    def accent_dark(self) -> tuple[int, int, int]:
         return self.modes[self.color_mode].accent_dark
 
 
@@ -105,16 +110,19 @@ class PinConfig:
 class Environment:
     dev_mode: bool = True
     flip_display: bool = False
-    display_config: SPIConfig = SPIConfig(0, 0)
-    touch_config: SPIConfig = SPIConfig(0, 1)
-    env_sensor_config: I2CConfig = I2CConfig(1, 0x76)
-    app_config: AppConfig = AppConfig()
-    pin_config: PinConfig = PinConfig()
+    display_config: SPIConfig = field(default_factory=lambda: SPIConfig(0, 0))
+    touch_config: SPIConfig = field(default_factory=lambda: SPIConfig(0, 1))
+    env_sensor_config: I2CConfig = field(default_factory=lambda: I2CConfig(1, 0x76))
+    gps_module_config: SerialConfig = field(default_factory=lambda: SerialConfig('/dev/ttyAMA0', 9600))
+    app_config: AppConfig = field(default_factory=lambda: AppConfig())
+    pin_config: PinConfig = field(default_factory=lambda: PinConfig())
 
 
 def spi_config_constructor(loader: Loader, node: Node) -> SPIConfig:
-    values = loader.construct_mapping(node)
-    return SPIConfig(**values)
+    if isinstance(node, MappingNode):
+        values = loader.construct_mapping(node)
+        return SPIConfig(**values)
+    raise TypeError("node is not of type MappingNode")
 
 
 def spi_config_representor(dumper: Dumper, data: SPIConfig) -> MappingNode:
@@ -122,17 +130,32 @@ def spi_config_representor(dumper: Dumper, data: SPIConfig) -> MappingNode:
 
 
 def i2c_config_constructor(loader: Loader, node: Node) -> I2CConfig:
-    values = loader.construct_mapping(node)
-    return I2CConfig(**values)
+    if isinstance(node, MappingNode):
+        values = loader.construct_mapping(node)
+        return I2CConfig(**values)
+    raise TypeError("node is not of type MappingNode")
 
 
 def i2c_config_representor(dumper: Dumper, data: I2CConfig) -> MappingNode:
     return dumper.represent_mapping('!I2CConfig', vars(data))
 
 
+def serial_config_constructor(loader: Loader, node: Node) -> SerialConfig:
+    if isinstance(node, MappingNode):
+        values = loader.construct_mapping(node)
+        return SerialConfig(**values)
+    raise TypeError("node if not of type MappingNode")
+
+
+def serial_config_representor(dumper: Dumper, data: SerialConfig) -> MappingNode:
+    return dumper.represent_mapping('!SerialConfig', vars(data))
+
+
 def color_config_constructor(loader: Loader, node: Node) -> ColorConfig:
-    values = loader.construct_mapping(node)
-    return ColorConfig(**values)
+    if isinstance(node, MappingNode):
+        values = loader.construct_mapping(node)
+        return ColorConfig(**values)
+    raise TypeError("node is not of type MappingNode")
 
 
 def color_config_representor(dumper: Dumper, data: ColorConfig) -> MappingNode:
@@ -140,8 +163,10 @@ def color_config_representor(dumper: Dumper, data: ColorConfig) -> MappingNode:
 
 
 def app_config_constructor(loader: Loader, node: Node) -> AppConfig:
-    values = loader.construct_mapping(node)
-    return AppConfig(**values)
+    if isinstance(node, MappingNode):
+        values = loader.construct_mapping(node)
+        return AppConfig(**values)
+    raise TypeError("node is not of type MappingNode")
 
 
 def app_config_representor(dumper: Dumper, data: AppConfig) -> MappingNode:
@@ -149,8 +174,10 @@ def app_config_representor(dumper: Dumper, data: AppConfig) -> MappingNode:
 
 
 def pin_config_constructor(loader: Loader, node: Node) -> PinConfig:
-    values = loader.construct_mapping(node)
-    return PinConfig(**values)
+    if isinstance(node, MappingNode):
+        values = loader.construct_mapping(node)
+        return PinConfig(**values)
+    raise TypeError("node is not of type MappingNode")
 
 
 def pin_config_representor(dumper: Dumper, data: PinConfig) -> MappingNode:
@@ -158,8 +185,10 @@ def pin_config_representor(dumper: Dumper, data: PinConfig) -> MappingNode:
 
 
 def environment_constructor(loader: Loader, node: Node) -> Environment:
-    values = loader.construct_mapping(node)
-    return Environment(**values)
+    if isinstance(node, MappingNode):
+        values = loader.construct_mapping(node)
+        return Environment(**values)
+    raise TypeError("node is not of type MappingNode")
 
 
 def environment_representor(dumper: Dumper, data: Environment) -> MappingNode:
@@ -169,12 +198,14 @@ def environment_representor(dumper: Dumper, data: Environment) -> MappingNode:
 def configure():
     yaml.add_constructor('!SPIConfig', spi_config_constructor)
     yaml.add_constructor('!I2CConfig', i2c_config_constructor)
+    yaml.add_constructor('!SerialConfig', serial_config_constructor)
     yaml.add_constructor('!ColorConfig', color_config_constructor)
     yaml.add_constructor('!AppConfig', app_config_constructor)
     yaml.add_constructor('!PinConfig', pin_config_constructor)
     yaml.add_constructor('!Environment', environment_constructor)
     yaml.add_representer(SPIConfig, spi_config_representor)
     yaml.add_representer(I2CConfig, i2c_config_representor)
+    yaml.add_representer(SerialConfig, serial_config_representor)
     yaml.add_representer(ColorConfig, color_config_representor)
     yaml.add_representer(AppConfig, app_config_representor)
     yaml.add_representer(PinConfig, pin_config_representor)

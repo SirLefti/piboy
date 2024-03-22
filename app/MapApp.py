@@ -1,7 +1,7 @@
 from app.App import SelfUpdatingApp
-from data.LocationProvider import LocationProvider, LocationException
+from data.LocationProvider import LocationProvider, LocationException, Location
 from data.TileProvider import TileProvider
-from typing import Callable, Tuple, List, Any
+from typing import Callable, Any, Optional, Union
 from PIL import Image, ImageDraw, ImageOps, ImageFont
 import os.path
 import math
@@ -26,27 +26,29 @@ class MapApp(SelfUpdatingApp):
             a background color.
             Initially, the state members are all none, replace them before usage or create new ones for a specific use.
             """
-            NONE = None
-            FOCUSED = None
-            SELECTED = None
 
             # skip first argument, it is the value for the enum
-            def __init__(self, color: Tuple[int, int, int], background_color: Tuple[int, int, int]):
+            def __init__(self, color: tuple[int, int, int], background_color: tuple[int, int, int]):
                 self.__color = color
                 self.__background_color = background_color
 
             @property
-            def color(self):
+            def color(self) -> tuple[int, int, int]:
                 return self.__color
 
             @property
-            def background_color(self):
+            def background_color(self) -> tuple[int, int, int]:
                 return self.__background_color
 
-        def __init__(self, icon_bitmap: Image, initial_state: SelectionState,
-                     on_select: Callable[[], None] = None, on_deselect: Callable[[], None] = None,
-                     on_key_left: Callable[[], None] = None, on_key_right: Callable[[], None] = None,
-                     on_key_up: Callable[[], None] = None, on_key_down: Callable[[], None] = None,
+        NONE: SelectionState = None
+        FOCUSED: SelectionState = None
+        SELECTED: SelectionState = None
+
+        def __init__(self, icon_bitmap: Image.Image, initial_state: SelectionState,
+                     on_select: Optional[Callable[[], None]] = None, on_deselect: Optional[Callable[[], None]] = None,
+                     on_key_left: Optional[Callable[[], None]] = None,
+                     on_key_right: Optional[Callable[[], None]] = None,
+                     on_key_up: Optional[Callable[[], None]] = None, on_key_down: Optional[Callable[[], None]] = None,
                      instant_action=False):
             self.__icon_bitmap = icon_bitmap
             self.__on_select = on_select
@@ -77,26 +79,26 @@ class MapApp(SelfUpdatingApp):
         def on_select(self):
             """When pressing button A"""
             if not self.__instant_action:
-                self.__selection_state = self.SelectionState.SELECTED
+                self.__selection_state = self.SELECTED
             if self.__on_select is not None:
                 self.__on_select()
 
         def on_deselect(self):
             """When pressing button B"""
             if not self.__instant_action:
-                self.__selection_state = self.SelectionState.FOCUSED
+                self.__selection_state = self.FOCUSED
             if self.__on_deselect is not None:
                 self.__on_deselect()
 
         def on_focus(self):
             """When moving focus on this control"""
-            self.__selection_state = self.SelectionState.FOCUSED
+            self.__selection_state = self.FOCUSED
 
         def on_blur(self):
             """When moving focus away from this control"""
-            self.__selection_state = self.SelectionState.NONE
+            self.__selection_state = self.NONE
 
-        def draw(self, draw: ImageDraw, left_top: Tuple[int, int]):
+        def draw(self, draw: ImageDraw.ImageDraw, left_top: tuple[int, int]):
             width, height = self.__icon_bitmap.size
             left, top = left_top
             draw.rectangle(left_top + (left + width - 1, top + height - 1),
@@ -104,12 +106,13 @@ class MapApp(SelfUpdatingApp):
             draw.bitmap(left_top, self.__icon_bitmap, fill=self.__selection_state.color)
 
         def is_selected(self) -> bool:
-            return self.__selection_state == self.SelectionState.SELECTED
+            return self.__selection_state == self.SELECTED
 
     def __init__(self, draw_callback: Callable[[Any], None],
-                 location_provider: LocationProvider, tile_provider: TileProvider, resolution: Tuple[int, int],
-                 background: Tuple[int, int, int], color: Tuple[int, int, int], color_dark: Tuple[int, int, int],
-                 app_top_offset: int, app_side_offset: int, app_bottom_offset: int, font_standard: ImageFont):
+                 location_provider: LocationProvider, tile_provider: TileProvider, resolution: tuple[int, int],
+                 background: tuple[int, int, int], color: tuple[int, int, int], color_dark: tuple[int, int, int],
+                 app_top_offset: int, app_side_offset: int, app_bottom_offset: int,
+                 font_standard: ImageFont.FreeTypeFont):
         super().__init__(self.__update_location)
         self.__resolution = resolution
         self.__background = background
@@ -121,9 +124,9 @@ class MapApp(SelfUpdatingApp):
         self.__font = font_standard
 
         # init selection states
-        self.Control.SelectionState.NONE = self.Control.SelectionState(color_dark, background)
-        self.Control.SelectionState.FOCUSED = self.Control.SelectionState(color, background)
-        self.Control.SelectionState.SELECTED = self.Control.SelectionState(background, color)
+        self.Control.NONE = self.Control.SelectionState(color_dark, background)
+        self.Control.FOCUSED = self.Control.SelectionState(color, background)
+        self.Control.SELECTED = self.Control.SelectionState(background, color)
 
         self.__draw_callback = draw_callback
         self.__draw_callback_kwargs = {'partial': True}
@@ -132,10 +135,12 @@ class MapApp(SelfUpdatingApp):
         self.__zoom = 15
         self.__x_offset = 0
         self.__y_offset = 0
+        self.__position: Union[Location, None] = None
         try:
-            self.__position: Tuple[float | None, float | None] = self.__location_provider.get_location()
+            self.__position = self.__location_provider.get_location()
+            self.__connection_lost = False
         except LocationException:
-            self.__position: Tuple[float | None, float | None] = (None, None)
+            self.__connection_lost = True
 
         resources_path = 'resources'
         minus_icon = Image.open(os.path.join(resources_path, 'minus.png')).convert('1')
@@ -167,16 +172,16 @@ class MapApp(SelfUpdatingApp):
         def move_down():
             self.__y_offset += 1
 
-        self.__controls: List[MapApp.Control] = [
-            self.Control(ImageOps.invert(minus_icon), initial_state=self.Control.SelectionState.NONE,
+        self.__controls: list[MapApp.Control] = [
+            self.Control(ImageOps.invert(minus_icon), initial_state=self.Control.NONE,
                          on_select=zoom_out, instant_action=True),
-            self.Control(ImageOps.invert(plus_icon), initial_state=self.Control.SelectionState.NONE,
+            self.Control(ImageOps.invert(plus_icon), initial_state=self.Control.NONE,
                          on_select=zoom_in, instant_action=True),
-            self.Control(ImageOps.invert(move_icon), initial_state=self.Control.SelectionState.NONE,
+            self.Control(ImageOps.invert(move_icon), initial_state=self.Control.NONE,
                          on_key_left=move_left, on_key_right=move_right,
                          on_key_up=move_up, on_key_down=move_down,
                          on_select=self.stop_updating, on_deselect=self.start_updating),
-            self.Control(ImageOps.invert(focus_icon), initial_state=self.Control.SelectionState.NONE,
+            self.Control(ImageOps.invert(focus_icon), initial_state=self.Control.NONE,
                          on_select=reset_offset, instant_action=True)
         ]
         self.__focused_control_index = 0
@@ -195,11 +200,12 @@ class MapApp(SelfUpdatingApp):
         if self.__x_offset == 0 and self.__y_offset == 0:
             try:
                 self.__position = self.__location_provider.get_location()
+                self.__connection_lost = False
             except LocationException:
-                pass
+                self.__connection_lost = True
             self.__draw_callback(**self.__draw_callback_kwargs)
 
-    def draw(self, image: Image, partial=False) -> (Image, int, int):
+    def draw(self, image: Image.Image, partial=False) -> tuple[Image.Image, int, int]:
         draw = ImageDraw.Draw(image)
         width, height = self.__resolution
         left_top = (self.__app_side_offset, self.__app_top_offset)
@@ -208,11 +214,12 @@ class MapApp(SelfUpdatingApp):
         line_height = 20
         font = self.__font
 
-        lat, lon = self.__position
         size = (width - 2 * self.__app_side_offset - side_tab_width,
                 height - self.__app_top_offset - self.__app_bottom_offset)
 
-        if lat is None or lon is None:
+        lat: Union[float, None] = None
+        lon: Union[float, None] = None
+        if self.__position is None:
             # if location is not available, just paste a black image for now
             left, top = left_top
             tile_width, tile_height = size
@@ -220,6 +227,8 @@ class MapApp(SelfUpdatingApp):
             draw.rectangle(left_top + right_bottom, self.__background, self.__color, 3)
         else:
             # if location is available, just fetch the tile as usual
+            lat = self.__position.latitude
+            lon = self.__position.longitude
             tile = self.__tile_provider.get_tile(lat, lon, self.__zoom, size=size,
                                                  x_offset=self.__x_offset * self.__SCROLL_FACTOR,
                                                  y_offset=self.__y_offset * self.__SCROLL_FACTOR)
@@ -243,7 +252,7 @@ class MapApp(SelfUpdatingApp):
                               (marker_center[0] + int(marker_size / 2), marker_center[1] - marker_size)],
                              fill=self.__color_dark)
             else:
-                def draw_outside_marker(edge_position: Tuple[int, int], center_position: Tuple[int, int]):
+                def draw_outside_marker(edge_position: tuple[int, int], center_position: tuple[int, int]):
                     marker_width = 3
                     marker_length_percentage = .2
                     tip_length_percentage = marker_length_percentage * .75
@@ -254,11 +263,11 @@ class MapApp(SelfUpdatingApp):
                                edge_position[1] - diff_y * marker_length_percentage) +
                               edge_position, fill=self.__color, width=marker_width)  # line towards center
 
-                    def dot(v1: Tuple[float, float], v2: Tuple[float, float]) -> float:
+                    def dot(v1: tuple[float, float], v2: tuple[float, float]) -> float:
                         """ vector dot product """
                         return sum([i * j for (i, j) in zip(v1, v2)])
 
-                    def mag(v: Tuple[float, float]) -> float:
+                    def mag(v: tuple[float, float]) -> float:
                         """ vector magnitude/length """
                         return math.sqrt(dot(v, v))
 
@@ -305,27 +314,27 @@ class MapApp(SelfUpdatingApp):
                     # positive ratio means top-left or bottom-right sector, negativ means others
                     vertical_limit = size[0] / size[1]  # x / y
                     horizontal_limit = size[1] / size[0]  # y / x
-                    vertical_ratio = self.__x_offset // self.__y_offset
-                    horizontal_ratio = self.__y_offset // self.__x_offset
+                    vertical_ratio = self.__x_offset / self.__y_offset
+                    horizontal_ratio = self.__y_offset / self.__x_offset
                     # calculate edge_center by taking the center of the edge and adding or subtracting the product of
                     # the other edge's half-length and the ratio
                     if -vertical_limit <= vertical_ratio <= vertical_limit:
                         if self.__y_offset > 0:
-                            edge_center = (left_top[0] + size[0] // 2 - (size[1] // 2) * vertical_ratio,
+                            edge_center = (int(left_top[0] + size[0] // 2 - (size[1] // 2) * vertical_ratio),
                                            left_top[1])
                             draw_outside_marker(edge_center, map_center)
                         else:
-                            edge_center = (left_top[0] + size[0] // 2 + (size[1] // 2) * vertical_ratio,
+                            edge_center = (int(left_top[0] + size[0] // 2 + (size[1] // 2) * vertical_ratio),
                                            left_top[1] + size[1])
                             draw_outside_marker(edge_center, map_center)
                     elif -horizontal_limit <= horizontal_ratio <= horizontal_limit:
                         if self.__x_offset > 0:
                             edge_center = (left_top[0],
-                                           left_top[1] + size[1] // 2 - (size[0] // 2) * horizontal_ratio)
+                                           int(left_top[1] + size[1] // 2 - (size[0] // 2) * horizontal_ratio))
                             draw_outside_marker(edge_center, map_center)
                         else:
                             edge_center = (left_top[0] + size[0],
-                                           left_top[1] + size[1] // 2 + (size[0] // 2) * horizontal_ratio)
+                                           int(left_top[1] + size[1] // 2 + (size[0] // 2) * horizontal_ratio))
                             draw_outside_marker(edge_center, map_center)
 
         # draw location info
@@ -338,6 +347,9 @@ class MapApp(SelfUpdatingApp):
         if self.__x_offset != 0 or self.__y_offset != 0:
             cursor = (cursor[0], cursor[1] + line_height)
             draw.text(cursor, f'x: {self.__x_offset}, y: {self.__y_offset}', self.__color, font=font)
+        if self.__connection_lost:
+            cursor = (cursor[0], cursor[1] + line_height)
+            draw.text(cursor, f'connection lost', self.__color, font=font)
 
         # draw controls
         cursor = (left_top[0] + size[0] - self.__CONTROL_SIZE - self.__CONTROL_PADDING,
@@ -348,7 +360,7 @@ class MapApp(SelfUpdatingApp):
 
         if partial:
             right_bottom = width - self.__app_side_offset, height - self.__app_bottom_offset
-            return image.crop(left_top + right_bottom), *left_top
+            return image.crop(left_top + right_bottom), *left_top  # noqa (unpacking type check fail)
         else:
             return image, 0, 0
 

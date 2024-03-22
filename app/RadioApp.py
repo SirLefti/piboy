@@ -1,6 +1,7 @@
+from abc import ABC, abstractmethod
 from app.App import App
 from PIL import Image, ImageDraw, ImageFont
-from typing import Tuple, List, Callable, Optional
+from typing import Callable, Optional
 from subprocess import run, PIPE
 import pyaudio
 import wave
@@ -25,7 +26,7 @@ class RadioApp(App):
         """
 
         def __init__(self):
-            self.__controls: List['RadioApp.Control'] = []
+            self.__controls: list['RadioApp.Control'] = []
 
         def listen(self, control: 'RadioApp.Control'):
             self.__controls.append(control)
@@ -34,7 +35,7 @@ class RadioApp(App):
             for control in [c for c in self.__controls if c is not control]:
                 control.on_blur()
 
-    class Control:
+    class Control(ABC):
         """
         Represents a UI control element. A control has a texture, a callback and might have a control group that
         unselects other controls in the same group, if this control gets selected.
@@ -46,10 +47,10 @@ class RadioApp(App):
             a background color, and also values determining if it represents focused and selected.
             Initially, the state members are all none, replace them before usage or create new ones for a specific use.
             """
-            NONE = None
-            FOCUSED = None
+            NONE: 'RadioApp.Control.SelectionState' = None
+            FOCUSED: 'RadioApp.Control.SelectionState' = None
 
-            def __init__(self, color: Tuple[int, int, int], background_color: Tuple[int, int, int],
+            def __init__(self, color: tuple[int, int, int], background_color: tuple[int, int, int],
                          is_focused: bool, is_selected: bool):
                 self.__color = color
                 self.__background_color = background_color
@@ -57,38 +58,36 @@ class RadioApp(App):
                 self.__is_selected = is_selected
 
             @classmethod
-            def from_state(cls, is_focused: bool, is_selected: bool):
+            def from_state(cls, is_focused: bool, is_selected: bool) -> 'RadioApp.Control.SelectionState':
                 values = [cls.NONE, cls.FOCUSED]
                 return [state for state in values
                         if state.is_focused == is_focused and state.is_selected == is_selected][0]
 
             @property
-            def is_focused(self):
+            def is_focused(self) -> bool:
                 return self.__is_focused
 
             @property
-            def is_selected(self):
+            def is_selected(self) -> bool:
                 return self.__is_selected
 
             @property
-            def color(self) -> Tuple[int, int, int]:
+            def color(self) -> tuple[int, int, int]:
                 return self.__color
 
             @property
-            def background_color(self):
+            def background_color(self) -> tuple[int, int, int]:
                 return self.__background_color
 
-        def __init__(self, icon_bitmap: Image, on_select: Callable[[], None],
-                     control_group: 'RadioApp.ControlGroup' = None):
+        def __init__(self, icon_bitmap: Image.Image, control_group: Optional['RadioApp.ControlGroup'] = None):
             self._icon_bitmap = icon_bitmap
             self._selection_state = self.SelectionState.NONE
-            self._on_select = on_select
             self._control_group = control_group
             if self._control_group:
                 self._control_group.listen(self)
 
         @property
-        def size(self) -> Tuple[int, int]:
+        def size(self) -> tuple[int, int]:
             return self._icon_bitmap.size
 
         @property
@@ -105,6 +104,11 @@ class RadioApp(App):
                 if self._control_group:
                     self._control_group.clear_selection(self)
 
+        @abstractmethod
+        def on_select(self):
+            """When pressing the A button while focussing this control"""
+            raise NotImplementedError
+
         def on_focus(self):
             """When moving focus on this control"""
             self._selection_state = self.SelectionState.FOCUSED
@@ -117,7 +121,7 @@ class RadioApp(App):
             """Resets the control to an unfocused state"""
             self._selection_state = self.SelectionState.NONE
 
-        def draw(self, draw: ImageDraw, left_top: Tuple[int, int]):
+        def draw(self, draw: ImageDraw.ImageDraw, left_top: tuple[int, int]):
             width, height = self._icon_bitmap.size
             left, top = left_top
             draw.rectangle(left_top + (left + width - 1, top + height - 1),
@@ -131,27 +135,30 @@ class RadioApp(App):
         depending on this state.
         """
 
-        def __init__(self, icon_bitmap: Image, switched_icon_bitmap: Image,
-                     on_select: Callable[[], None],
-                     on_switched_select: Callable[[], None],
-                     control_group: 'RadioApp.ControlGroup' = None):
-            super().__init__(icon_bitmap, on_select, control_group)
+        def __init__(self, icon_bitmap: Image.Image, switched_icon_bitmap: Image.Image,
+                     on_select: Callable[[], bool],
+                     on_switched_select: Callable[[], bool],
+                     control_group: Optional['RadioApp.ControlGroup'] = None):
+            super().__init__(icon_bitmap, control_group)
+            self._on_select = on_select
             self._on_switched_select = on_switched_select
             self._switched_icon_bitmap = switched_icon_bitmap
             self._is_switched = False
 
         def on_select(self):
             super()._handle_control_group()
-            self._is_switched = not self._is_switched
+            # this is inverted because we switch states after successful action
             if self._is_switched:
-                self._on_switched_select()
+                if self._on_select():
+                    self._is_switched = not self._is_switched
             else:
-                self._on_select()
+                if self._on_switched_select():
+                    self._is_switched = not self._is_switched
 
         def on_deselect(self):
             self._is_switched = False
 
-        def draw(self, draw: ImageDraw, left_top: Tuple[int, int]):
+        def draw(self, draw: ImageDraw.ImageDraw, left_top: tuple[int, int]):
             width, height = self._icon_bitmap.size
             left, top = left_top
             draw.rectangle(left_top + (left + width - 1, top + height - 1),
@@ -165,17 +172,19 @@ class RadioApp(App):
         callback but stays in the same state, allowing to call the action again.
         """
 
-        def __init__(self, icon_bitmap: Image, on_select: Callable[[], None],
-                     control_group: 'RadioApp.ControlGroup' = None):
-            super().__init__(icon_bitmap, on_select, control_group)
+        def __init__(self, icon_bitmap: Image.Image, on_select: Callable[[], None],
+                     control_group: Optional['RadioApp.ControlGroup'] = None):
+            super().__init__(icon_bitmap, control_group)
+            self._on_select = on_select
 
         def on_select(self):
             super()._handle_control_group()
             self._on_select()
 
-    def __init__(self, resolution: Tuple[int, int],
-                 background: Tuple[int, int, int], color: Tuple[int, int, int], color_dark: Tuple[int, int, int],
-                 app_top_offset: int, app_side_offset: int, app_bottom_offset: int, font_standard: ImageFont):
+    def __init__(self, resolution: tuple[int, int],
+                 background: tuple[int, int, int], color: tuple[int, int, int], color_dark: tuple[int, int, int],
+                 app_top_offset: int, app_side_offset: int, app_bottom_offset: int,
+                 font_standard: ImageFont.FreeTypeFont):
         self.__resolution = resolution
         self.__background = background
         self.__color = color
@@ -187,15 +196,14 @@ class RadioApp(App):
 
         self.__directory = 'media'
         self.__supported_extensions = ['.wav']
-        self.__files: List[str] = self.__get_files()
+        self.__files: list[str] = self.__get_files()
 
         self.__selected_index = 0  # what we have selected with our cursor
         self.__top_index = 0  # what is on top in case the list is greater than screen space
-        self.__playlist: List[int] = list(range(0, len(self.__files)))  # order of the tracks to play
+        self.__playlist: list[int] = list(range(0, len(self.__files)))  # order of the tracks to play
         self.__playing_index = 0  # what we are currently playing from the playlist
         self.__player = pyaudio.PyAudio()
         self.__stream: Optional[pyaudio.Stream] = None
-        self.__wave = None
         self.__is_random = False
         self.__volume: Optional[int] = None
         try:
@@ -219,15 +227,14 @@ class RadioApp(App):
         volume_decrease_icon = Image.open(os.path.join(resources_path, 'volume_decrease.png')).convert('1')
         volume_increase_icon = Image.open(os.path.join(resources_path, 'volume_increase.png')).convert('1')
 
-        def stream_callback(_1, frame_count, _2,  _3):
-            data = self.__wave.readframes(frame_count)
-            return data, pyaudio.paContinue
-
-        def play_action():
+        def play_action() -> bool:
             """
             Loads current selected file if no stream is loaded.
             Resumes playing a loaded stream.
+            :return: `True` if stream was started, else `False` (e.g. playlist is empty)
             """
+            if len(self.__playlist) == 0:
+                return False
             if self.__selected_index != self.__playlist[self.__playing_index]:
                 self.__playing_index = self.__playlist.index(self.__selected_index)
             if self.__stream:
@@ -235,23 +242,36 @@ class RadioApp(App):
                 self.__stream.close()
                 self.__stream = None
             if not self.__stream:
-                self.__wave = wave.open(os.path.join(self.__directory,
-                                                     self.__files[self.__playlist[self.__playing_index]]), 'rb')
-                self.__stream = self.__player.open(format=self.__player.get_format_from_width(
-                                                          self.__wave.getsampwidth()),
-                                                   channels=self.__wave.getnchannels(),
-                                                   rate=self.__wave.getframerate(),
-                                                   output=True,
-                                                   stream_callback=stream_callback)
-            self.__stream.start_stream()
+                wave_read = wave.open(os.path.join(self.__directory,
+                                                   self.__files[self.__playlist[self.__playing_index]]), 'rb')
 
-        def pause_action():
-            """Pauses a currently loaded stream."""
+                def stream_callback(_1, frame_count, _2, _3) -> tuple[bytes, int]:
+                    data = wave_read.readframes(frame_count)
+                    return data, pyaudio.paContinue
+
+                self.__stream = self.__player.open(format=self.__player.get_format_from_width(
+                    wave_read.getsampwidth()),
+                    channels=wave_read.getnchannels(),
+                    rate=wave_read.getframerate(),
+                    output=True,
+                    stream_callback=stream_callback)
+            self.__stream.start_stream()
+            return True
+
+        def pause_action() -> bool:
+            """
+            Pauses a currently loaded stream.
+            :return: `True` if stream was stopped, else `False` (e.g. there was no active stream)
+            """
             if self.__stream:
                 self.__stream.stop_stream()
+                return True
+            return False
 
         def stop_action():
-            """Stops and clears a currently loaded stream."""
+            """
+            Stops and clears a currently loaded stream.
+            """
             if self.__stream:
                 self.__stream.stop_stream()
                 self.__stream.close()
@@ -285,19 +305,33 @@ class RadioApp(App):
                 self.__stream = None
                 play_action()
 
-        def random_action():
+        def random_action() -> bool:
+            """
+            Shuffles the playlist and places the current index at the track we are currently playing or looking at.
+            :return: always `True`
+            """
             self.__is_random = True
             random.shuffle(self.__playlist)
             # set playlist index to the track we are currently playing or looking at
             self.__playing_index = self.__playlist.index(self.__selected_index)
+            return True
 
-        def order_action():
+        def order_action() -> bool:
+            """
+            Creates an ordered playlist and places the current index at the track we are currently playing or looking
+            at.
+            :return: always `True`
+            """
             self.__is_random = False
             self.__playlist = list(range(0, len(self.__files)))
             # set playlist index to the track we are currently playing or looking at
             self.__playing_index = self.__selected_index
+            return True
 
         def decrease_volume_action():
+            """
+            Decreases the volume by one volume step. Only works on Linux with `amixer`
+            """
             current_value = self.__get_volume()
             if current_value % self.__VOLUME_STEP == 0:
                 self.__set_volume(max(current_value - self.__VOLUME_STEP, 0))
@@ -307,6 +341,9 @@ class RadioApp(App):
             self.__volume = self.__get_volume()
 
         def increase_volume_action():
+            """
+            Increases the volume by one volume step. Only works on Linux with `amixer`
+            """
             current_value = self.__get_volume()
             if current_value % self.__VOLUME_STEP == 0:
                 self.__set_volume(min(current_value + self.__VOLUME_STEP, 100))
@@ -331,7 +368,7 @@ class RadioApp(App):
     def title(self) -> str:
         return 'RAD'
 
-    def draw(self, image: Image, partial=False) -> (Image, int, int):
+    def draw(self, image: Image.Image, partial=False) -> tuple[Image.Image, int, int]:
         draw = ImageDraw.Draw(image)
         width, height = self.__resolution
 
@@ -339,8 +376,9 @@ class RadioApp(App):
         controls_total_width = sum([c.size[0] for c in self.__controls]) + self.__CONTROL_PADDING * (
                 len(self.__controls) - 1)
         max_control_height = max([c.size[1] for c in self.__controls])
-        cursor = (width // 2 - controls_total_width // 2,
-                  height - self.__app_bottom_offset - max_control_height - self.__CONTROL_BOTTOM_OFFSET)
+        cursor: tuple[int, int] = (width // 2 - controls_total_width // 2,
+                                   height - self.__app_bottom_offset - max_control_height
+                                   - self.__CONTROL_BOTTOM_OFFSET)
         for control in self.__controls:
             c_width, c_height = control.size
             control.draw(draw, (cursor[0], cursor[1] + (max_control_height - c_height) // 2))
@@ -393,13 +431,13 @@ class RadioApp(App):
 
         if partial:
             right_bottom = width - self.__app_side_offset, height - self.__app_bottom_offset
-            return image.crop(left_top + right_bottom), *left_top
+            return image.crop(left_top + right_bottom), *left_top  # noqa (unpacking type check fail)
         else:
             return image, 0, 0
 
-    def __get_files(self):
+    def __get_files(self) -> list[str]:
         return sorted([f for f in os.listdir(self.__directory) if os.path.splitext(f)[1] in
-                       self.__supported_extensions], key=str.lower)
+                       self.__supported_extensions], key=lambda f: f.lower())
 
     @staticmethod
     def __get_volume() -> int:

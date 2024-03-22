@@ -8,7 +8,8 @@ from app.EnvironmentApp import EnvironmentApp
 from data.FakeEnvironmentDataProvider import FakeEnvironmentDataProvider
 from data.IPLocationProvider import IPLocationProvider
 from data.OSMTileProvider import OSMTileProvider
-from interface import Interface, Input
+from interface.Interface import Interface
+from interface.Input import Input
 from interface.SelfManagedTkInterrface import SelfManagedTkInterface
 from piboy import AppState, load_environment
 import threading
@@ -101,5 +102,4 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         pass
     finally:
-        INTERFACE.close()
-        INPUT.close()
+        __tk.close()

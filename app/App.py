@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Optional, Callable, Any
+from typing import Optional, Callable
 from PIL import Image
 import threading
 import time
@@ -15,7 +15,7 @@ class App(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def draw(self, image: Image, partial=False) -> (Image, int, int):
+    def draw(self, image: Image.Image, partial=False) -> tuple[Image.Image, int, int]:
         """
         Draws the app content and returns the full or partial frame.
 
@@ -100,7 +100,7 @@ class SelfUpdatingApp(App, ABC):
             """Stops the inner thread function by setting a flag."""
             self.__alive = False
 
-    def __init__(self, update_callback: Callable[[Any], None]):
+    def __init__(self, update_callback: Callable[[], None]):
         self.__update_callback = update_callback
         self.__update_thread: Optional[SelfUpdatingApp.UpdateThread] = None
 
