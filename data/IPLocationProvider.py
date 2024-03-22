@@ -1,4 +1,4 @@
-from data.LocationProvider import LocationProvider, LocationException
+from data.LocationProvider import LocationProvider, LocationException,  Location
 from typing import Callable, Type, Collection
 import time
 import requests
@@ -30,23 +30,24 @@ class IPLocationProvider(LocationProvider):
         self.__apply_inaccuracy = apply_inaccuracy
 
     @retry(exceptions=(requests.exceptions.ConnectionError,), delay=2, tries=5)
-    def get_location(self) -> tuple[float, float]:
+    def get_location(self) -> Location:
         response = requests.get('https://ipinfo.io/json')
-        if response.status_code == 200:
-            data = json.loads(response.content)
-            loc = 'loc'
-            if loc in data.keys():
-                values = str.split(data[loc], ',')
-                if len(values) == 2:
-                    if self.__apply_inaccuracy:
-                        lat_offset = random.randint(-100, 100)
-                        lon_offset = random.randint(-100, 100)
-                        return float(values[0]) + lat_offset / 1000000, float(values[1]) + lon_offset / 10000000
-                    else:
-                        return float(values[0]), float(values[1])
-                else:
-                    raise ValueError('Response data does not contain two coordinates')
-            else:
-                raise ValueError(f'Response data does not contain key ({loc})')
+        if response.status_code != 200:
+            raise LocationException(f'Fetching coordinates by IP failed ({response.status_code})')
+
+        data = json.loads(response.content)
+        loc = 'loc'
+        if loc not in data.keys():
+            raise LocationException(f'Response data does not contain key ({loc})')
+
+        values = str.split(data[loc], ',')
+        if len(values) != 2:
+            raise LocationException('Response data does not contain two coordinates')
+
+        if self.__apply_inaccuracy:
+            lat_offset = random.randint(-100, 100)
+            lon_offset = random.randint(-100, 100)
+            return Location(float(values[0]) + lat_offset / 1000000,
+                            float(values[1]) + lon_offset / 10000000)
         else:
-            raise ValueError(f'Fetching coordinates by IP failed ({response.status_code})')
+            return Location(float(values[0]), float(values[1]))

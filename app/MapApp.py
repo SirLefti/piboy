@@ -1,5 +1,5 @@
 from app.App import SelfUpdatingApp
-from data.LocationProvider import LocationProvider, LocationException
+from data.LocationProvider import LocationProvider, LocationException, Location
 from data.TileProvider import TileProvider
 from typing import Callable, Any, Optional, Union
 from PIL import Image, ImageDraw, ImageOps, ImageFont
@@ -135,7 +135,7 @@ class MapApp(SelfUpdatingApp):
         self.__zoom = 15
         self.__x_offset = 0
         self.__y_offset = 0
-        self.__position: Union[tuple[float, float], tuple[None, None]] = (None, None)
+        self.__position: Union[Location, None] = None
         try:
             self.__position = self.__location_provider.get_location()
         except LocationException:
@@ -212,11 +212,12 @@ class MapApp(SelfUpdatingApp):
         line_height = 20
         font = self.__font
 
-        lat, lon = self.__position
         size = (width - 2 * self.__app_side_offset - side_tab_width,
                 height - self.__app_top_offset - self.__app_bottom_offset)
 
-        if lat is None or lon is None:
+        lat: Union[float, None] = None
+        lon: Union[float, None] = None
+        if self.__position is None:
             # if location is not available, just paste a black image for now
             left, top = left_top
             tile_width, tile_height = size
@@ -224,6 +225,8 @@ class MapApp(SelfUpdatingApp):
             draw.rectangle(left_top + right_bottom, self.__background, self.__color, 3)
         else:
             # if location is available, just fetch the tile as usual
+            lat = self.__position.latitude
+            lon = self.__position.longitude
             tile = self.__tile_provider.get_tile(lat, lon, self.__zoom, size=size,
                                                  x_offset=self.__x_offset * self.__SCROLL_FACTOR,
                                                  y_offset=self.__y_offset * self.__SCROLL_FACTOR)
