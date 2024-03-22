@@ -50,6 +50,7 @@ Other shown apps are currently placeholders and not implemented yet.
  - 3.5" SPI display module (with an ILI9486 display driver chip)
  - rotary encoder module (KY-040)
  - BME280 environment sensor
+ - NEO-6M GPS module
  - DS3231 RTC clock (optional)
 
 Additional parts depending on case variant.
@@ -91,9 +92,6 @@ To enable logging, use the following instead:
 ````bash
 @reboot cd /home/pi/piboy && (.venv/bin/python -u piboy.py >log 2>err) &
 ````
-
-To use the hardware input and display, set ``dev_move`` in ``config.yaml`` to `false` (file will be created after first
-start).
 
 ## Configuration
 
