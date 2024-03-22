@@ -1,5 +1,5 @@
 -r requirements.txt
-# the following requirements are used by only the hardware modules, but can be installed for code checks.
+# The following requirements are used by only the hardware modules, but can be installed for code checks.
 smbus2 >= 0.4.3
 numpy >= 1.22.3
 pyserial >= 3.5
