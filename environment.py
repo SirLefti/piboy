@@ -16,7 +16,7 @@ class I2CConfig:
     address: int
 
 
-@dataclass()
+@dataclass
 class SerialConfig:
     port: str
     baudrate: int
