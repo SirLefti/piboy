@@ -44,8 +44,12 @@ and also for both types:
 
 ### 1. Prepare parts
 
+![proto2_parts](proto2_parts.jpg)
+
 The first version of these parts had a few issues. Use the parts with ``Proto2.1`` in their name instead. Some parts
-might still need some sanding and smoothing, especially on the mounting rails. 
+might still need some sanding and smoothing, especially on the mounting rails.
+The image shows the parts for type A. The top left part is slightly different for type B and does not use the top right
+part.
 
 ### 2. Solder daughter board
 
