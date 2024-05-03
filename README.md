@@ -2,7 +2,7 @@ PiBoy
 =========================
 [![commit activity](https://img.shields.io/github/commit-activity/m/SirLefti/piboy/develop)](https://github.com/SirLefti/piboy)
 [![last commit](https://img.shields.io/github/last-commit/SirLefti/piboy/develop)](https://github.com/SirLefti/piboy)
-![image](./docs/proto1_6.jpg)
+![image](docs/prototype1/proto1_6.jpg)
 Build your own Pip-Boy with some useful features for real-life using your Raspberry Pi.
 
 ## Features
@@ -10,50 +10,63 @@ Build your own Pip-Boy with some useful features for real-life using your Raspbe
 #### File Manager App
 Provides basic functions for moving, copying and deleting files and directories. Plug in a USB drive as a holo tape.
 
-![inv](./docs/inv.png)
+![inv](docs/apps/inv.png)
 
 #### System App
 Can fetch and install updates from the git repository.
 
-![sys](./docs/sys.png)
+![sys](docs/apps/sys.png)
 
 #### Environment App
 Provides useful information about your environment like temperature, atmospheric pressure and humidity.
 
-![env](./docs/env.png)
+![env](docs/apps/env.png)
 
 #### Radio App
 Actually more like a classic music player. Stay tuned!
 
-![rad](./docs/rad.png)
+![rad](docs/apps/rad.png)
 
 #### Debug App
 Shows the last pressed key to help you check the key wiring.
 
-![dbg](./docs/dbg.png)
+![dbg](docs/apps/dbg.png)
 
 #### Clock App
 It just shows the time on a classic analog clock.
 
-![clk](./docs/clk.png)
+![clk](docs/apps/clk.png)
 
 #### Map App
 Supports zooming and moving the map around. Don't get lost in the wasteland.
 
-![map](./docs/map.png)
+![map](docs/apps/map.png)
 
 Other shown apps are currently placeholders and not implemented yet.
 
 ## Hardware
 
- - Raspberry Pi (full size board with all 40 pins recommended)
- - 3.5" SPI display module (with an ILI9486 display driver chip)
- - rotary encoder module (KY-040)
- - BME280 environment sensor
- - NEO-6M GPS module
- - DS3231 RTC clock (optional)
+Base:
+- Raspberry Pi (full size board with all 40 pins recommended)
+- 3.5" SPI display module (with an ILI9486 display driver chip)
+- rotary encoder module (KY-040)
+- 6x micro push buttons (6mm x 6mm)
+- perf board/proto board (14x9 holes required)
+- wires, general soldering stuff
+- rotary encoder knob (optional, choose one you like)
 
-Additional parts depending on case variant.
+Modules:
+- BME280 environment sensor
+- NEO-6M GPS module
+- DS3231 RTC clock (optional, but recommended)
+
+Battery power:
+- MT3608 power converter
+- TP4056 battery charging controller
+- 18650 battery cell (others can fit as well)
+- toggle switch
+
+Additional parts depending on case version. Battery power and modules are not supported internally by prototype 1.
 
 ## Installation
 
@@ -111,7 +124,8 @@ to install it, place the ``FreeSansBold.ttf`` in the root directory as a workaro
 
 ## Assembly
 
-See [instructions for prototype 1](./docs/PROTO1.md).
+See [instructions for prototype 1](docs/prototype1/ASSEMBLY.md).
+See [instructions for prototype 2](docs/prototype2/ASSEMBLY.md)
 
 ### Module specific instructions
 

@@ -4,16 +4,11 @@ Case Prototype 1
 ![proto1_final](proto1_6.jpg)
 
 ## Parts
-* [base part](parts/proto1/Proto1.1-base.stl)
-* [top part](parts/proto1/Proto1.1-top.stl)
+* [base part](parts/Proto1.1-base.stl)
+* [top part](parts/Proto1.1-top.stl)
 * 3x M2x25
-* 6x micro push buttons (6mm x 6mm)
-* rotary encoder (KY-040 module)
-* perf board/proto board (14x9 holes required)
-* wires, general soldering stuff
-* rotary encoder knob (optional)
 
-**Made for Raspberry Pi 2 Model B**
+**Made for Raspberry Pi 2 Model B. Other full size boards should fit as well with some adjustments to the I/O part.**
 
 ## Goal
 
