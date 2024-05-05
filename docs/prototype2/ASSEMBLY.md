@@ -31,7 +31,6 @@ and also for both types:
 * mounting rails for MT3608 is pretty tight
 * display might need additional support from the bottom
 * misplaced stand-offs for NEO-6M
-* malformed stand-offs for DS3231
 * USB ports need a bit more space
 
 ### Fixes in Prototype 2.1
@@ -41,7 +40,6 @@ and also for both types:
 * widened mounting rails for MT3608
 * additional support for display
 * fixed misplaced stand-offs for NEO-6M
-* fixed malformed stand-offs for DS3231
 * more space for USB ports
 
 ## Building
