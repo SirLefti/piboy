@@ -32,7 +32,7 @@ and also for both types:
 * display might need additional support from the bottom
 * misplaced stand-offs for NEO-6M
 * malformed stand-offs for DS3231
-* USB ports need a bit more space to the side
+* USB ports need a bit more space
 
 ### Fixes in Prototype 2.1
 
@@ -57,7 +57,7 @@ part.
 ![proto2_placing](proto2_placing.jpg)
 
 This is how the components are being placed. Make sure everything fits nicely before soldering. Some parts might still
-need some sanding and smoothing, especially on the mounting rails.
+need some sanding and smoothing, especially on the mounting rails.´´
 
 ### 2. Solder daughter board
 
