@@ -27,18 +27,22 @@ and also for both types:
 
 * forearm bulging radius is probably too wide for most arms to be comfortable
 * hole for power switch is pretty tight, might be hard to mount the switch
+* hole for rotary encoder is pretty tight
 * mounting rails for MT3608 is pretty tight
 * display might need additional support from the bottom
 * misplaced stand-offs for NEO-6M
 * malformed stand-offs for DS3231
+* USB ports need a bit more space to the side
 
 ### Fixes in Prototype 2.1
 
 * widened hole for power switch for easier mounting
+* widened hole for rotary encoder
 * widened mounting rails for MT3608
 * additional support for display
 * fixed misplaced stand-offs for NEO-6M
 * fixed malformed stand-offs for DS3231
+* more space for USB ports
 
 ## Building
 
@@ -46,10 +50,14 @@ and also for both types:
 
 ![proto2_parts](proto2_parts.jpg)
 
-The first version of these parts had a few issues. Use the parts with ``Proto2.1`` in their name instead. Some parts
-might still need some sanding and smoothing, especially on the mounting rails.
+The first version of these parts had a few issues. Use the parts with ``Proto2.1`` in their name instead.
 The image shows the parts for type A. The top left part is slightly different for type B and does not use the top right
 part.
+
+![proto2_placing](proto2_placing.jpg)
+
+This is how the components are being placed. Make sure everything fits nicely before soldering. Some parts might still
+need some sanding and smoothing, especially on the mounting rails.
 
 ### 2. Solder daughter board
 
