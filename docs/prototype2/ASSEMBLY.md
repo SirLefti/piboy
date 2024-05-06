@@ -6,7 +6,7 @@ Case Prototype 1
 * [carrier part](parts/Proto2.1-carrier.stl)
 
 either for type A:
-* [spacer part](parts/Proto2-Proto2.1-spacer.stl)
+* [spacer part](parts/Proto2.1-spacer.stl)
 * [top part](parts/Proto2.1-top.stl)
 * [GPIO edge extension](https://wiki.52pi.com/index.php?title=EP-0121)
 
@@ -26,6 +26,7 @@ and also for both types:
 ## Evaluation
 
 * forearm bulging radius is probably too wide for most arms to be comfortable
+* more space to run wires through would be helpful
 * hole for power switch is pretty tight, might be hard to mount the switch
 * hole for rotary encoder is pretty tight
 * mounting rails for MT3608 is pretty tight
@@ -55,7 +56,7 @@ part.
 ![proto2_placing](proto2_placing.jpg)
 
 This is how the components are being placed. Make sure everything fits nicely before soldering. Some parts might still
-need some sanding and smoothing, especially on the mounting rails.´´
+need some sanding and smoothing, especially on the mounting rails.
 
 ### 2. Solder daughter board
 
@@ -69,7 +70,34 @@ Solder a common ground wire.
 
 Cut the edges of the board if it is too big to fit.
 
-### 3. Solder to Pi board
+### 3. Solder power circuit
+
+For the power circuit, you need the battery, charging controller, switch and power converter. Solder them together as
+show in the table and image below.
+
+**IMPORTANT:** Set up the power converter to output 5.0 V before soldering the Pi to it. The Pi has no fuses to protect
+itself from overvoltage via the pins. Charge the battery before configuring it.
+
+**NOTE**: The switch is placed between the battery/charging controller and the power converter, because the power
+converter would drain the battery over time if it was permanently connected it.
+
+| from          | to              |
+|---------------|-----------------|
+| battery+      | TP4056 B+       |
+| battery-      | TP4056 B-       |
+| TP4056 Out+   | Switch Center 1 |
+| TP4056 Out-   | Switch Center 2 |
+| Switch Left 1 | MT3608 VIn+     |
+| Switch Left 2 | MT3608 VIn-     |
+| MT3608 VOut+  | Pi Pin 2 (5V)   |
+| MT3608 VOut-  | Pi Pin 6 (GND)  |
+
+The complete circuit should look like this. Try to power it on like that to see if everything works. Also attach the
+display module, because it has a relatively high power draw compared to the other components.
+![proto2_power](proto2_power.jpg)
+*Note: I am using here two separate cells instead of the single 18650 one.*
+
+### 4. Solder to Pi board
 
 If you chose type A (includes the spacer), you can solder everything to the extra GPIO extension, or even use jumper
 wires to connect the components. If you chose type B (more compact) instead, you have to solder the wires directly to
@@ -95,7 +123,7 @@ Do the same for [DS3231](../DS3231.md) and [NEO-6M](../NEO-6M.md), as described 
 
 TODO: power converter, battery
 
-### 4. Assembly
+### 5. Assembly
 
 The parts are held in place in different ways. If needed, add some (more) hot glue.
 
