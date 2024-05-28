@@ -14,7 +14,9 @@ or for type B:
 * [top part no spacer](/prototype2/parts/Proto2.1-top-no-spacer.stl)
 
 and also for both types:
-* 8x M2x25 (might require to shorten some screws a bit, also depending on the type)
+* 8x M2 (you can shorten screws if needed)
+  * 4x at least 16 mm for the bottom
+  * 4x at least 24 mm for the top for type A or 12 mm for type B
 
 **Made for Raspberry Pi 2 Model B. Other full size boards should fit as well with some adjustments to the I/O part.**
 
@@ -58,6 +60,12 @@ part.
 This is how the components are being placed. Make sure everything fits nicely before soldering. Some parts might still
 need some sanding and smoothing, especially on the mounting rails.
 
+The screws should grip into the four holes in the carrier part that holds the Pi and most of the other components, but
+slip through the holes in the other parts. Screws will be placed from the bottom as well as from the top, and might need
+to be shortened a bit. Going from both sides reduces the load on each screw and allows to use shorter screws, because
+25 mm is usually already the longest variant you can get for M2 screws, which would not be enough here if going from the
+top all the way to the bottom part.
+
 ### 2. Solder daughter board
 
 This is the same as from prototype 1 and can be reused.
@@ -79,7 +87,7 @@ show in the table and image below.
 itself from overvoltage via the pins. Charge the battery before configuring it.
 
 **NOTE**: The switch is placed between the battery/charging controller and the power converter, because the power
-converter would drain the battery over time if it was permanently connected it.
+converter would drain the battery over time if it was permanently connected to it.
 
 | from          | to              |
 |---------------|-----------------|

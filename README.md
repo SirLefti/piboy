@@ -145,6 +145,7 @@ See [instructions for prototype 2](docs/prototype2/ASSEMBLY.md)
 * [x] GPS module
 * [ ] other apps (?)
 * [ ] battery power
+* [ ] battery status (?)
 * [ ] improved case
 * [ ] utilities
 
