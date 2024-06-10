@@ -131,7 +131,8 @@ to install it, place the ``FreeSansBold.ttf`` in the root directory as a workaro
 ## Assembly
 
 See [instructions for prototype 1](docs/prototype1/ASSEMBLY.md).
-See [instructions for prototype 2](docs/prototype2/ASSEMBLY.md)
+
+See [instructions for prototype 2](docs/prototype2/ASSEMBLY.md).
 
 ### Module specific instructions
 
