@@ -45,7 +45,7 @@ and also for both types:
 * fixed misplaced stand-offs for NEO-6M
 * more space for USB ports
 
-## Building
+## Instructions
 
 ### 1. Prepare parts
 
@@ -66,19 +66,9 @@ to be shortened a bit. Going from both sides reduces the load on each screw and 
 25 mm is usually already the longest variant you can get for M2 screws, which would not be enough here if going from the
 top all the way to the bottom part.
 
-### 2. Solder daughter board
+Solder the keypad as [described](../keypad.md).
 
-This is the same as from prototype 1 and can be reused.
-
-![proto1_1](../prototype1/proto1_1.jpg)
-Mount and solder the micro push buttons as shown.
-
-![proto1_2](../prototype1/proto1_2.jpg)
-Solder a common ground wire.
-
-Cut the edges of the board if it is too big to fit.
-
-### 3. Solder power circuit
+### 2. Solder power circuit
 
 For the power circuit, you need the battery, charging controller, switch and power converter. Solder them together as
 show in the table and image below.
@@ -103,9 +93,10 @@ converter would drain the battery over time if it was permanently connected to i
 The complete circuit should look like this. Try to power it on like that to see if everything works. Also attach the
 display module, because it has a relatively high power draw compared to the other components.
 ![proto2_power](proto2_power.jpg)
-*Note: I am using here two separate cells instead of the single 18650 one.*
+*Note: I am using here two separate cells instead of the single 18650 one. Both should have the same capacity when doing
+so.*
 
-### 4. Solder to Pi board
+### 3. Solder to Pi board
 
 If you chose type A (includes the spacer), you can solder everything to the extra GPIO extension, or even use jumper
 wires to connect the components. If you chose type B (more compact) instead, you have to solder the wires directly to
@@ -127,11 +118,10 @@ bottom of the Pi.
 Keep in mind, that wiring diagrams and pin-outs for the Pi are usually from a top view, which means you have mirror the
 pinout. Some wires might need to go through the middle of the carrier part.
 
-Do the same for [DS3231](../DS3231.md) and [NEO-6M](../NEO-6M.md), as described in their instructions.
+Do the same for [DS3231](../DS3231.md) and [NEO-6M](../NEO-6M.md), as described in their instructions. You can try it
+with jumper wires before soldering to make sure the modules are recognized and work as expected.
 
-TODO: power converter, battery
-
-### 5. Assembly
+### 4. Assembly
 
 The parts are held in place in different ways. If needed, add some (more) hot glue.
 
