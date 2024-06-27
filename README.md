@@ -1,10 +1,10 @@
 PiBoy
 =========================
-![master](https://img.shields.io/badge/master-8A2BE2)
+[![master](https://img.shields.io/badge/master-8A2BE2)](https://github.com/SirLefti/piboy)
 [![commit activity](https://img.shields.io/github/commit-activity/m/SirLefti/piboy/master)](https://github.com/SirLefti/piboy)
 [![last commit](https://img.shields.io/github/last-commit/SirLefti/piboy/master)](https://github.com/SirLefti/piboy)
 <br>
-![develop](https://img.shields.io/badge/develop-8A2BE2)
+[![develop](https://img.shields.io/badge/develop-8A2BE2)](https://github.com/SirLefti/piboy/tree/develop)
 [![commit activity](https://img.shields.io/github/commit-activity/m/SirLefti/piboy/develop)](https://github.com/SirLefti/piboy/tree/develop)
 [![last commit](https://img.shields.io/github/last-commit/SirLefti/piboy/develop)](https://github.com/SirLefti/piboy/tree/develop)
 
