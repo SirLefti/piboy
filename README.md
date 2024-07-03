@@ -78,13 +78,17 @@ Additional parts depending on case version. Battery power and modules are not su
 
 Install system dependencies:
 ````bash
+# OLD, test what we really need
 sudo apt install build-essential git usbmount python3 python3-dev python3-smbus python3-venv python3-audio fonts-freefont-ttf libjpeg-dev libatlas-base-dev libopenjp2-7-dev
 ````
 
-Make sure the following entry in ``/lib/systemd/system/systemd-udevd.service`` matches and reboot after changes:
 ````bash
-PrivateMount=no
+# NEW, checked that we need them
+sudo apt install git libopenjp2-7 libportaudio2 libopenblas0 python3-rpi-lgpio
 ````
+
+Call ``sudo raspi-config`` and then select ``Interface Options > SPI`` to enable SPI.
+Then select ``Interface Options > I2C`` to enable I2C.
 
 Clone repository and go into it:
 ````bash
@@ -150,6 +154,8 @@ See [instructions for prototype 2](docs/prototype2/ASSEMBLY.md).
 * [x] radio app
 * [x] environment sensors (temperature, humidity, ...)
 * [x] GPS module
+* [ ] fix audio quality
+* [ ] auto-mount usb drives (previous solutions does not work any more)
 * [ ] other apps (?)
 * [ ] battery power
 * [ ] battery status (?)
