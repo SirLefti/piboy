@@ -118,8 +118,8 @@ bottom of the Pi.
 Keep in mind, that wiring diagrams and pin-outs for the Pi are usually from a top view, which means you have mirror the
 pinout. Some wires might need to go through the middle of the carrier part.
 
-Do the same for [DS3231](../DS3231.md) and [NEO-6M](../NEO-6M.md), as described in their instructions. You can try it
-with jumper wires before soldering to make sure the modules are recognized and work as expected.
+Do the same for [BME280](../BME280.md), [DS3231](../DS3231.md) and [NEO-6M](../NEO-6M.md), as described in their instructions.
+You can try it with jumper wires before soldering to make sure the modules are recognized and work as expected.
 
 ### 4. Assembly
 

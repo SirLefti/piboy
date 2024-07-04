@@ -60,6 +60,7 @@ Base:
 - perf board/proto board (14x9 holes required)
 - wires, general soldering stuff
 - rotary encoder knob (optional, choose one you like)
+- USB Wi-Fi adapter (optional, if your Pi does not have Wi-Fi onboard)
 
 Modules:
 - BME280 environment sensor
@@ -140,6 +141,7 @@ See [instructions for prototype 2](docs/prototype2/ASSEMBLY.md).
 
 ### Module specific instructions
 
+* [BME280](./docs/BME280.md)
 * [DS3231 RTC clock](./docs/DS3231.md)
 * [NEO-6M GPS module](./docs/NEO-6M.md)
 
@@ -154,10 +156,10 @@ See [instructions for prototype 2](docs/prototype2/ASSEMBLY.md).
 * [x] radio app
 * [x] environment sensors (temperature, humidity, ...)
 * [x] GPS module
+* [x] battery power
 * [ ] fix audio quality
 * [ ] auto-mount usb drives (previous solutions does not work any more)
 * [ ] other apps (?)
-* [ ] battery power
 * [ ] battery status (?)
 * [ ] improved case
 * [ ] utilities
