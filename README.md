@@ -126,8 +126,8 @@ development, ``TkInterface`` or ``SelfManagedTkInterface`` can be used, both imp
 functionality.
 
 You can define additional color groups under ``app_config/modes`` for your own theme and set the index at
-``app_config/color_mode``. The first default color group is the traditional class green theme, the second is a yellow
-power armor mode theme.
+``app_config/color_mode``. The first default color group is the traditional classic green theme, the second is a yellow
+power armor theme.
 
 This project uses FreeSansBold as default font. If the font cannot be found despite being installed, or you do not want
 to install it, place the ``FreeSansBold.ttf`` in the root directory as a workaround.
