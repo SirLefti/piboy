@@ -77,6 +77,8 @@ Additional parts depending on case version. Battery power and modules are not su
 
 ## Installation
 
+All guides are using Raspberry OS based on Debian Bookworm.
+
 Install system dependencies:
 ````bash
 # OLD, test what we really need
