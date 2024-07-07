@@ -68,7 +68,7 @@ Solder wires to the bottom of the Pi board to connect the daughter board and rot
 | 37   | GPIO 26   | button B                       |
 | 39   | GND       | rotary encoder GND, button GND |
 
-Keep in mind, that wiring diagrams and pin-outs for the Pi are usually from a top view, which means you have mirror the
+Keep in mind, that wiring diagrams and pinouts for the Pi are usually from a top view, which means you have mirror the
 pinout, as seen in the image.
 
 ### 3. Assembly
