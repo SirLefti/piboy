@@ -79,13 +79,7 @@ All guides are using Raspberry OS based on Debian Bookworm.
 
 Install system dependencies:
 ````bash
-# OLD, test what we really need
-sudo apt install build-essential git usbmount python3 python3-dev python3-smbus python3-venv python3-audio fonts-freefont-ttf libjpeg-dev libatlas-base-dev libopenjp2-7-dev
-````
-
-````bash
-# NEW, checked that we need them
-sudo apt install git libopenjp2-7 libportaudio2 libopenblas0 python3-rpi-lgpio
+sudo apt install git libopenjp2-7 libportaudio2 libopenblas0 python3-rpi-lgpio font-freefont-ttf
 ````
 
 Call ``sudo raspi-config`` and then select ``Interface Options > SPI`` to enable SPI.
