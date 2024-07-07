@@ -115,8 +115,12 @@ bottom of the Pi.
 | 37   | GPIO 26   | button B                       |
 | 39   | GND       | rotary encoder GND, button GND |
 
+Refer to this pinout diagram from [pinout.xyz](https://pinout.xyz/). The GPIO pins and their numbers are the green ones
+here:
+![pinout](../pinout.png)
+
 Keep in mind, that wiring diagrams and pin-outs for the Pi are usually from a top view, which means you have mirror the
-pinout. Some wires might need to go through the middle of the carrier part.
+pin-out when soldering to the bottom. Some wires might need to go through the middle of the carrier part.
 
 Do the same for [BME280](../BME280.md), [DS3231](../DS3231.md) and [NEO-6M](../NEO-6M.md), as described in their instructions.
 You can try it with jumper wires before soldering to make sure the modules are recognized and work as expected.
