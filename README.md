@@ -48,8 +48,6 @@ Supports zooming and moving the map around. Don't get lost in the wasteland.
 
 ![map](docs/apps/map.png)
 
-Other shown apps are currently placeholders and not implemented yet.
-
 ## Hardware
 
 Base:
