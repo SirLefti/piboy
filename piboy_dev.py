@@ -97,8 +97,6 @@ if __name__ == '__main__':
     try:
         # blocking run function
         __tk.run()
-        # blocking function that updates the clock
-        app_state.watch_function(INTERFACE)
     except KeyboardInterrupt:
         pass
     finally:
