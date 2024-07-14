@@ -38,7 +38,8 @@ class GPIOInput(Input):
         GPIO.add_event_detect(key_b, GPIO.RISING, callback=self.__gpio_b, bouncetime=debounce)
 
         # rotary event callbacks
-        GPIO.add_event_detect(rotary_clock, GPIO.RISING, callback=self.__gpio_rotary_clock, bouncetime=debounce)
+        GPIO.add_event_detect(rotary_clock, GPIO.BOTH, callback=self.__gpio_rotary_decrease, bouncetime=debounce)
+        GPIO.add_event_detect(rotary_data, GPIO.BOTH, callback=self.__gpio_rotary_increase, bouncetime=debounce)
         GPIO.add_event_detect(rotary_switch, GPIO.RISING, callback=self.__gpio_rotary_switch, bouncetime=debounce)
 
     def close(self):
@@ -62,13 +63,11 @@ class GPIOInput(Input):
     def __gpio_b(self, pin):
         self.on_key_b()
 
-    def __gpio_rotary_clock(self, pin):
-        clk = GPIO.input(self.__rotary_clock)
-        dt = GPIO.input(self.__rotary_data)
-        if clk == 0 and dt == 0:
-            self.on_rotary_decrease()
-        elif clk == 0 and dt == 1:
-            self.on_rotary_increase()
+    def __gpio_rotary_increase(self, pin):
+        self.on_rotary_increase()
+
+    def __gpio_rotary_decrease(self, pin):
+        self.on_rotary_decrease()
 
     def __gpio_rotary_switch(self, pin):
         pass
