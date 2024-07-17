@@ -35,6 +35,7 @@ and also for both types:
 * display might need additional support from the bottom
 * misplaced stand-offs for NEO-6M
 * USB ports need a bit more space
+* spacer for type A is not tall enough for the extension unit
 
 ### Fixes in Prototype 2.1
 
@@ -44,6 +45,7 @@ and also for both types:
 * additional support for display
 * fixed misplaced stand-offs for NEO-6M
 * more space for USB ports
+* higher spacer part
 
 ## Instructions
 
