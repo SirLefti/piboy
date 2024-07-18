@@ -1,19 +1,22 @@
 from interface.Input import Input
 from typing import Callable
 import RPi.GPIO as GPIO
+import evdev
+import threading
 
 
 class GPIOInput(Input):
 
     def __init__(self, key_left: int, key_up: int, key_right: int, key_down: int, key_a: int, key_b: int,
-                 rotary_clock: int, rotary_data: int, rotary_switch: int,
+                 rotary_device: str, rotary_switch: int,
                  on_key_left: Callable, on_key_right: Callable, on_key_up: Callable, on_key_down: Callable,
                  on_key_a: Callable, on_key_b: Callable, on_rotary_increase: Callable, on_rotary_decrease: Callable,
                  debounce: int = 50):
         super().__init__(on_key_left, on_key_right, on_key_up, on_key_down, on_key_a, on_key_b, on_rotary_increase,
                          on_rotary_decrease)
-        self.__rotary_clock = rotary_clock
-        self.__rotary_data = rotary_data
+        # self.__rotary_clock = rotary_clock
+        # self.__rotary_data = rotary_data
+        self.__encoder = evdev.InputDevice(rotary_device)
         GPIO.setmode(GPIO.BCM)
 
         # keys setup
@@ -25,8 +28,8 @@ class GPIOInput(Input):
         GPIO.setup(key_b, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
         # rotary setup
-        GPIO.setup(rotary_clock, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-        GPIO.setup(rotary_data, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+        # GPIO.setup(rotary_clock, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+        # GPIO.setup(rotary_data, GPIO.IN, pull_up_down=GPIO.PUD_UP)
         GPIO.setup(rotary_switch, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
         # keys event callbacks
@@ -38,9 +41,20 @@ class GPIOInput(Input):
         GPIO.add_event_detect(key_b, GPIO.RISING, callback=self.__gpio_b, bouncetime=debounce)
 
         # rotary event callbacks
-        GPIO.add_event_detect(rotary_clock, GPIO.BOTH, callback=self.__gpio_rotary_decrease, bouncetime=debounce)
-        GPIO.add_event_detect(rotary_data, GPIO.BOTH, callback=self.__gpio_rotary_increase, bouncetime=debounce)
+        # GPIO.add_event_detect(rotary_clock, GPIO.BOTH, callback=self.__gpio_rotary_decrease, bouncetime=debounce)
+        # GPIO.add_event_detect(rotary_data, GPIO.BOTH, callback=self.__gpio_rotary_increase, bouncetime=debounce)
         GPIO.add_event_detect(rotary_switch, GPIO.RISING, callback=self.__gpio_rotary_switch, bouncetime=debounce)
+
+        loop_thread = threading.Thread(target=self.__encoder_loop)
+        loop_thread.start()
+
+    def __encoder_loop(self):
+        for event in self.__encoder.read_loop():
+            if event.type == 2:
+                if event.value == -1:
+                    self.on_rotary_increase()
+                elif event.value == 1:
+                    self.on_rotary_decrease()
 
     def close(self):
         GPIO.cleanup()

@@ -286,7 +286,7 @@ if __name__ == '__main__':
         INPUT = GPIOInput(env.pin_config.left_pin, env.pin_config.up_pin,
                           env.pin_config.right_pin, env.pin_config.down_pin,
                           env.pin_config.a_pin, env.pin_config.b_pin,
-                          env.pin_config.clk_pin, env.pin_config.dt_pin, env.pin_config.sw_pin,
+                          env.pin_config.rotary_device, env.pin_config.sw_pin,
                           on_key_left, on_key_right, on_key_up, on_key_down, on_key_a, on_key_b,
                           on_rotary_increase, on_rotary_decrease)
         ENVIRONMENT_DATA_PROVIDER = BME280EnvironmentDataProvider(env.env_sensor_config.port,

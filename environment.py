@@ -93,6 +93,7 @@ class PinConfig:
     b_pin: int = 26
 
     # Rotary encoder
+    rotary_device: str = '/dev/input/event0'
     clk_pin: int = 22
     dt_pin: int = 23
     sw_pin: int = 27
