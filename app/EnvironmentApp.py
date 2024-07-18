@@ -25,7 +25,11 @@ class EnvironmentApp(SelfUpdatingApp):
         self.__draw_callback = draw_callback
         self.__draw_callback_kwargs = {'partial': True}
         self.__data_provider = data_provider
-        self.__data: EnvironmentData = self.__data_provider.get_environment_data()
+        self.__data: EnvironmentData | None = None
+        try:
+            self.__data = self.__data_provider.get_environment_data()
+        except TimeoutError:
+            pass
 
         resources_path = 'resources'
         self.__t_icon = Image.open(os.path.join(resources_path, 'temperature.png')).convert('1')
@@ -41,7 +45,10 @@ class EnvironmentApp(SelfUpdatingApp):
         return 'ENV'
 
     def __update_data(self):
-        self.__data = self.__data_provider.get_environment_data()
+        try:
+            self.__data = self.__data_provider.get_environment_data()
+        except TimeoutError:
+            self.__data = None
         self.__draw_callback(**self.__draw_callback_kwargs)
 
     def draw(self, image: Image.Image, partial=False) -> tuple[Image.Image, int, int]:
@@ -67,9 +74,9 @@ class EnvironmentApp(SelfUpdatingApp):
                               humidity_xy[1] + self.__h_icon.height))
 
         # format with two decimals, and seven characters in total (adds whitespaces on the left to fill)
-        t_text = f'{self.__data.temperature:.2f} °C'
-        p_text = f'{self.__data.pressure:.2f} hPa'
-        h_text = f'{self.__data.humidity:.2%}'
+        t_text = f'{self.__data.temperature:.2f} °C' if self.__data is not None else '? °C'
+        p_text = f'{self.__data.pressure:.2f} hPa' if self.__data is not None else '? hPa'
+        h_text = f'{self.__data.humidity:.2%}' if self.__data is not None else '?%'
         _, _, t_text_width, t_text_height = self.__font.getbbox(t_text)
         _, _, p_text_width, p_text_height = self.__font.getbbox(p_text)
         _, _, h_text_width, h_text_height = self.__font.getbbox(h_text)
