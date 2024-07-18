@@ -48,7 +48,7 @@ upside down
 The first version of the 3d-printed parts have some issues. There is no cutout for the audio jack and the support posts
 for the Pi board are misplaced. 
 
-Solder the keypad as [described](../keypad.md).
+Solder the [keypad](../keypad.md) as described, and prepare the config for the [rotary encoder](../rotary-encoder.md).
 
 ### 2. Solder to Pi board
 

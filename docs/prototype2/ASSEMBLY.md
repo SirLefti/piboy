@@ -68,7 +68,7 @@ to be shortened a bit. Going from both sides reduces the load on each screw and 
 25 mm is usually already the longest variant you can get for M2 screws, which would not be enough here if going from the
 top all the way to the bottom part.
 
-Solder the keypad as [described](../keypad.md).
+Solder the [keypad](../keypad.md) as described, and prepare the config for the [rotary encoder](../rotary-encoder.md).
 
 ### 2. Solder power circuit
 
