@@ -3,3 +3,4 @@
 spidev >= 3.5
 rpi-lgpio >= 0.6.0
 RPi.bme280 >= 0.2.4
+evdev >= 1.7.1
