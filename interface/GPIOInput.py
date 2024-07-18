@@ -49,6 +49,7 @@ class GPIOInput(Input):
         loop_thread.start()
 
     def __encoder_loop(self):
+        # ref: https://github.com/raphaelyancey/pyKY040 (cannot use this lib directly, because it uses the old GPIO lib)
         for event in self.__encoder.read_loop():
             if event.type == 2:
                 if event.value == -1:
