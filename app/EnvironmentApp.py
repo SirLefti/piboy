@@ -38,7 +38,7 @@ class EnvironmentApp(SelfUpdatingApp):
 
     @property
     def refresh_time(self) -> float:
-        return 10
+        return 1
 
     @property
     def title(self) -> str:
