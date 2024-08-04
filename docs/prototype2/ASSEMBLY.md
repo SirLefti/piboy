@@ -57,7 +57,7 @@ The first version of these parts had a few issues. Use the parts with ``Proto2.1
 The image shows the parts for type A. The top left part is slightly different for type B and does not use the top right
 part.
 
-![proto2_placing](proto2_placing.jpg)
+![proto2_overview](proto2_overview.jpg)
 
 This is how the components are being placed. Make sure everything fits nicely before soldering. Some parts might still
 need some sanding and smoothing, especially on the mounting rails.
@@ -146,4 +146,28 @@ The parts are held in place in different ways. If needed, add some (more) hot gl
 | DS3231         | stand-offs          |
 | BME280         | hot glue            |
 
-TODO: images and descriptions
+![proto2_power_wiring](./proto2_power_wiring.jpg)
+* mount the toggle switch in the bottom part
+* glue in the charging controller
+* place the battery
+* mount the MT3508 power converter
+  * grind away the rest of the pins on the bottom of the board, if needed
+* screw both parts together from the bottom
+
+![proto2_top_wiring](./proto2_top_wiring.jpg)
+* mount the rotary encoder
+* glue in the keypad
+* glue in the BME280 environment sensor
+
+![proto2_extension_wiring](./proto2_extension_wiring.jpg)
+Depending on the variant, solder all wires to the Pi as referenced, or connect them to the edge extension. Using the
+extension makes it much easier, especially because there is not much space under the Pi for cable management.
+
+You can bundle multiple GND and VCC wires together. The I2C devices (DS3231 and BME280) also share the same pins.
+
+![proto2_placing](./proto2_placing.jpg)
+Put all components inside and add some hot glue if needed. Remember to also add the spacer part when using the edge
+extension.
+
+![proto2_final](./proto2_final.jpg)
+Place the top part on top and secure it with screw.

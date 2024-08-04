@@ -8,7 +8,7 @@ PiBoy
 [![commit activity](https://img.shields.io/github/commit-activity/m/SirLefti/piboy/develop)](https://github.com/SirLefti/piboy/tree/develop)
 [![last commit](https://img.shields.io/github/last-commit/SirLefti/piboy/develop)](https://github.com/SirLefti/piboy/tree/develop)
 
-![image](docs/prototype1/proto1_final.jpg)
+![image](docs/prototype2/proto2_final.jpg)
 Build your own Pip-Boy with some useful features for real-life using your Raspberry Pi.
 
 ## Features
