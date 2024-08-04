@@ -153,7 +153,7 @@ See [instructions for prototype 2](docs/prototype2/ASSEMBLY.md).
 * [x] environment sensors (temperature, humidity, ...)
 * [x] GPS module
 * [x] battery power
-* [ ] fix audio quality
+* [ ] speaker for radio app
 * [ ] auto-mount usb drives (previous solution does not work any more)
 * [ ] other apps (?)
 * [ ] battery status (?)
