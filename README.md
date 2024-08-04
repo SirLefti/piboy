@@ -138,6 +138,8 @@ See [instructions for prototype 2](docs/prototype2/ASSEMBLY.md).
 * [BME280](./docs/BME280.md)
 * [DS3231 RTC clock](./docs/DS3231.md)
 * [NEO-6M GPS module](./docs/NEO-6M.md)
+* [KY-040 rotary encoder](./docs/rotary-encoder.md)
+* [Keypad](./docs/keypad.md)
 
 ## Roadmap
 
@@ -152,7 +154,7 @@ See [instructions for prototype 2](docs/prototype2/ASSEMBLY.md).
 * [x] GPS module
 * [x] battery power
 * [ ] fix audio quality
-* [ ] auto-mount usb drives (previous solutions does not work any more)
+* [ ] auto-mount usb drives (previous solution does not work any more)
 * [ ] other apps (?)
 * [ ] battery status (?)
 * [ ] improved case
