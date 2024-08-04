@@ -98,36 +98,7 @@ display module, because it has a relatively high power draw compared to the othe
 *Note: I am using here two separate cells instead of the single 18650 one. Both should have the same capacity when doing
 so.*
 
-### 3. Solder to Pi board
-
-If you chose type A (includes the spacer), you can solder everything to the extra GPIO extension, or even use jumper
-wires to connect the components. If you chose type B (more compact) instead, you have to solder the wires directly to
-bottom of the Pi.
-
-| #pin | pin name  | connects                       |
-|------|-----------|--------------------------------|
-| 1    | 3v3 power | rotary encoder +               |
-| 15   | GPIO 22   | rotary encoder CLK             |
-| 16   | GPIO 23   | rotary encoder DT              |
-| 29   | GPIO 5    | button UP                      |
-| 31   | GPIO 6    | button DOWN                    |
-| 32   | GPIO 12   | button LEFT                    |
-| 33   | GPIO 13   | button RIGHT                   |
-| 36   | GPIO 16   | button A                       |
-| 37   | GPIO 26   | button B                       |
-| 39   | GND       | rotary encoder GND, button GND |
-
-Refer to this pinout diagram from [pinout.xyz](https://pinout.xyz/). The GPIO pins and their numbers are the green ones
-here:
-![pinout](../pinout.png)
-
-Keep in mind, that wiring diagrams and pinouts for the Pi are usually from a top view, which means you have mirror the
-pinout when soldering to the bottom. Some wires might need to go through the middle of the carrier part.
-
-Do the same for [BME280](../BME280.md), [DS3231](../DS3231.md) and [NEO-6M](../NEO-6M.md), as described in their instructions.
-You can try it with jumper wires before soldering to make sure the modules are recognized and work as expected.
-
-### 4. Assembly
+### 3. Assembly
 
 The parts are held in place in different ways. If needed, add some (more) hot glue.
 
@@ -163,7 +134,38 @@ The parts are held in place in different ways. If needed, add some (more) hot gl
 Depending on the variant, solder all wires to the Pi as referenced, or connect them to the edge extension. Using the
 extension makes it much easier, especially because there is not much space under the Pi for cable management.
 
+Configure [BME280](../BME280.md), [DS3231](../DS3231.md) and [NEO-6M](../NEO-6M.md), as described in their instructions.
+
 You can bundle multiple GND and VCC wires together. The I2C devices (DS3231 and BME280) also share the same pins.
+
+Use this table for reference:
+
+| #pin | pin name          | connects                                       |
+|------|-------------------|------------------------------------------------|
+| 1    | 3v3 power         | KY-040 +, BME280 VIn, DS3231 VCC               |
+| 2    | 5v power          | MT3608 VOut+                                   |
+| 3    | GPIO 2 / I2C SDA  | BME280 SDA, DS3231 SDA                         |
+| 4    | 5v power          | NEO-6M VCC                                     |
+| 5    | GPIO 3 / I2C SCL  | BME280 SCL, DS3231 SCL                         |
+| 6    | GND               | MT3608 VOut-, NEO-6M GND                       |
+| 8    | GPIO 14 / UART TX | NEO-6M RX                                      |
+| 9    | GND               | KY-040 GND, keypad GND, BME280 GND, DS3231 GND |
+| 10   | GPIO 15 / UART RX | NEO-6M TX                                      |
+| 13   | GPIO 27           | KY-040 SW / NC                                 |
+| 15   | GPIO 22           | KY-040 CLK                                     |
+| 16   | GPIO 23           | KY-040 DT                                      |
+| 29   | GPIO 5            | keypad UP                                      |
+| 31   | GPIO 6            | keypad DOWN                                    |
+| 32   | GPIO 12           | keypad LEFT                                    |
+| 33   | GPIO 13           | keypad RIGHT                                   |
+| 36   | GPIO 16           | keypad A                                       |
+| 37   | GPIO 26           | keypad B                                       |
+
+Refer to this pinout diagram from [pinout.xyz](https://pinout.xyz/):
+![pinout](../pinout.png)
+
+Keep in mind, that wiring diagrams and pinouts for the Pi are usually from a top view, which means you have mirror the
+pinout when soldering to the bottom. Some wires might need to go through the middle of the carrier part.
 
 ![proto2_placing](./proto2_placing.jpg)
 Put all components inside and add some hot glue if needed. Remember to also add the spacer part when using the edge
