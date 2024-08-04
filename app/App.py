@@ -123,4 +123,5 @@ class SelfUpdatingApp(App, ABC):
 
     def stop_updating(self):
         """Stops the update thread wrapper"""
-        self.__update_thread.stop()
+        if self.__update_thread is not None:
+            self.__update_thread.stop()
