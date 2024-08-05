@@ -33,7 +33,7 @@ class RadioApp(App):
 
         def clear_selection(self, control: Optional['RadioApp.Control']):
             for control in [c for c in self.__controls if c is not control]:
-                control.on_blur()
+                control.reset()
 
     class Control(ABC):
         """
@@ -157,6 +157,10 @@ class RadioApp(App):
 
         def on_deselect(self):
             self._is_switched = False
+
+        def reset(self):
+            self.on_blur()
+            self.on_deselect()
 
         def draw(self, draw: ImageDraw.ImageDraw, left_top: tuple[int, int]):
             width, height = self._icon_bitmap.size
