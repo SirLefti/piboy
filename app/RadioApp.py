@@ -231,6 +231,8 @@ class RadioApp(SelfUpdatingApp):
                 self.__stream.stop_stream()
                 self.__stream.close()
                 self.__stream = None
+                self.__total_frames = 0
+                self.__played_frames = 0
                 return True
             return False
 
