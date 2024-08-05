@@ -10,7 +10,7 @@ from data.IPLocationProvider import IPLocationProvider
 from data.OSMTileProvider import OSMTileProvider
 from interface.Interface import Interface
 from interface.Input import Input
-from interface.SelfManagedTkInterrface import SelfManagedTkInterface
+from interface.SelfManagedTkInterface import SelfManagedTkInterface
 from piboy import AppState, load_environment
 import threading
 
@@ -82,7 +82,7 @@ if __name__ == '__main__':
                  )
 
     __tk = SelfManagedTkInterface(on_key_left, on_key_right, on_key_up, on_key_down, on_key_a, on_key_b,
-                                  on_rotary_increase, on_rotary_decrease,
+                                  on_rotary_increase, on_rotary_decrease, lambda _: None,
                                   resolution, background, color_dark)
     INTERFACE = __tk
     INPUT = __tk

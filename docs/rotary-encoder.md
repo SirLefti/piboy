@@ -9,7 +9,7 @@ over and over again in a short period of time, the device overlay on the other h
 A rotary encoder has two channels, channels A and B. On the KY-040 they are named CLK and DT for some reason, indicating
 some clock and data pins, which is not really the case.
 
-The rotary switch is currently unused, but GPIO 27 is already reserved for that purpose.
+Connecting the rotary switch is optional. It can be used to call any function for debugging, like resetting the display.
 
 | Rotary Encoder Pin | Raspberry Pi Pin |
 |--------------------|------------------|

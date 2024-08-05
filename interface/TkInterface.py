@@ -11,10 +11,10 @@ class TkInterface(Interface, Input):
 
     def __init__(self, on_key_left: Callable, on_key_right: Callable,
                  on_key_up: Callable, on_key_down: Callable, on_key_a: Callable, on_key_b: Callable,
-                 on_rotary_increase: Callable, on_rotary_decrease: Callable,
+                 on_rotary_increase: Callable, on_rotary_decrease: Callable, on_rotary_switch: Callable,
                  resolution: tuple[int, int], background: tuple[int, int, int], ui_background: tuple[int, int, int]):
         Input.__init__(self, on_key_left, on_key_right, on_key_up, on_key_down, on_key_a, on_key_b,
-                       on_rotary_increase, on_rotary_decrease)
+                       on_rotary_increase, on_rotary_decrease, on_rotary_switch)
         self.__resolution = resolution
         self.__background = background
         self.__image: Optional[Image.Image] = None

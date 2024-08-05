@@ -5,7 +5,8 @@ from typing import Callable
 class Input(ABC):
 
     def __init__(self, on_key_left: Callable, on_key_right: Callable, on_key_up: Callable, on_key_down: Callable,
-                 on_key_a: Callable, on_key_b: Callable, on_rotary_increase: Callable, on_rotary_decrease: Callable):
+                 on_key_a: Callable, on_key_b: Callable, on_rotary_increase: Callable, on_rotary_decrease: Callable,
+                 on_rotary_switch: Callable):
         self.__on_key_left = on_key_left
         self.__on_key_right = on_key_right
         self.__on_key_up = on_key_up
@@ -14,6 +15,7 @@ class Input(ABC):
         self.__on_key_b = on_key_b
         self.__on_rotary_increase = on_rotary_increase
         self.__on_rotary_decrease = on_rotary_decrease
+        self.__on_rotary_switch = on_rotary_switch
 
     @abstractmethod
     def close(self):
@@ -42,3 +44,6 @@ class Input(ABC):
 
     def on_rotary_decrease(self):
         self.__on_rotary_decrease()
+
+    def on_rotary_switch(self):
+        self.__on_rotary_switch()
