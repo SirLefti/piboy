@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
-from app.App import App
+from app.App import SelfUpdatingApp
 from PIL import Image, ImageDraw, ImageFont
-from typing import Callable, Optional
+from typing import Callable, Optional, Any
 from subprocess import run, PIPE
 import pyaudio
 import wave
@@ -10,7 +10,7 @@ import re
 import random
 
 
-class RadioApp(App):
+class RadioApp(SelfUpdatingApp):
     __CONTROL_PADDING = 4
     __CONTROL_BOTTOM_OFFSET = 20
     __LINE_HEIGHT = 20
@@ -242,10 +242,18 @@ class RadioApp(App):
         def is_active(self) -> bool:
             return self.__stream and self.__stream.is_active()
 
-    def __init__(self, resolution: tuple[int, int],
-                 background: tuple[int, int, int], color: tuple[int, int, int], color_dark: tuple[int, int, int],
-                 app_top_offset: int, app_side_offset: int, app_bottom_offset: int,
+        @property
+        def progress(self) -> Optional[float]:
+            return (self.__played_frames / self.__total_frames) if self.__total_frames != 0 else None
+
+    def __init__(self, draw_callback: Callable[[Any], None],
+                 resolution: tuple[int, int], background: tuple[int, int, int], color: tuple[int, int, int],
+                 color_dark: tuple[int, int, int], app_top_offset: int, app_side_offset: int, app_bottom_offset: int,
                  font_standard: ImageFont.FreeTypeFont):
+        super().__init__(self.__self_update)
+        self.__draw_callback = draw_callback
+        self.__draw_callback_kwargs = {'partial': True}
+
         self.__resolution = resolution
         self.__background = background
         self.__color = color
@@ -401,9 +409,16 @@ class RadioApp(App):
         ]
         self.__selected_control_index = 2
 
+    def __self_update(self):
+        self.__draw_callback(**self.__draw_callback_kwargs)
+
     @property
     def title(self) -> str:
         return 'RAD'
+
+    @property
+    def refresh_time(self) -> float:
+        return 1.0
 
     def draw(self, image: Image.Image, partial=False) -> tuple[Image.Image, int, int]:
         draw = ImageDraw.Draw(image)
@@ -431,7 +446,7 @@ class RadioApp(App):
 
         # draw currently playing track
         max_width = width - 2 * self.__app_side_offset
-        text = f'Playing: {self.__files[self.__playlist[self.__playing_index]]}' \
+        text = f'{self.__player.progress:.1%}: {self.__files[self.__playlist[self.__playing_index]]}' \
             if self.__player.has_stream else 'Empty'
         while self.__font.getbbox(text)[2] > max_width:
             text = text[:-1]  # cut off last char until it fits
@@ -534,7 +549,5 @@ class RadioApp(App):
         pass
 
     def on_app_enter(self):
+        super().on_app_enter()
         self.__controls[self.__selected_control_index].on_focus()
-
-    def on_app_leave(self):
-        pass
