@@ -70,8 +70,8 @@ if __name__ == '__main__':
         .add_app(EnvironmentApp(update_display, FakeEnvironmentDataProvider(),
                                 resolution, background, color, color_dark, top_offset, side_offset, bottom_offset,
                                 font_standard)) \
-        .add_app(RadioApp(resolution, background, color, color_dark, top_offset, side_offset, bottom_offset,
-                          font_standard)) \
+        .add_app(RadioApp(update_display, resolution, background, color, color_dark,
+                          top_offset, side_offset, bottom_offset, font_standard)) \
         .add_app(DebugApp(resolution, color, color_dark)) \
         .add_app(ClockApp(update_display, resolution, color)) \
         .add_app(MapApp(update_display, IPLocationProvider(apply_inaccuracy=True),
