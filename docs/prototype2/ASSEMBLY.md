@@ -36,6 +36,7 @@ and also for both types:
 * misplaced stand-offs for NEO-6M
 * USB ports need a bit more space
 * spacer for type A is not tall enough for the extension unit
+* antenna position is suboptimal
 
 ### Fixes in Prototype 2.1
 
