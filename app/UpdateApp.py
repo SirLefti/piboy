@@ -10,7 +10,7 @@ class UpdateApp(App):
 
     class Option:
 
-        def __init__(self, name: str, action: Callable[[], Optional[CompletedProcess]],
+        def __init__(self, name: str, action: Callable[[], CompletedProcess],
                      result_text_action: Callable[[CompletedProcess], str],
                      count_action: Optional[Callable[[], Optional[int]]] = None,
                      count_name: Optional[str] = None):
@@ -25,7 +25,7 @@ class UpdateApp(App):
             return self.__name
 
         @property
-        def action(self) -> Callable[[], Optional[CompletedProcess]]:
+        def action(self) -> Callable[[], CompletedProcess]:
             return self.__action
 
         @property

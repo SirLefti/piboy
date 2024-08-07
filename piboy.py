@@ -269,7 +269,7 @@ if __name__ == '__main__':
         from data.IPLocationProvider import IPLocationProvider
 
         __tk = TkInterface(on_key_left, on_key_right, on_key_up, on_key_down, on_key_a, on_key_b,
-                           on_rotary_increase, on_rotary_decrease,
+                           on_rotary_increase, on_rotary_decrease, lambda _: None,
                            resolution, background, color_dark)
         INTERFACE = __tk
         INPUT = __tk
@@ -282,13 +282,14 @@ if __name__ == '__main__':
         from data.SerialGPSLocationProvider import SerialGPSLocationProvider
 
         display_spi = (env.display_config.bus, env.display_config.device)
-        INTERFACE = ILI9486Interface(display_spi, env.pin_config.dc_pin, env.pin_config.rst_pin, env.flip_display)
+        spi_display = ILI9486Interface(display_spi, env.pin_config.dc_pin, env.pin_config.rst_pin, env.flip_display)
+        INTERFACE = spi_display
         INPUT = GPIOInput(env.pin_config.left_pin, env.pin_config.up_pin,
                           env.pin_config.right_pin, env.pin_config.down_pin,
                           env.pin_config.a_pin, env.pin_config.b_pin,
-                          env.pin_config.clk_pin, env.pin_config.dt_pin, env.pin_config.sw_pin,
+                          env.pin_config.rotary_device, env.pin_config.sw_pin,
                           on_key_left, on_key_right, on_key_up, on_key_down, on_key_a, on_key_b,
-                          on_rotary_increase, on_rotary_decrease)
+                          on_rotary_increase, on_rotary_decrease, spi_display.reset)
         ENVIRONMENT_DATA_PROVIDER = BME280EnvironmentDataProvider(env.env_sensor_config.port,
                                                                   env.env_sensor_config.address)
         LOCATION_PROVIDER = SerialGPSLocationProvider(env.gps_module_config.port, env.gps_module_config.baudrate)
@@ -300,8 +301,8 @@ if __name__ == '__main__':
         .add_app(EnvironmentApp(update_display, ENVIRONMENT_DATA_PROVIDER,
                                 resolution, background, color, color_dark, top_offset, side_offset, bottom_offset,
                                 font_standard)) \
-        .add_app(RadioApp(resolution, background, color, color_dark, top_offset, side_offset, bottom_offset,
-                          font_standard)) \
+        .add_app(RadioApp(update_display, resolution, background, color, color_dark,
+                          top_offset, side_offset, bottom_offset, font_standard)) \
         .add_app(DebugApp(resolution, color, color_dark)) \
         .add_app(ClockApp(update_display, resolution, color)) \
         .add_app(MapApp(update_display, LOCATION_PROVIDER, OSMTileProvider(background, color, font_standard),

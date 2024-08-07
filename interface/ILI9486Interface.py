@@ -29,3 +29,6 @@ class ILI9486Interface(Interface):
             self.__blocked = True
             self.__display.display(image, x0, y0)
             self.__blocked = False
+
+    def reset(self):
+        self.__display.begin()

@@ -1,8 +1,14 @@
 PiBoy
 =========================
-[![commit activity](https://img.shields.io/github/commit-activity/m/SirLefti/piboy/develop)](https://github.com/SirLefti/piboy)
-[![last commit](https://img.shields.io/github/last-commit/SirLefti/piboy/develop)](https://github.com/SirLefti/piboy)
-![image](./docs/proto1_6.jpg)
+[![master](https://img.shields.io/badge/master-8A2BE2)](https://github.com/SirLefti/piboy)
+[![commit activity](https://img.shields.io/github/commit-activity/m/SirLefti/piboy/master)](https://github.com/SirLefti/piboy)
+[![last commit](https://img.shields.io/github/last-commit/SirLefti/piboy/master)](https://github.com/SirLefti/piboy)
+<br>
+[![develop](https://img.shields.io/badge/develop-8A2BE2)](https://github.com/SirLefti/piboy/tree/develop)
+[![commit activity](https://img.shields.io/github/commit-activity/m/SirLefti/piboy/develop)](https://github.com/SirLefti/piboy/tree/develop)
+[![last commit](https://img.shields.io/github/last-commit/SirLefti/piboy/develop)](https://github.com/SirLefti/piboy/tree/develop)
+
+![image](docs/prototype2/proto2_final.jpg)
 Build your own Pip-Boy with some useful features for real-life using your Raspberry Pi.
 
 ## Features
@@ -10,62 +16,74 @@ Build your own Pip-Boy with some useful features for real-life using your Raspbe
 #### File Manager App
 Provides basic functions for moving, copying and deleting files and directories. Plug in a USB drive as a holo tape.
 
-![inv](./docs/inv.png)
+![inv](docs/apps/inv.png)
 
 #### System App
 Can fetch and install updates from the git repository.
 
-![sys](./docs/sys.png)
+![sys](docs/apps/sys.png)
 
 #### Environment App
 Provides useful information about your environment like temperature, atmospheric pressure and humidity.
 
-![env](./docs/env.png)
+![env](docs/apps/env.png)
 
 #### Radio App
 Actually more like a classic music player. Stay tuned!
 
-![rad](./docs/rad.png)
+![rad](docs/apps/rad.png)
 
 #### Debug App
 Shows the last pressed key to help you check the key wiring.
 
-![dbg](./docs/dbg.png)
+![dbg](docs/apps/dbg.png)
 
 #### Clock App
 It just shows the time on a classic analog clock.
 
-![clk](./docs/clk.png)
+![clk](docs/apps/clk.png)
 
 #### Map App
 Supports zooming and moving the map around. Don't get lost in the wasteland.
 
-![map](./docs/map.png)
-
-Other shown apps are currently placeholders and not implemented yet.
+![map](docs/apps/map.png)
 
 ## Hardware
 
- - Raspberry Pi (full size board with all 40 pins recommended)
- - 3.5" SPI display module (with an ILI9486 display driver chip)
- - rotary encoder module (KY-040)
- - BME280 environment sensor
- - NEO-6M GPS module
- - DS3231 RTC clock (optional)
+Base:
+- Raspberry Pi (full size board with all 40 pins recommended)
+- 3.5" SPI display module (with an ILI9486 display driver chip)
+- rotary encoder module (KY-040)
+- 6x micro push buttons (6mm x 6mm)
+- perf board/proto board (14x9 holes required)
+- wires, general soldering stuff
+- rotary encoder knob (optional, choose one you like)
+- USB Wi-Fi adapter (optional, if your Pi does not have Wi-Fi onboard)
 
-Additional parts depending on case variant.
+Modules:
+- BME280 environment sensor
+- NEO-6M GPS module
+- DS3231 RTC clock (optional, but recommended)
+
+Battery power:
+- MT3608 power converter
+- TP4056 battery charging controller
+- 18650 battery cell (others can fit as well)
+- toggle switch
+
+Additional parts depending on case version. Battery power and modules are not supported internally by prototype 1.
 
 ## Installation
 
+All guides are using Raspberry OS based on Debian Bookworm.
+
 Install system dependencies:
 ````bash
-sudo apt install build-essential git usbmount python3 python3-dev python3-smbus python3-venv python3-audio fonts-freefont-ttf libjpeg-dev libatlas-base-dev libopenjp2-7-dev
+sudo apt install git libopenjp2-7 libportaudio2 libopenblas0 python3-rpi-lgpio font-freefont-ttf
 ````
 
-Make sure the following entry in ``/lib/systemd/system/systemd-udevd.service`` matches and reboot after changes:
-````bash
-PrivateMount=no
-````
+Call ``sudo raspi-config`` and then select ``Interface Options > SPI`` to enable SPI.
+Then select ``Interface Options > I2C`` to enable I2C.
 
 Clone repository and go into it:
 ````bash
@@ -103,20 +121,25 @@ development, ``TkInterface`` or ``SelfManagedTkInterface`` can be used, both imp
 functionality.
 
 You can define additional color groups under ``app_config/modes`` for your own theme and set the index at
-``app_config/color_mode``. The first default color group is the traditional class green theme, the second is a yellow
-power armor mode theme.
+``app_config/color_mode``. The first default color group is the traditional classic green theme, the second is a yellow
+power armor theme.
 
 This project uses FreeSansBold as default font. If the font cannot be found despite being installed, or you do not want
 to install it, place the ``FreeSansBold.ttf`` in the root directory as a workaround.
 
 ## Assembly
 
-See [instructions for prototype 1](./docs/PROTO1.md).
+See [instructions for prototype 1](docs/prototype1/ASSEMBLY.md).
+
+See [instructions for prototype 2](docs/prototype2/ASSEMBLY.md).
 
 ### Module specific instructions
 
+* [BME280](./docs/BME280.md)
 * [DS3231 RTC clock](./docs/DS3231.md)
 * [NEO-6M GPS module](./docs/NEO-6M.md)
+* [KY-040 rotary encoder](./docs/rotary-encoder.md)
+* [Keypad](./docs/keypad.md)
 
 ## Roadmap
 
@@ -129,8 +152,11 @@ See [instructions for prototype 1](./docs/PROTO1.md).
 * [x] radio app
 * [x] environment sensors (temperature, humidity, ...)
 * [x] GPS module
+* [x] battery power
+* [ ] speaker for radio app
+* [ ] auto-mount usb drives (previous solution does not work any more)
 * [ ] other apps (?)
-* [ ] battery power
+* [ ] battery status (?)
 * [ ] improved case
 * [ ] utilities
 

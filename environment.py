@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from PIL import ImageFont
-from yaml import Loader, Dumper, MappingNode, Node, FullLoader
+from yaml import Loader, FullLoader, UnsafeLoader, Dumper, MappingNode, Node
 import yaml
 
 
@@ -93,6 +93,7 @@ class PinConfig:
     b_pin: int = 26
 
     # Rotary encoder
+    rotary_device: str = '/dev/input/event0'
     clk_pin: int = 22
     dt_pin: int = 23
     sw_pin: int = 27
@@ -113,12 +114,12 @@ class Environment:
     display_config: SPIConfig = field(default_factory=lambda: SPIConfig(0, 0))
     touch_config: SPIConfig = field(default_factory=lambda: SPIConfig(0, 1))
     env_sensor_config: I2CConfig = field(default_factory=lambda: I2CConfig(1, 0x76))
-    gps_module_config: SerialConfig = field(default_factory=lambda: SerialConfig('/dev/ttyAMA0', 9600))
+    gps_module_config: SerialConfig = field(default_factory=lambda: SerialConfig('/dev/serial0', 9600))
     app_config: AppConfig = field(default_factory=lambda: AppConfig())
     pin_config: PinConfig = field(default_factory=lambda: PinConfig())
 
 
-def spi_config_constructor(loader: Loader, node: Node) -> SPIConfig:
+def spi_config_constructor(loader: Loader | FullLoader | UnsafeLoader, node: Node) -> SPIConfig:
     if isinstance(node, MappingNode):
         values = loader.construct_mapping(node)
         return SPIConfig(**values)
@@ -129,7 +130,7 @@ def spi_config_representor(dumper: Dumper, data: SPIConfig) -> MappingNode:
     return dumper.represent_mapping('!SPIConfig', vars(data))
 
 
-def i2c_config_constructor(loader: Loader, node: Node) -> I2CConfig:
+def i2c_config_constructor(loader: Loader | FullLoader | UnsafeLoader, node: Node) -> I2CConfig:
     if isinstance(node, MappingNode):
         values = loader.construct_mapping(node)
         return I2CConfig(**values)
@@ -140,7 +141,7 @@ def i2c_config_representor(dumper: Dumper, data: I2CConfig) -> MappingNode:
     return dumper.represent_mapping('!I2CConfig', vars(data))
 
 
-def serial_config_constructor(loader: Loader, node: Node) -> SerialConfig:
+def serial_config_constructor(loader: Loader | FullLoader | UnsafeLoader, node: Node) -> SerialConfig:
     if isinstance(node, MappingNode):
         values = loader.construct_mapping(node)
         return SerialConfig(**values)
@@ -151,7 +152,7 @@ def serial_config_representor(dumper: Dumper, data: SerialConfig) -> MappingNode
     return dumper.represent_mapping('!SerialConfig', vars(data))
 
 
-def color_config_constructor(loader: Loader, node: Node) -> ColorConfig:
+def color_config_constructor(loader: Loader | FullLoader | UnsafeLoader, node: Node) -> ColorConfig:
     if isinstance(node, MappingNode):
         values = loader.construct_mapping(node)
         return ColorConfig(**values)
@@ -162,7 +163,7 @@ def color_config_representor(dumper: Dumper, data: ColorConfig) -> MappingNode:
     return dumper.represent_mapping('!ColorConfig', vars(data))
 
 
-def app_config_constructor(loader: Loader, node: Node) -> AppConfig:
+def app_config_constructor(loader: Loader | FullLoader | UnsafeLoader, node: Node) -> AppConfig:
     if isinstance(node, MappingNode):
         values = loader.construct_mapping(node)
         return AppConfig(**values)
@@ -173,7 +174,7 @@ def app_config_representor(dumper: Dumper, data: AppConfig) -> MappingNode:
     return dumper.represent_mapping('!AppConfig', vars(data))
 
 
-def pin_config_constructor(loader: Loader, node: Node) -> PinConfig:
+def pin_config_constructor(loader: Loader | FullLoader | UnsafeLoader, node: Node) -> PinConfig:
     if isinstance(node, MappingNode):
         values = loader.construct_mapping(node)
         return PinConfig(**values)
@@ -184,7 +185,7 @@ def pin_config_representor(dumper: Dumper, data: PinConfig) -> MappingNode:
     return dumper.represent_mapping('!PinConfig', vars(data))
 
 
-def environment_constructor(loader: Loader, node: Node) -> Environment:
+def environment_constructor(loader: Loader | FullLoader | UnsafeLoader, node: Node) -> Environment:
     if isinstance(node, MappingNode):
         values = loader.construct_mapping(node)
         return Environment(**values)

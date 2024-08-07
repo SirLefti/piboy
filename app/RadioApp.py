@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
-from app.App import App
+from app.App import SelfUpdatingApp
 from PIL import Image, ImageDraw, ImageFont
-from typing import Callable, Optional
+from typing import Callable, Optional, Any
 from subprocess import run, PIPE
 import pyaudio
 import wave
@@ -10,7 +10,7 @@ import re
 import random
 
 
-class RadioApp(App):
+class RadioApp(SelfUpdatingApp):
     __CONTROL_PADDING = 4
     __CONTROL_BOTTOM_OFFSET = 20
     __LINE_HEIGHT = 20
@@ -33,7 +33,7 @@ class RadioApp(App):
 
         def clear_selection(self, control: Optional['RadioApp.Control']):
             for control in [c for c in self.__controls if c is not control]:
-                control.on_blur()
+                control.reset()
 
     class Control(ABC):
         """
@@ -158,6 +158,10 @@ class RadioApp(App):
         def on_deselect(self):
             self._is_switched = False
 
+        def reset(self):
+            self.on_blur()
+            self.on_deselect()
+
         def draw(self, draw: ImageDraw.ImageDraw, left_top: tuple[int, int]):
             width, height = self._icon_bitmap.size
             left, top = left_top
@@ -181,10 +185,77 @@ class RadioApp(App):
             super()._handle_control_group()
             self._on_select()
 
-    def __init__(self, resolution: tuple[int, int],
-                 background: tuple[int, int, int], color: tuple[int, int, int], color_dark: tuple[int, int, int],
-                 app_top_offset: int, app_side_offset: int, app_bottom_offset: int,
+    class AudioPlayer:
+
+        def __init__(self):
+            self.__player = pyaudio.PyAudio()
+            self.__total_frames = 0
+            self.__played_frames = 0
+            self.__wave_read: Optional[wave.Wave_read] = None
+            self.__stream: Optional[pyaudio.Stream] = None
+
+        def __stream_callback(self, _1, frame_count, _2, _3) -> tuple[bytes, int]:
+            data = self.__wave_read.readframes(frame_count)
+            self.__played_frames += frame_count
+            if self.__played_frames >= self.__total_frames:
+                return bytes(), pyaudio.paComplete
+            else:
+                return data, pyaudio.paContinue
+
+        def load_file(self, file_path: str):
+            self.__wave_read = wave.open(file_path, 'rb')
+            self.__total_frames = self.__wave_read.getnframes()
+            self.__played_frames = 0
+
+            self.__stream = self.__player.open(format=self.__player.get_format_from_width(
+                self.__wave_read.getsampwidth()),
+                channels=self.__wave_read.getnchannels(),
+                rate=self.__wave_read.getframerate(),
+                output=True,
+                stream_callback=self.__stream_callback)
+
+        def start_stream(self) -> bool:
+            if self.__stream:
+                self.__stream.start_stream()
+                return True
+            return False
+
+        def pause_stream(self) -> bool:
+            if self.__stream:
+                self.__stream.stop_stream()
+                return True
+            return False
+
+        def stop_stream(self) -> bool:
+            if self.__stream:
+                self.__stream.stop_stream()
+                self.__stream.close()
+                self.__stream = None
+                self.__total_frames = 0
+                self.__played_frames = 0
+                return True
+            return False
+
+        @property
+        def has_stream(self) -> bool:
+            return self.__stream is not None
+
+        @property
+        def is_active(self) -> bool:
+            return self.__stream and self.__stream.is_active()
+
+        @property
+        def progress(self) -> Optional[float]:
+            return (self.__played_frames / self.__total_frames) if self.__total_frames != 0 else None
+
+    def __init__(self, draw_callback: Callable[[Any], None],
+                 resolution: tuple[int, int], background: tuple[int, int, int], color: tuple[int, int, int],
+                 color_dark: tuple[int, int, int], app_top_offset: int, app_side_offset: int, app_bottom_offset: int,
                  font_standard: ImageFont.FreeTypeFont):
+        super().__init__(self.__self_update)
+        self.__draw_callback = draw_callback
+        self.__draw_callback_kwargs = {'partial': True}
+
         self.__resolution = resolution
         self.__background = background
         self.__color = color
@@ -202,8 +273,7 @@ class RadioApp(App):
         self.__top_index = 0  # what is on top in case the list is greater than screen space
         self.__playlist: list[int] = list(range(0, len(self.__files)))  # order of the tracks to play
         self.__playing_index = 0  # what we are currently playing from the playlist
-        self.__player = pyaudio.PyAudio()
-        self.__stream: Optional[pyaudio.Stream] = None
+        self.__player = self.AudioPlayer()
         self.__is_random = False
         self.__volume: Optional[int] = None
         try:
@@ -237,45 +307,26 @@ class RadioApp(App):
                 return False
             if self.__selected_index != self.__playlist[self.__playing_index]:
                 self.__playing_index = self.__playlist.index(self.__selected_index)
-            if self.__stream:
-                self.__stream.stop_stream()
-                self.__stream.close()
-                self.__stream = None
-            if not self.__stream:
-                wave_read = wave.open(os.path.join(self.__directory,
-                                                   self.__files[self.__playlist[self.__playing_index]]), 'rb')
-
-                def stream_callback(_1, frame_count, _2, _3) -> tuple[bytes, int]:
-                    data = wave_read.readframes(frame_count)
-                    return data, pyaudio.paContinue
-
-                self.__stream = self.__player.open(format=self.__player.get_format_from_width(
-                    wave_read.getsampwidth()),
-                    channels=wave_read.getnchannels(),
-                    rate=wave_read.getframerate(),
-                    output=True,
-                    stream_callback=stream_callback)
-            self.__stream.start_stream()
+                if self.__player.has_stream:
+                    self.__player.stop_stream()
+            if not self.__player.has_stream:
+                self.__player.load_file(os.path.join(self.__directory,
+                                                     self.__files[self.__playlist[self.__playing_index]]))
+            self.__player.start_stream()
             return True
 
         def pause_action() -> bool:
             """
             Pauses a currently loaded stream.
-            :return: `True` if stream was stopped, else `False` (e.g. there was no active stream)
+            :return: `True` if stream was paused, else `False` (e.g. there was no active stream)
             """
-            if self.__stream:
-                self.__stream.stop_stream()
-                return True
-            return False
+            return self.__player.pause_stream()
 
         def stop_action():
             """
             Stops and clears a currently loaded stream.
             """
-            if self.__stream:
-                self.__stream.stop_stream()
-                self.__stream.close()
-                self.__stream = None
+            self.__player.stop_stream()
 
         def prev_action():
             """
@@ -285,10 +336,8 @@ class RadioApp(App):
             self.__playing_index = (self.__playing_index - 1) % len(self.__files)
             self.__selected_index = self.__playlist[self.__playing_index]
 
-            if self.__stream and self.__stream.is_active():
-                self.__stream.stop_stream()
-                self.__stream.close()
-                self.__stream = None
+            if self.__player.is_active:
+                stop_action()
                 play_action()
 
         def skip_action():
@@ -299,10 +348,8 @@ class RadioApp(App):
             self.__playing_index = (self.__playing_index + 1) % len(self.__files)
             self.__selected_index = self.__playlist[self.__playing_index]
 
-            if self.__stream and self.__stream.is_active():
-                self.__stream.stop_stream()
-                self.__stream.close()
-                self.__stream = None
+            if self.__player.is_active:
+                stop_action()
                 play_action()
 
         def random_action() -> bool:
@@ -364,9 +411,16 @@ class RadioApp(App):
         ]
         self.__selected_control_index = 2
 
+    def __self_update(self):
+        self.__draw_callback(**self.__draw_callback_kwargs)
+
     @property
     def title(self) -> str:
         return 'RAD'
+
+    @property
+    def refresh_time(self) -> float:
+        return 1.0
 
     def draw(self, image: Image.Image, partial=False) -> tuple[Image.Image, int, int]:
         draw = ImageDraw.Draw(image)
@@ -394,7 +448,8 @@ class RadioApp(App):
 
         # draw currently playing track
         max_width = width - 2 * self.__app_side_offset
-        text = f'Playing: {self.__files[self.__playlist[self.__playing_index]]}' if self.__stream else 'Empty'
+        text = f'{self.__player.progress:.1%}: {self.__files[self.__playlist[self.__playing_index]]}' \
+            if self.__player.has_stream else 'Empty'
         while self.__font.getbbox(text)[2] > max_width:
             text = text[:-1]  # cut off last char until it fits
         _, _, t_width, t_height = self.__font.getbbox(text)
@@ -496,7 +551,5 @@ class RadioApp(App):
         pass
 
     def on_app_enter(self):
+        super().on_app_enter()
         self.__controls[self.__selected_control_index].on_focus()
-
-    def on_app_leave(self):
-        pass

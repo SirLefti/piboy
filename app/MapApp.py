@@ -194,7 +194,7 @@ class MapApp(SelfUpdatingApp):
 
     @property
     def refresh_time(self) -> float:
-        return 10.0
+        return 2.0
 
     def __update_location(self):
         if self.__x_offset == 0 and self.__y_offset == 0:

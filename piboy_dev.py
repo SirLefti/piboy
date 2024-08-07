@@ -10,7 +10,7 @@ from data.IPLocationProvider import IPLocationProvider
 from data.OSMTileProvider import OSMTileProvider
 from interface.Interface import Interface
 from interface.Input import Input
-from interface.SelfManagedTkInterrface import SelfManagedTkInterface
+from interface.SelfManagedTkInterface import SelfManagedTkInterface
 from piboy import AppState, load_environment
 import threading
 
@@ -70,8 +70,8 @@ if __name__ == '__main__':
         .add_app(EnvironmentApp(update_display, FakeEnvironmentDataProvider(),
                                 resolution, background, color, color_dark, top_offset, side_offset, bottom_offset,
                                 font_standard)) \
-        .add_app(RadioApp(resolution, background, color, color_dark, top_offset, side_offset, bottom_offset,
-                          font_standard)) \
+        .add_app(RadioApp(update_display, resolution, background, color, color_dark,
+                          top_offset, side_offset, bottom_offset, font_standard)) \
         .add_app(DebugApp(resolution, color, color_dark)) \
         .add_app(ClockApp(update_display, resolution, color)) \
         .add_app(MapApp(update_display, IPLocationProvider(apply_inaccuracy=True),
@@ -82,7 +82,7 @@ if __name__ == '__main__':
                  )
 
     __tk = SelfManagedTkInterface(on_key_left, on_key_right, on_key_up, on_key_down, on_key_a, on_key_b,
-                                  on_rotary_increase, on_rotary_decrease,
+                                  on_rotary_increase, on_rotary_decrease, lambda _: None,
                                   resolution, background, color_dark)
     INTERFACE = __tk
     INPUT = __tk
@@ -97,8 +97,6 @@ if __name__ == '__main__':
     try:
         # blocking run function
         __tk.run()
-        # blocking function that updates the clock
-        app_state.watch_function(INTERFACE)
     except KeyboardInterrupt:
         pass
     finally:
