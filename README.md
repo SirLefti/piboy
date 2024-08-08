@@ -141,6 +141,26 @@ See [instructions for prototype 2](docs/prototype2/ASSEMBLY.md).
 * [KY-040 rotary encoder](./docs/rotary-encoder.md)
 * [Keypad](./docs/keypad.md)
 
+## Post-Install
+
+### Wi-Fi connection
+
+You might want to add another Wi-Fi connection, e.g. to your phone, when you are out of your homes Wi-Fi range. Get in
+the range of the Wi-Fi you want to add and check, if your device can see it:
+````bash
+nmcli dev wifi
+````
+If your Wi-Fi is not found immediately, wait a bit and run the command again.
+
+If it was found, you can configure the connection (replace `<wifi-ssid>` and `<wifi-password>`):
+````bash
+sudo nmcli dev wifi connect <wifi-ssid> password <wifi-password>
+````
+When you were connected via `ssh`, the connection might reset due to the network change.
+
+Network configurations are saved at `/etc/NetworkManager/system-connections`. Refer to the documentation of `nmcli` for
+further details.
+
 ## Roadmap
 
 * [x] display driver
