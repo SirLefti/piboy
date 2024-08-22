@@ -1,4 +1,5 @@
 from app.App import App
+from core.decorator import override
 from PIL import Image, ImageDraw
 
 
@@ -16,9 +17,11 @@ class DebugApp(App):
         self.__color_dark = color_dark
 
     @property
+    @override
     def title(self) -> str:
         return 'DBG'
 
+    @override
     def draw(self, image: Image.Image, partial=False) -> tuple[Image.Image, int, int]:
         width, height = self.__resolution
         center_x, center_y = int(width / 2), int(height / 2)
@@ -77,6 +80,7 @@ class DebugApp(App):
         else:
             return image, 0, 0
 
+    @override
     def on_key_left(self):
         self.__button_left = True
         self.__button_right = False
@@ -85,6 +89,7 @@ class DebugApp(App):
         self.__button_a = False
         self.__button_b = False
 
+    @override
     def on_key_right(self):
         self.__button_left = False
         self.__button_right = True
@@ -93,6 +98,7 @@ class DebugApp(App):
         self.__button_a = False
         self.__button_b = False
 
+    @override
     def on_key_up(self):
         self.__button_left = False
         self.__button_right = False
@@ -101,6 +107,7 @@ class DebugApp(App):
         self.__button_a = False
         self.__button_b = False
 
+    @override
     def on_key_down(self):
         self.__button_left = False
         self.__button_right = False
@@ -109,6 +116,7 @@ class DebugApp(App):
         self.__button_a = False
         self.__button_b = False
 
+    @override
     def on_key_a(self):
         self.__button_left = False
         self.__button_right = False
@@ -117,6 +125,7 @@ class DebugApp(App):
         self.__button_a = True
         self.__button_b = False
 
+    @override
     def on_key_b(self):
         self.__button_left = False
         self.__button_right = False
@@ -125,9 +134,7 @@ class DebugApp(App):
         self.__button_a = False
         self.__button_b = True
 
-    def on_app_enter(self):
-        pass
-
+    @override
     def on_app_leave(self):
         self.__button_left = False
         self.__button_right = False

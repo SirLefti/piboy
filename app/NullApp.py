@@ -1,4 +1,5 @@
 from app.App import App
+from core.decorator import override
 from PIL import Image
 
 
@@ -9,32 +10,10 @@ class NullApp(App):
         self.__title = title
 
     @property
+    @override
     def title(self) -> str:
         return self.__title
 
+    @override
     def draw(self, image: Image.Image, partial=False) -> tuple[Image, int, int]:
         return image, 0, 0
-
-    def on_key_left(self):
-        pass
-
-    def on_key_right(self):
-        pass
-
-    def on_key_up(self):
-        pass
-
-    def on_key_down(self):
-        pass
-
-    def on_key_a(self):
-        pass
-
-    def on_key_b(self):
-        pass
-
-    def on_app_enter(self):
-        pass
-
-    def on_app_leave(self):
-        pass

@@ -1,3 +1,4 @@
+from core.decorator import override
 from interface.Interface import Interface
 from interface.Input import Input
 from typing import Callable, Optional
@@ -21,6 +22,7 @@ class TkInterface(Interface, Input):
         self.__buffer: Optional[Image.Image] = None
         threading.Thread(target=_tk_thread, args=(self, resolution, ui_background), daemon=True).start()
 
+    @override
     def close(self):
         pass
 
@@ -29,6 +31,7 @@ class TkInterface(Interface, Input):
         self.__image = None
         return image
 
+    @override
     def show(self, image: Image.Image, x0, y0):
         if self.__buffer is None:
             self.__buffer = Image.new('RGB', self.__resolution, self.__background)

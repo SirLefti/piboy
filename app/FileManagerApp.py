@@ -1,4 +1,5 @@
 from app.App import App
+from core.decorator import override
 from PIL import Image, ImageDraw, ImageOps, ImageFont
 from typing import Callable, Optional
 import os
@@ -152,6 +153,7 @@ class FileManagerApp(App):
             return self.__right_directory
 
     @property
+    @override
     def title(self) -> str:
         return "INV"
 
@@ -282,6 +284,7 @@ class FileManagerApp(App):
         except PermissionError:
             self.__draw_error(draw, left_top, right_bottom, 'Permission denied')
 
+    @override
     def draw(self, image: Image.Image, partial=False) -> tuple[Image.Image, int, int]:
         width, height = self.__resolution
         is_left_tab = self.__selected_tab == 0
@@ -363,14 +366,17 @@ class FileManagerApp(App):
             self.__active_directory.error_message = self.DirectoryState.ErrorMessage('Permission denied')
         self.__active_directory.remove_popup()
 
+    @override
     def on_key_left(self):
         if self.__active_directory.popup is None and self.__active_directory.error_message is None:
             self.__change_tab()
 
+    @override
     def on_key_right(self):
         if self.__active_directory.popup is None and self.__active_directory.error_message is None:
             self.__change_tab()
 
+    @override
     def on_key_up(self):
         if self.__active_directory.error_message is not None:
             pass
@@ -379,6 +385,7 @@ class FileManagerApp(App):
         else:
             self.__active_directory.decrease_index()
 
+    @override
     def on_key_down(self):
         if self.__active_directory.error_message is not None:
             pass
@@ -387,6 +394,7 @@ class FileManagerApp(App):
         else:
             self.__active_directory.increase_index()
 
+    @override
     def on_key_a(self):
         path = os.path.join(self.__active_directory.directory, self.__active_directory.files[self.__active_directory
                             .selected_index])
@@ -403,6 +411,7 @@ class FileManagerApp(App):
                 self.__active_directory.popup = self.DirectoryState.Popup(['Copy', 'Move', 'Delete'],
                                                                           [self._copy, self._move, self._delete])
 
+    @override
     def on_key_b(self):
         if self.__active_directory.error_message is not None:
             self.__active_directory.remove_error_message()
@@ -419,9 +428,3 @@ class FileManagerApp(App):
                     self.__active_directory.selected_index = index
                 except StopIteration:
                     pass
-
-    def on_app_enter(self):
-        pass
-
-    def on_app_leave(self):
-        pass

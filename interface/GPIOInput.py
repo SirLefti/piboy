@@ -1,3 +1,4 @@
+from core.decorator import override
 from interface.Input import Input
 from typing import Callable
 import RPi.GPIO as GPIO
@@ -51,6 +52,7 @@ class GPIOInput(Input):
                 elif event.value == 1:
                     self.on_rotary_decrease()
 
+    @override
     def close(self):
         GPIO.cleanup()
 

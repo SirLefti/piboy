@@ -1,3 +1,4 @@
+from core.decorator import override
 from interface.Interface import Interface
 from interface.Input import Input
 from typing import Callable
@@ -60,11 +61,13 @@ class SelfManagedTkInterface(Interface, Input):
                                     command=self.__on_rotary_increase)
         button_increase.grid(row=0, column=5)
 
+    @override
     def show(self, image: Image.Image, x0, y0):
         self.__image.paste(image, (x0, y0))
         self.__image_tk = ImageTk.PhotoImage(self.__image)
         self.__label.configure(image=self.__image_tk)
 
+    @override
     def close(self):
         pass
 

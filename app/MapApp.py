@@ -1,4 +1,5 @@
 from app.App import SelfUpdatingApp
+from core.decorator import override
 from data.LocationProvider import LocationProvider, LocationException, Location
 from data.TileProvider import TileProvider
 from typing import Callable, Any, Optional, Union
@@ -40,9 +41,9 @@ class MapApp(SelfUpdatingApp):
             def background_color(self) -> tuple[int, int, int]:
                 return self.__background_color
 
-        NONE: SelectionState = None
-        FOCUSED: SelectionState = None
-        SELECTED: SelectionState = None
+        NONE: SelectionState
+        FOCUSED: SelectionState
+        SELECTED: SelectionState
 
         def __init__(self, icon_bitmap: Image.Image, initial_state: SelectionState,
                      on_select: Optional[Callable[[], None]] = None, on_deselect: Optional[Callable[[], None]] = None,
@@ -189,10 +190,12 @@ class MapApp(SelfUpdatingApp):
         self.__controls[self.__focused_control_index].on_focus()
 
     @property
+    @override
     def title(self) -> str:
         return 'MAP'
 
     @property
+    @override
     def refresh_time(self) -> float:
         return 2.0
 
@@ -205,6 +208,7 @@ class MapApp(SelfUpdatingApp):
                 self.__connection_lost = True
             self.__draw_callback(**self.__draw_callback_kwargs)
 
+    @override
     def draw(self, image: Image.Image, partial=False) -> tuple[Image.Image, int, int]:
         draw = ImageDraw.Draw(image)
         width, height = self.__resolution
@@ -364,14 +368,17 @@ class MapApp(SelfUpdatingApp):
         else:
             return image, 0, 0
 
+    @override
     def on_key_left(self):
         if self.__controls[self.__focused_control_index].is_selected():
             self.__controls[self.__focused_control_index].on_key_left()
 
+    @override
     def on_key_right(self):
         if self.__controls[self.__focused_control_index].is_selected():
             self.__controls[self.__focused_control_index].on_key_right()
 
+    @override
     def on_key_up(self):
         if self.__controls[self.__focused_control_index].is_selected():
             self.__controls[self.__focused_control_index].on_key_up()
@@ -380,6 +387,7 @@ class MapApp(SelfUpdatingApp):
             self.__focused_control_index = min(self.__focused_control_index + 1, len(self.__controls) - 1)
             self.__controls[self.__focused_control_index].on_focus()
 
+    @override
     def on_key_down(self):
         if self.__controls[self.__focused_control_index].is_selected():
             self.__controls[self.__focused_control_index].on_key_down()
@@ -388,8 +396,10 @@ class MapApp(SelfUpdatingApp):
             self.__focused_control_index = max(self.__focused_control_index - 1, 0)
             self.__controls[self.__focused_control_index].on_focus()
 
+    @override
     def on_key_a(self):
         self.__controls[self.__focused_control_index].on_select()
 
+    @override
     def on_key_b(self):
         self.__controls[self.__focused_control_index].on_deselect()

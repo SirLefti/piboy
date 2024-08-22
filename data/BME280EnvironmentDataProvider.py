@@ -1,3 +1,4 @@
+from core.decorator import override
 from data.EnvironmentDataProvider import EnvironmentDataProvider, EnvironmentData
 import bme280
 import smbus2
@@ -9,6 +10,7 @@ class BME280EnvironmentDataProvider(EnvironmentDataProvider):
         self.__bus = smbus2.SMBus(port)
         self.__address = address
 
+    @override
     def get_environment_data(self) -> EnvironmentData:
         data = bme280.sample(self.__bus, self.__address)
         return EnvironmentData(

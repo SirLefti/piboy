@@ -1,4 +1,5 @@
 from app.App import SelfUpdatingApp
+from core.decorator import override
 from PIL import Image, ImageDraw
 from typing import Callable, Any
 from datetime import datetime
@@ -18,9 +19,11 @@ class ClockApp(SelfUpdatingApp):
         self.__update_callback(dict(partial=True))
 
     @property
+    @override
     def title(self) -> str:
         return 'CLK'
 
+    @override
     def draw(self, image: Image.Image, partial=False) -> tuple[Image.Image, int, int]:
         width, height = self.__resolution
         center_x, center_y = int(width / 2), int(height / 2)
@@ -74,24 +77,7 @@ class ClockApp(SelfUpdatingApp):
         else:
             return image, 0, 0
 
-    def on_key_left(self):
-        pass
-
-    def on_key_right(self):
-        pass
-
-    def on_key_up(self):
-        pass
-
-    def on_key_down(self):
-        pass
-
-    def on_key_a(self):
-        pass
-
-    def on_key_b(self):
-        pass
-
     @property
+    @override
     def refresh_time(self) -> float:
         return 1.0

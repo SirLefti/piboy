@@ -1,3 +1,4 @@
+from core.decorator import override
 from data.TileProvider import TileProvider, TileInfo
 from typing import Iterable
 from PIL import Image, ImageDraw, ImageFont, UnidentifiedImageError
@@ -19,9 +20,11 @@ class OSMTileProvider(TileProvider):
         self.__font = font
 
     @property
+    @override
     def zoom_range(self) -> Iterable[int]:
         return range(0, 20)
 
+    @override
     def get_tile(self, lat: float, lon: float, zoom: int, size: tuple[int, int] = (256, 256), x_offset: int = 0,
                  y_offset: int = 0) -> TileInfo:
         x_tile, y_tile = self._deg_to_num(lat, lon, zoom)

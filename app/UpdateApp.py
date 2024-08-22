@@ -1,4 +1,5 @@
 from app.App import App
+from core.decorator import override
 from PIL import Image, ImageDraw, ImageFont
 from subprocess import run, CompletedProcess, PIPE
 from typing import Callable, Optional
@@ -201,9 +202,11 @@ class UpdateApp(App):
         self.__commits_to_update = self.__get_commits_to_update()
 
     @property
+    @override
     def title(self) -> str:
         return 'SYS'
 
+    @override
     def draw(self, image: Image.Image, partial=False) -> tuple[Image.Image, int, int]:
         width, height = self.__resolution
         font = self.__font
@@ -269,18 +272,15 @@ class UpdateApp(App):
         else:
             return image, 0, 0
 
-    def on_key_left(self):
-        pass
-
-    def on_key_right(self):
-        pass
-
+    @override
     def on_key_up(self):
         self.__selected_index = (self.__selected_index - 1) % len(self.__options)
 
+    @override
     def on_key_down(self):
         self.__selected_index = (self.__selected_index + 1) % len(self.__options)
 
+    @override
     def on_key_a(self):
         option = self.__options[self.__selected_index]
         result = option.action()
@@ -288,11 +288,6 @@ class UpdateApp(App):
         self.__results.append(option.result_text_action(result))
         self.__update_counts()
 
-    def on_key_b(self):
-        pass
-
+    @override
     def on_app_enter(self):
         self.__update_counts()
-
-    def on_app_leave(self):
-        pass

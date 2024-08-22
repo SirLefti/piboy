@@ -1,4 +1,5 @@
 from app.App import SelfUpdatingApp
+from core.decorator import override
 from data.EnvironmentDataProvider import EnvironmentDataProvider, EnvironmentData
 from PIL import Image, ImageDraw, ImageFont
 from typing import Callable, Any
@@ -37,10 +38,12 @@ class EnvironmentApp(SelfUpdatingApp):
         self.__h_icon = Image.open(os.path.join(resources_path, 'humidity.png')).convert('1')
 
     @property
+    @override
     def refresh_time(self) -> float:
         return 1
 
     @property
+    @override
     def title(self) -> str:
         return 'ENV'
 
@@ -51,6 +54,7 @@ class EnvironmentApp(SelfUpdatingApp):
             self.__data = None
         self.__draw_callback(**self.__draw_callback_kwargs)
 
+    @override
     def draw(self, image: Image.Image, partial=False) -> tuple[Image.Image, int, int]:
         draw = ImageDraw.Draw(image)
         width, height = self.__resolution
@@ -96,21 +100,3 @@ class EnvironmentApp(SelfUpdatingApp):
             return image.crop(draw_area_left_top + right_bottom), *draw_area_left_top  # noqa (unpacking type check fail)
         else:
             return image, 0, 0
-
-    def on_key_left(self):
-        pass
-
-    def on_key_right(self):
-        pass
-
-    def on_key_up(self):
-        pass
-
-    def on_key_down(self):
-        pass
-
-    def on_key_a(self):
-        pass
-
-    def on_key_b(self):
-        pass

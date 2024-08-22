@@ -1,3 +1,4 @@
+from core.decorator import override
 from data.LocationProvider import LocationProvider, LocationException, Location
 from typing import Union
 import serial
@@ -10,6 +11,7 @@ class SerialGPSLocationProvider(LocationProvider):
 
     def __init__(self, port: str, baudrate=9600):
         self.__device = serial.Serial(port, baudrate=baudrate, timeout=0.5)
+        io.BufferedReader(self.__device)
         self.__io_wrapper = io.TextIOWrapper(io.BufferedRWPair(self.__device, self.__device))
         self.__location: Union[Location, None] = None
         self.__thread = threading.Thread(target=self.__update_location, args=(), daemon=True)
@@ -31,6 +33,7 @@ class SerialGPSLocationProvider(LocationProvider):
             except pynmea2.ParseError:
                 pass
 
+    @override
     def get_location(self) -> Location:
         if self.__location is None:
             raise LocationException('GPS module has currently no signal')

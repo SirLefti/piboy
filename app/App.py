@@ -1,3 +1,4 @@
+from core.decorator import override
 from abc import ABC, abstractmethod
 from typing import Optional, Callable
 from PIL import Image
@@ -29,45 +30,37 @@ class App(ABC):
         """
         raise NotImplementedError
 
-    @abstractmethod
     def on_key_left(self):
         """Called when the 'left' key is pressed. Apps can change their state if they want for the next draw call."""
-        raise NotImplementedError
+        pass
 
-    @abstractmethod
     def on_key_right(self):
         """Called when the 'right' key is pressed. Apps can change their state if they want for the next draw call."""
-        raise NotImplementedError
+        pass
 
-    @abstractmethod
     def on_key_up(self):
         """Called when the 'up' key is pressed. Apps can change their state if they want for the next draw call."""
-        raise NotImplementedError
+        pass
 
-    @abstractmethod
     def on_key_down(self):
         """Called when the 'down' key is pressed. Apps can change their state if they want for the next draw call."""
-        raise NotImplementedError
+        pass
 
-    @abstractmethod
     def on_key_a(self):
         """Called when the 'a' key is pressed. Apps can change their state if they want for the next draw call."""
-        raise NotImplementedError
+        pass
 
-    @abstractmethod
     def on_key_b(self):
         """Called when the 'b' key is pressed. Apps can change their state if they want for the next draw call."""
-        raise NotImplementedError
+        pass
 
-    @abstractmethod
     def on_app_enter(self):
         """Called when entering the app. Apps can perform initial actions here."""
-        raise NotImplementedError
+        pass
 
-    @abstractmethod
     def on_app_leave(self):
         """Called when leaving the app. Apps can perform cleanup actions here."""
-        raise NotImplementedError
+        pass
 
 
 class SelfUpdatingApp(App, ABC):
@@ -110,9 +103,11 @@ class SelfUpdatingApp(App, ABC):
         """Time in seconds between self refreshed updates."""
         raise NotImplementedError
 
+    @override
     def on_app_enter(self):
         self.start_updating()
 
+    @override
     def on_app_leave(self):
         self.stop_updating()
 

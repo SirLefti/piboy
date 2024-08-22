@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from app.App import SelfUpdatingApp
+from core.decorator import override
 from PIL import Image, ImageDraw, ImageFont
 from typing import Callable, Optional, Any
 from subprocess import run, PIPE
@@ -47,8 +48,8 @@ class RadioApp(SelfUpdatingApp):
             a background color, and also values determining if it represents focused and selected.
             Initially, the state members are all none, replace them before usage or create new ones for a specific use.
             """
-            NONE: 'RadioApp.Control.SelectionState' = None
-            FOCUSED: 'RadioApp.Control.SelectionState' = None
+            NONE: 'RadioApp.Control.SelectionState'
+            FOCUSED: 'RadioApp.Control.SelectionState'
 
             def __init__(self, color: tuple[int, int, int], background_color: tuple[int, int, int],
                          is_focused: bool, is_selected: bool):
@@ -242,7 +243,7 @@ class RadioApp(SelfUpdatingApp):
 
         @property
         def is_active(self) -> bool:
-            return self.__stream and self.__stream.is_active()
+            return self.__stream is not None and self.__stream.is_active()
 
         @property
         def progress(self) -> Optional[float]:
@@ -415,13 +416,16 @@ class RadioApp(SelfUpdatingApp):
         self.__draw_callback(**self.__draw_callback_kwargs)
 
     @property
+    @override
     def title(self) -> str:
         return 'RAD'
 
     @property
+    @override
     def refresh_time(self) -> float:
         return 1.0
 
+    @override
     def draw(self, image: Image.Image, partial=False) -> tuple[Image.Image, int, int]:
         draw = ImageDraw.Draw(image)
         width, height = self.__resolution
@@ -528,28 +532,31 @@ class RadioApp(SelfUpdatingApp):
         if result.returncode != 0:
             raise ValueError(f'Error setting volume value: {result.returncode}')
 
+    @override
     def on_key_left(self):
         self.__controls[self.__selected_control_index].on_blur()
         self.__selected_control_index = max(self.__selected_control_index - 1, 0)
         self.__controls[self.__selected_control_index].on_focus()
 
+    @override
     def on_key_right(self):
         self.__controls[self.__selected_control_index].on_blur()
         self.__selected_control_index = min(self.__selected_control_index + 1, len(self.__controls) - 1)
         self.__controls[self.__selected_control_index].on_focus()
 
+    @override
     def on_key_up(self):
         self.__selected_index = max(self.__selected_index - 1, 0)
 
+    @override
     def on_key_down(self):
         self.__selected_index = min(self.__selected_index + 1, len(self.__files) - 1)
 
+    @override
     def on_key_a(self):
         self.__controls[self.__selected_control_index].on_select()
 
-    def on_key_b(self):
-        pass
-
+    @override
     def on_app_enter(self):
         super().on_app_enter()
         self.__controls[self.__selected_control_index].on_focus()

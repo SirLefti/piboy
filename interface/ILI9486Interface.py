@@ -1,3 +1,4 @@
+from core.decorator import override
 from interface.Interface import Interface
 from PIL import Image
 from driver.ILI9486 import ILI9486, Origin
@@ -19,11 +20,13 @@ class ILI9486Interface(Interface):
         self.__display = lcd
         self.__blocked = False  # Flag to block new draw calls while still drawing (takes around 333 ms)
 
+    @override
     def close(self):
         self.__display.reset()
         self.__spi.close()
         GPIO.cleanup()
 
+    @override
     def show(self, image: Image.Image, x0, y0):
         if not self.__blocked:
             self.__blocked = True

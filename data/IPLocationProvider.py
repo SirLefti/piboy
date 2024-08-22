@@ -1,3 +1,4 @@
+from core.decorator import override
 from data.LocationProvider import LocationProvider, LocationException,  Location
 from typing import Callable, Type, Collection
 import time
@@ -30,6 +31,7 @@ class IPLocationProvider(LocationProvider):
         self.__apply_inaccuracy = apply_inaccuracy
 
     @retry(exceptions=(requests.exceptions.ConnectionError,), delay=2, tries=5)
+    @override
     def get_location(self) -> Location:
         response = requests.get('https://ipinfo.io/json')
         if response.status_code != 200:
