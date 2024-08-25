@@ -226,9 +226,6 @@ if __name__ == '__main__':
     color = env.app_config.accent
     color_dark = env.app_config.accent_dark
     font_standard = env.app_config.font_standard
-    top_offset = env.app_config.app_top_offset
-    side_offset = env.app_config.app_side_offset
-    bottom_offset = env.app_config.app_bottom_offset
 
     app_state = AppState(env)
 
@@ -296,22 +293,14 @@ if __name__ == '__main__':
                                                                   env.env_sensor_config.address)
         LOCATION_PROVIDER = SerialGPSLocationProvider(env.gps_module_config.port, env.gps_module_config.baudrate)
 
-    app_state.add_app(FileManagerApp(resolution, background, color, color_dark, top_offset, side_offset, bottom_offset,
-                                     font_standard)) \
-        .add_app(UpdateApp(resolution, background, color, color_dark, top_offset, side_offset, bottom_offset,
-                           font_standard)) \
-        .add_app(EnvironmentApp(update_display, ENVIRONMENT_DATA_PROVIDER,
-                                resolution, background, color, color_dark, top_offset, side_offset, bottom_offset,
-                                font_standard)) \
-        .add_app(RadioApp(update_display, resolution, background, color, color_dark,
-                          top_offset, side_offset, bottom_offset, font_standard)) \
-        .add_app(DebugApp(resolution, color, color_dark)) \
-        .add_app(ClockApp(update_display, resolution, color)) \
+    app_state.add_app(FileManagerApp(env.app_config)) \
+        .add_app(UpdateApp(env.app_config)) \
+        .add_app(EnvironmentApp(update_display, ENVIRONMENT_DATA_PROVIDER, env.app_config)) \
+        .add_app(RadioApp(update_display, env.app_config)) \
+        .add_app(DebugApp(env.app_config)) \
+        .add_app(ClockApp(update_display, env.app_config)) \
         .add_app(MapApp(update_display, LOCATION_PROVIDER, OSMTileProvider(background, color, font_standard),
-                        resolution, background, color, color_dark, top_offset, side_offset, bottom_offset,
-                        font_standard
-                        )
-                 )
+                        env.app_config))
 
     # initial draw
     app_state.update_display(INTERFACE)

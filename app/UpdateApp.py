@@ -1,6 +1,7 @@
+from environment import AppConfig
 from app.App import App
 from core.decorator import override
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw
 from subprocess import run, CompletedProcess, PIPE
 from typing import Callable, Optional
 
@@ -41,18 +42,15 @@ class UpdateApp(App):
         def count_name(self) -> Optional[str]:
             return self.__count_name
 
-    def __init__(self, resolution: tuple[int, int],
-                 background: tuple[int, int, int], color: tuple[int, int, int], color_dark: tuple[int, int, int],
-                 app_top_offset: int, app_side_offset: int, app_bottom_offset: int,
-                 font_standard: ImageFont.FreeTypeFont):
-        self.__resolution = resolution
-        self.__background = background
-        self.__color = color
-        self.__color_dark = color_dark
-        self.__app_top_offset = app_top_offset
-        self.__app_side_offset = app_side_offset
-        self.__app_bottom_offset = app_bottom_offset
-        self.__font = font_standard
+    def __init__(self, app_config: AppConfig):
+        self.__resolution = app_config.resolution
+        self.__background = app_config.background
+        self.__color = app_config.accent
+        self.__color_dark = app_config.accent_dark
+        self.__app_top_offset = app_config.app_top_offset
+        self.__app_side_offset = app_config.app_side_offset
+        self.__app_bottom_offset = app_config.app_bottom_offset
+        self.__font = app_config.font_standard
 
         self.__selected_index = 0
         self.__files_to_reset: Optional[int] = None
