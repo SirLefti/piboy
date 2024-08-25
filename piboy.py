@@ -281,13 +281,14 @@ if __name__ == '__main__':
         from data.BME280EnvironmentDataProvider import BME280EnvironmentDataProvider
         from data.SerialGPSLocationProvider import SerialGPSLocationProvider
 
-        display_spi = (env.display_config.bus, env.display_config.device)
-        spi_display = ILI9486Interface(display_spi, env.pin_config.dc_pin, env.pin_config.rst_pin, env.flip_display)
+        display_spi = env.display_config.display_device
+        spi_display = ILI9486Interface((display_spi.bus, display_spi.device),
+                                       env.display_config.dc_pin, env.display_config.rst_pin, env.flip_display)
         INTERFACE = spi_display
-        INPUT = GPIOInput(env.pin_config.left_pin, env.pin_config.up_pin,
-                          env.pin_config.right_pin, env.pin_config.down_pin,
-                          env.pin_config.a_pin, env.pin_config.b_pin,
-                          env.pin_config.rotary_device, env.pin_config.sw_pin,
+        INPUT = GPIOInput(env.keypad_config.left_pin, env.keypad_config.up_pin,
+                          env.keypad_config.right_pin, env.keypad_config.down_pin,
+                          env.keypad_config.a_pin, env.keypad_config.b_pin,
+                          env.rotary_config.rotary_device, env.rotary_config.sw_pin,
                           on_key_left, on_key_right, on_key_up, on_key_down, on_key_a, on_key_b,
                           on_rotary_increase, on_rotary_decrease, spi_display.reset)
         ENVIRONMENT_DATA_PROVIDER = BME280EnvironmentDataProvider(env.env_sensor_config.port,
