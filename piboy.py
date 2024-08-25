@@ -283,7 +283,8 @@ if __name__ == '__main__':
 
         display_spi = env.display_config.display_device
         spi_display = ILI9486Interface((display_spi.bus, display_spi.device),
-                                       env.display_config.dc_pin, env.display_config.rst_pin, env.flip_display)
+                                       env.display_config.dc_pin, env.display_config.rst_pin,
+                                       env.display_config.flip_display)
         INTERFACE = spi_display
         INPUT = GPIOInput(env.keypad_config.left_pin, env.keypad_config.up_pin,
                           env.keypad_config.right_pin, env.keypad_config.down_pin,

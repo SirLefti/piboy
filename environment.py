@@ -108,6 +108,7 @@ class DisplayConfig:
     rst_pin: int = 25
     dc_pin: int = 24
     display_device: SPIConfig = field(default_factory=lambda: SPIConfig(0, 0))
+    flip_display: bool = False
 
     # Touch module
     cs_pin: int = 7
@@ -118,7 +119,6 @@ class DisplayConfig:
 @dataclass
 class Environment:
     dev_mode: bool = True
-    flip_display: bool = False
     env_sensor_config: I2CConfig = field(default_factory=lambda: I2CConfig(1, 0x76))
     gps_module_config: SerialConfig = field(default_factory=lambda: SerialConfig('/dev/serial0', 9600))
     app_config: AppConfig = field(default_factory=lambda: AppConfig())
