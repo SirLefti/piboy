@@ -8,12 +8,14 @@ from app.ClockApp import ClockApp
 from app.EnvironmentApp import EnvironmentApp
 from data.LocationProvider import LocationProvider
 from data.EnvironmentDataProvider import EnvironmentDataProvider
+from data.TileProvider import TileProvider
+from data.OSMTileProvider import OSMTileProvider
 from interface.Interface import Interface
 from interface.Input import Input
-from data.OSMTileProvider import OSMTileProvider
 from PIL import Image, ImageDraw
 from datetime import datetime
 from environment import Environment
+from injector import Injector, Module, provider, singleton
 import environment
 import time
 
@@ -121,6 +123,46 @@ class AppState:
         self.update_display(interface, partial=False)
 
 
+class AppModule(Module):
+
+    @singleton
+    @provider
+    def provide_environment(self) -> Environment:
+        environment.configure()
+        try:
+            return environment.load()
+        except FileNotFoundError:
+            e = Environment()
+            e.dev_mode = not is_raspberry_pi()
+            environment.save(e)
+            return e
+
+    @singleton
+    @provider
+    def provide_environment_data_service(self, e: Environment) -> EnvironmentDataProvider:
+        if e.dev_mode:
+            from data.FakeEnvironmentDataProvider import FakeEnvironmentDataProvider
+            return FakeEnvironmentDataProvider()
+        else:
+            from data.BME280EnvironmentDataProvider import BME280EnvironmentDataProvider
+            return BME280EnvironmentDataProvider(e.env_sensor_config.port, e.env_sensor_config.address)
+
+    @singleton
+    @provider
+    def provide_location_service(self, e: Environment) -> LocationProvider:
+        if e.dev_mode:
+            from data.IPLocationProvider import IPLocationProvider
+            return IPLocationProvider(apply_inaccuracy=True)
+        else:
+            from data.SerialGPSLocationProvider import SerialGPSLocationProvider
+            return SerialGPSLocationProvider(e.gps_module_config.port, baudrate=e.gps_module_config.baudrate)
+
+    @singleton
+    @provider
+    def provide_tile_service(self, e: Environment) -> TileProvider:
+        return OSMTileProvider(e.app_config.background, e.app_config.accent, e.app_config.font_standard)
+
+
 def draw_footer(image: Image.Image, state: AppState) -> tuple[Image.Image, int, int]:
     width, height = state.environment.app_config.resolution
     footer_height = 20  # height of the footer
@@ -205,22 +247,13 @@ def is_raspberry_pi() -> bool:
         return False
 
 
-def load_environment() -> Environment:
-    environment.configure()
-    try:
-        return environment.load()
-    except FileNotFoundError:
-        e = Environment()
-        e.dev_mode = not is_raspberry_pi()
-        environment.save(e)
-        return e
-
-
 if __name__ == '__main__':
     INTERFACE: Interface
     INPUT: Input
 
-    env = load_environment()
+    injector = Injector([AppModule()])
+
+    env = injector.get(Environment)
     resolution = env.app_config.resolution
     background = env.app_config.background
     color = env.app_config.accent
@@ -257,26 +290,21 @@ if __name__ == '__main__':
     def update_display(partial=False):
         app_state.update_display(INTERFACE, partial)
 
-    ENVIRONMENT_DATA_PROVIDER: EnvironmentDataProvider
-    LOCATION_PROVIDER: LocationProvider
+    ENVIRONMENT_DATA_PROVIDER: EnvironmentDataProvider = injector.get(EnvironmentDataProvider)
+    LOCATION_PROVIDER: LocationProvider = injector.get(LocationProvider)
+    TILE_PROVIDER: TileProvider = injector.get(TileProvider)
 
     if env.dev_mode:
         from interface.TkInterface import TkInterface
-        from data.FakeEnvironmentDataProvider import FakeEnvironmentDataProvider
-        from data.IPLocationProvider import IPLocationProvider
 
         __tk = TkInterface(on_key_left, on_key_right, on_key_up, on_key_down, on_key_a, on_key_b,
                            on_rotary_increase, on_rotary_decrease, lambda _: None,
                            resolution, background, color_dark)
         INTERFACE = __tk
         INPUT = __tk
-        ENVIRONMENT_DATA_PROVIDER = FakeEnvironmentDataProvider()
-        LOCATION_PROVIDER = IPLocationProvider(apply_inaccuracy=True)
     else:
         from interface.ILI9486Interface import ILI9486Interface
         from interface.GPIOInput import GPIOInput
-        from data.BME280EnvironmentDataProvider import BME280EnvironmentDataProvider
-        from data.SerialGPSLocationProvider import SerialGPSLocationProvider
 
         display_spi = env.display_config.display_device
         spi_display = ILI9486Interface((display_spi.bus, display_spi.device),
@@ -289,9 +317,6 @@ if __name__ == '__main__':
                           env.rotary_config.rotary_device, env.rotary_config.sw_pin,
                           on_key_left, on_key_right, on_key_up, on_key_down, on_key_a, on_key_b,
                           on_rotary_increase, on_rotary_decrease, spi_display.reset)
-        ENVIRONMENT_DATA_PROVIDER = BME280EnvironmentDataProvider(env.env_sensor_config.port,
-                                                                  env.env_sensor_config.address)
-        LOCATION_PROVIDER = SerialGPSLocationProvider(env.gps_module_config.port, env.gps_module_config.baudrate)
 
     app_state.add_app(FileManagerApp(env.app_config)) \
         .add_app(UpdateApp(env.app_config)) \
@@ -299,8 +324,7 @@ if __name__ == '__main__':
         .add_app(RadioApp(update_display, env.app_config)) \
         .add_app(DebugApp(env.app_config)) \
         .add_app(ClockApp(update_display, env.app_config)) \
-        .add_app(MapApp(update_display, LOCATION_PROVIDER, OSMTileProvider(background, color, font_standard),
-                        env.app_config))
+        .add_app(MapApp(update_display, LOCATION_PROVIDER, TILE_PROVIDER, env.app_config))
 
     # initial draw
     app_state.update_display(INTERFACE)
