@@ -168,10 +168,10 @@ def draw_header(image: Image.Image, state: AppState) -> tuple[Image.Image, int, 
     # draw app short name header
     font = state.environment.app_config.font_header
     max_text_width = width - (2 * header_side_offset)
-    app_text_width = sum(font.getbbox(app.title)[2] for app in state.apps) + (len(state.apps) - 1) * app_spacing
+    app_text_width = sum(int(font.getbbox(app.title)[2]) for app in state.apps) + (len(state.apps) - 1) * app_spacing
     cursor = header_side_offset + (max_text_width - app_text_width) // 2
     for app in state.apps:
-        _, _, text_width, text_height = font.getbbox(app.title)
+        _, _, text_width, text_height = map(int, font.getbbox(app.title))
         draw.text((cursor, header_top_offset - text_height - app_padding), app.title, color_accent, font=font)
         if app is state.active_app:
             start = (cursor - app_padding, header_top_offset - vertical_line)

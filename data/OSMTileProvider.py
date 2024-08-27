@@ -113,19 +113,6 @@ class OSMTileProvider(TileProvider):
                 raise ValueError(f'Fetching OSM tile ({zoom}-{x_tile}-{y_tile}) failed ({response.status_code})')
 
     @classmethod
-    def _resize(cls, img: Image.Image, size: tuple[int, int]) -> Image.Image:
-        if img.size == size:
-            return img
-        old_x, old_y = img.size
-        new_x, new_y = size
-        scale = max(new_x / old_x, new_y / old_y)
-        resized = img.resize((int(old_x * scale), int(old_y * scale)), Image.LANCZOS)
-        res_x, res_y = resized.size
-        offset_x = int((res_x - new_x) / 2)
-        offset_y = int((res_y - new_y) / 2)
-        return resized.crop((offset_x, offset_y, offset_x + new_x, offset_y + new_y))
-
-    @classmethod
     def _deg_to_num(cls, lat_deg: float, lon_deg: float, zoom: int) -> tuple[int, int]:
         """Code from: https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames"""
         lat_rad = math.radians(lat_deg)

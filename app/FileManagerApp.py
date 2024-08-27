@@ -175,9 +175,10 @@ class FileManagerApp(App):
         left, top = left_top
         right, bottom = right_bottom
 
-        sizes = [font.getbbox(text)[2:] for text in popup.options]
+        options_widths = [int(font.getbbox(text)[2]) for text in popup.options]
         popup_width = self.__next_even(
-            max(max(e[0] for e in sizes), popup_min_width))  # require at least popup_min_width
+            max(max(options_widths), popup_min_width)
+        )  # require at least popup_min_width
         popup_height = line_height * len(popup.options)
 
         center = left + int((right - left) / 2), top + int((bottom - top) / 2)
@@ -221,7 +222,7 @@ class FileManagerApp(App):
         line_height = self.LINE_HEIGHT  # height of a line entry in the directory
         side_padding = 3  # padding to the side of the directory background
         symbol_dimensions = 10  # size of symbol entry
-        symbol_padding = (line_height - symbol_dimensions) / 2  # space around symbol
+        symbol_padding = (line_height - symbol_dimensions) // 2  # space around symbol
         left, top = left_top  # unpacking top left anchor point
         right, bottom = right_bottom  # unpacking bottom right anchor point
         font = self.__font
