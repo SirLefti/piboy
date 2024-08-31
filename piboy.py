@@ -15,13 +15,14 @@ from interface.Input import Input
 from PIL import Image, ImageDraw
 from datetime import datetime
 from environment import Environment
-from injector import Injector, Module, provider, singleton
+from injector import Injector, Module, provider, singleton, inject
 import environment
 import time
 
 
 class AppState:
 
+    @inject
     def __init__(self, e: Environment):
         self.__environment = e
         self.__image_buffer = self.__init_buffer()
@@ -260,7 +261,7 @@ if __name__ == '__main__':
     color_dark = env.app_config.accent_dark
     font_standard = env.app_config.font_standard
 
-    app_state = AppState(env)
+    app_state = injector.get(AppState)
 
     # wrapping key functions with local interface instance
     def on_key_left():
