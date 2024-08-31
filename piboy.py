@@ -224,7 +224,7 @@ class AppModule(Module):
                              e.rotary_config.rotary_device, e.rotary_config.sw_pin,
                              lambda: state.on_key_left(interface), lambda: state.on_key_right(interface),
                              lambda: state.on_key_up(interface), lambda: state.on_key_down(interface),
-                             lambda: state.on_key_a(interface), lambda: state.on_key_down(interface),
+                             lambda: state.on_key_a(interface), lambda: state.on_key_b(interface),
                              lambda: state.on_rotary_increase(interface), lambda: state.on_rotary_decrease(interface),
                              switch_function)
 
