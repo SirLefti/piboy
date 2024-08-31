@@ -2,8 +2,9 @@ from environment import AppConfig
 from abc import ABC, abstractmethod
 from app.App import SelfUpdatingApp
 from core.decorator import override
+from injector import inject
 from PIL import Image, ImageDraw
-from typing import Callable, Optional, Any
+from typing import Callable, Optional
 from subprocess import run, PIPE
 import pyaudio
 import wave
@@ -250,7 +251,8 @@ class RadioApp(SelfUpdatingApp):
         def progress(self) -> Optional[float]:
             return (self.__played_frames / self.__total_frames) if self.__total_frames != 0 else None
 
-    def __init__(self, draw_callback: Callable[[Any], None], app_config: AppConfig):
+    @inject
+    def __init__(self, draw_callback: Callable[[bool], None], app_config: AppConfig):
         super().__init__(self.__self_update)
         self.__draw_callback = draw_callback
         self.__draw_callback_kwargs = {'partial': True}

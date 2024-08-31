@@ -3,7 +3,8 @@ from app.App import SelfUpdatingApp
 from core.decorator import override
 from data.LocationProvider import LocationProvider, LocationException, Location
 from data.TileProvider import TileProvider
-from typing import Callable, Any, Optional, Union
+from injector import inject
+from typing import Callable, Optional, Union
 from PIL import Image, ImageDraw, ImageOps
 import os.path
 import math
@@ -110,7 +111,8 @@ class MapApp(SelfUpdatingApp):
         def is_selected(self) -> bool:
             return self.__selection_state == self.SELECTED
 
-    def __init__(self, draw_callback: Callable[[Any], None],
+    @inject
+    def __init__(self, draw_callback: Callable[[bool], None],
                  location_provider: LocationProvider, tile_provider: TileProvider, app_config: AppConfig):
         super().__init__(self.__update_location)
         self.__resolution = app_config.resolution

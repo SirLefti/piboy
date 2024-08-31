@@ -1,11 +1,13 @@
 from environment import AppConfig
 from app.App import App
 from core.decorator import override
+from injector import inject
 from PIL import Image, ImageDraw
 
 
 class DebugApp(App):
 
+    @inject
     def __init__(self, app_config: AppConfig):
         self.__button_left = False
         self.__button_right = False

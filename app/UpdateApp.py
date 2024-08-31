@@ -1,6 +1,7 @@
 from environment import AppConfig
 from app.App import App
 from core.decorator import override
+from injector import inject
 from PIL import Image, ImageDraw
 from subprocess import run, CompletedProcess, PIPE
 from typing import Callable, Optional
@@ -42,6 +43,7 @@ class UpdateApp(App):
         def count_name(self) -> Optional[str]:
             return self.__count_name
 
+    @inject
     def __init__(self, app_config: AppConfig):
         self.__resolution = app_config.resolution
         self.__background = app_config.background

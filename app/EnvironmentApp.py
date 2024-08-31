@@ -2,14 +2,16 @@ from environment import AppConfig
 from app.App import SelfUpdatingApp
 from core.decorator import override
 from data.EnvironmentDataProvider import EnvironmentDataProvider, EnvironmentData
+from injector import inject
 from PIL import Image, ImageDraw
-from typing import Callable, Any
+from typing import Callable
 import os
 
 
 class EnvironmentApp(SelfUpdatingApp):
 
-    def __init__(self, draw_callback: Callable[[Any], None],
+    @inject
+    def __init__(self, draw_callback: Callable[[bool], None],
                  data_provider: EnvironmentDataProvider, app_config: AppConfig):
         super().__init__(self.__update_data)
         self.__resolution = app_config.resolution
