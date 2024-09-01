@@ -321,14 +321,11 @@ if __name__ == '__main__':
     INPUT: Input
 
     injector = Injector([AppModule()])
-
-    env = injector.get(Environment)
     app_state = injector.get(AppState)
 
     INTERFACE = injector.get(Interface)
     INPUT = injector.get(Input)
 
-    draw_callback = lambda partial : app_state.update_display(INTERFACE, partial)
     app_state.add_app(injector.get(FileManagerApp)) \
         .add_app(injector.get(UpdateApp)) \
         .add_app(injector.get(EnvironmentApp)) \
