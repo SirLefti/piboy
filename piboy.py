@@ -129,6 +129,9 @@ class AppModule(Module):
 
     __unified_instance: UnifiedInteraction | None = None
 
+    def register_external_tk_interface(self, tk_instance: UnifiedInteraction):
+        self.__unified_instance = tk_instance
+
     @staticmethod
     def __create_tk_interface(state: AppState, app_config: AppConfig) -> UnifiedInteraction:
         from interface.TkInterface import TkInterface

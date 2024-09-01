@@ -1,12 +1,12 @@
 from core.decorator import override
-from interface.Interface import Interface
+from interface.UnifiedInteraction import UnifiedInteraction
 from interface.Input import Input
 from typing import Callable
 from PIL import Image, ImageTk
 import tkinter as tk
 
 
-class SelfManagedTkInterface(Interface, Input):
+class SelfManagedTkInterface(UnifiedInteraction):
 
     BUTTON_W = 15
     BUTTON_H = 6

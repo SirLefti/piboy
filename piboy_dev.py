@@ -17,7 +17,8 @@ with MacOS and maybe other desktop environments that require UI draw calls from 
 continue to use the other script, that is also made for the raspberry pi.
 """
 if __name__ == '__main__':
-    injector = Injector([AppModule()])
+    module = AppModule()
+    injector = Injector([module])
 
     env = injector.get(Environment)
     app_state = injector.get(AppState)
@@ -28,7 +29,7 @@ if __name__ == '__main__':
                                   app_state.on_rotary_increase, app_state.on_rotary_decrease, lambda _: None,
                                   env.app_config.resolution, env.app_config.background, env.app_config.accent_dark)
 
-    draw_callback = lambda partial : app_state.update_display(__tk, partial)
+    module.register_external_tk_interface(__tk)
     app_state.add_app(injector.get(FileManagerApp)) \
         .add_app(injector.get(UpdateApp)) \
         .add_app(injector.get(EnvironmentApp)) \
