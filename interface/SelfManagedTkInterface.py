@@ -1,4 +1,5 @@
 from core.decorator import override
+from interface.UnifiedInteraction import UnifiedInteraction
 from interface.Interface import Interface
 from interface.Input import Input
 from typing import Callable
@@ -6,25 +7,27 @@ from PIL import Image, ImageTk
 import tkinter as tk
 
 
-class SelfManagedTkInterface(Interface, Input):
+class SelfManagedTkInterface(UnifiedInteraction):
 
     BUTTON_W = 15
     BUTTON_H = 6
 
-    def __init__(self, on_key_left: Callable, on_key_right: Callable,
-                 on_key_up: Callable, on_key_down: Callable, on_key_a: Callable, on_key_b: Callable,
-                 on_rotary_increase: Callable, on_rotary_decrease: Callable, on_rotary_switch: Callable,
+    def __init__(self, on_key_left: Callable[[Interface], None], on_key_right: Callable[[Interface], None],
+                 on_key_up: Callable[[Interface], None], on_key_down: Callable[[Interface], None],
+                 on_key_a: Callable[[Interface], None], on_key_b: Callable[[Interface], None],
+                 on_rotary_increase: Callable[[Interface], None], on_rotary_decrease: Callable[[Interface], None],
+                 on_rotary_switch: Callable[[Interface], None],
                  resolution: tuple[int, int], background: tuple[int, int, int], ui_background: tuple[int, int, int]):
         Input.__init__(self, on_key_left, on_key_right, on_key_up, on_key_down, on_key_a, on_key_b,
                        on_rotary_increase, on_rotary_decrease, on_rotary_switch)
-        self.__on_key_left = on_key_left
-        self.__on_key_right = on_key_right
-        self.__on_key_up = on_key_up
-        self.__on_key_down = on_key_down
-        self.__on_key_a = on_key_a
-        self.__on_key_b = on_key_b
-        self.__on_rotary_increase = on_rotary_increase
-        self.__on_rotary_decrease = on_rotary_decrease
+        self.__on_key_left = lambda: on_key_left(self)
+        self.__on_key_right = lambda: on_key_right(self)
+        self.__on_key_up = lambda: on_key_up(self)
+        self.__on_key_down = lambda: on_key_down(self)
+        self.__on_key_a = lambda: on_key_a(self)
+        self.__on_key_b = lambda: on_key_b(self)
+        self.__on_rotary_increase = lambda: on_rotary_increase(self)
+        self.__on_rotary_decrease = lambda: on_rotary_decrease(self)
         self.__resolution = resolution
         self.__background = background
         self.__image = Image.new('RGB', resolution, background)

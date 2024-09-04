@@ -1,20 +1,23 @@
+from environment import AppConfig
 from app.App import App
 from core.decorator import override
+from injector import inject
 from PIL import Image, ImageDraw
 
 
 class DebugApp(App):
 
-    def __init__(self, resolution: tuple[int, int], color: tuple[int, int, int], color_dark: tuple[int, int, int]):
+    @inject
+    def __init__(self, app_config: AppConfig):
         self.__button_left = False
         self.__button_right = False
         self.__button_up = False
         self.__button_down = False
         self.__button_a = False
         self.__button_b = False
-        self.__resolution = resolution
-        self.__color = color
-        self.__color_dark = color_dark
+        self.__resolution = app_config.resolution
+        self.__color = app_config.accent
+        self.__color_dark = app_config.accent_dark
 
     @property
     @override

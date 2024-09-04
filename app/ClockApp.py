@@ -1,5 +1,7 @@
+from environment import AppConfig
 from app.App import SelfUpdatingApp
 from core.decorator import override
+from injector import inject
 from PIL import Image, ImageDraw
 from typing import Callable, Any
 from datetime import datetime
@@ -8,15 +10,15 @@ import math
 
 class ClockApp(SelfUpdatingApp):
 
-    def __init__(self, update_callback: Callable[[Any], None], resolution: tuple[int, int],
-                 color: tuple[int, int, int]):
+    @inject
+    def __init__(self, update_callback: Callable[[bool], None], app_config: AppConfig):
         super().__init__(self.__draw_partial)
         self.__update_callback: Callable[[Any], None] = update_callback
-        self.__resolution = resolution
-        self.__color = color
+        self.__resolution = app_config.resolution
+        self.__color = app_config.accent
 
     def __draw_partial(self):
-        self.__update_callback(dict(partial=True))
+        self.__update_callback(**dict(partial=True))
 
     @property
     @override

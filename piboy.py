@@ -8,12 +8,16 @@ from app.ClockApp import ClockApp
 from app.EnvironmentApp import EnvironmentApp
 from data.LocationProvider import LocationProvider
 from data.EnvironmentDataProvider import EnvironmentDataProvider
+from data.TileProvider import TileProvider
+from data.OSMTileProvider import OSMTileProvider
 from interface.Interface import Interface
 from interface.Input import Input
-from data.OSMTileProvider import OSMTileProvider
+from interface.UnifiedInteraction import UnifiedInteraction
+from typing import Callable
 from PIL import Image, ImageDraw
 from datetime import datetime
-from environment import Environment
+from environment import Environment, AppConfig
+from injector import Injector, Module, provider, singleton
 import environment
 import time
 
@@ -121,6 +125,113 @@ class AppState:
         self.update_display(interface, partial=False)
 
 
+class AppModule(Module):
+
+    __unified_instance: UnifiedInteraction | None = None
+
+    def register_external_tk_interface(self, tk_instance: UnifiedInteraction):
+        self.__unified_instance = tk_instance
+
+    @staticmethod
+    def __create_tk_interface(state: AppState, app_config: AppConfig) -> UnifiedInteraction:
+        from interface.TkInterface import TkInterface
+        return TkInterface(state.on_key_left, state.on_key_right, state.on_key_up, state.on_key_down,
+                           state.on_key_a, state.on_key_b, state.on_rotary_increase, state.on_rotary_decrease,
+                           lambda _: None, app_config.resolution, app_config.background, app_config.accent_dark)
+
+    @singleton
+    @provider
+    def provide_environment(self) -> Environment:
+        environment.configure()
+        try:
+            return environment.load()
+        except FileNotFoundError:
+            e = Environment()
+            e.dev_mode = not is_raspberry_pi()
+            environment.save(e)
+            return e
+
+    @singleton
+    @provider
+    def provide_app_config(self, e: Environment) -> AppConfig:
+        return e.app_config
+
+    @singleton
+    @provider
+    def provide_app_state(self, e: Environment) -> AppState:
+        return AppState(e)
+
+    @singleton
+    @provider
+    def provide_environment_data_service(self, e: Environment) -> EnvironmentDataProvider:
+        if e.dev_mode:
+            from data.FakeEnvironmentDataProvider import FakeEnvironmentDataProvider
+            return FakeEnvironmentDataProvider()
+        else:
+            from data.BME280EnvironmentDataProvider import BME280EnvironmentDataProvider
+            return BME280EnvironmentDataProvider(e.env_sensor_config.port, e.env_sensor_config.address)
+
+    @singleton
+    @provider
+    def provide_location_service(self, e: Environment) -> LocationProvider:
+        if e.dev_mode:
+            from data.IPLocationProvider import IPLocationProvider
+            return IPLocationProvider(apply_inaccuracy=True)
+        else:
+            from data.SerialGPSLocationProvider import SerialGPSLocationProvider
+            return SerialGPSLocationProvider(e.gps_module_config.port, baudrate=e.gps_module_config.baudrate)
+
+    @singleton
+    @provider
+    def provide_tile_service(self, e: Environment) -> TileProvider:
+        return OSMTileProvider(e.app_config.background, e.app_config.accent, e.app_config.font_standard)
+
+
+    @singleton
+    @provider
+    def provide_draw_callback(self, state: AppState, interface: Interface) -> Callable[[bool], None]:
+        return lambda partial: state.update_display(interface, partial)
+
+
+    @singleton
+    @provider
+    def provide_interface(self, e: Environment, state: AppState) -> Interface:
+        if e.dev_mode:
+            if self.__unified_instance is None:
+                self.__unified_instance = self.__create_tk_interface(state, e.app_config)
+            return self.__unified_instance
+        else:
+            from interface.ILI9486Interface import ILI9486Interface
+
+            spi_device_config = e.display_config.display_device
+            return ILI9486Interface((spi_device_config.bus, spi_device_config.device),
+                                    e.display_config.dc_pin, e.display_config.rst_pin, e.display_config.flip_display)
+
+    @singleton
+    @provider
+    def provide_input(self, e: Environment, state: AppState, interface: Interface) -> Input:
+        if e.dev_mode:
+            if self.__unified_instance is None:
+                self.__unified_instance = self.__create_tk_interface(state, e.app_config)
+            return self.__unified_instance
+        else:
+            from interface.GPIOInput import GPIOInput
+            from interface.ILI9486Interface import ILI9486Interface
+
+            # make sure that interface is ILI9486Interface to call the reset function, should be always true
+            switch_function = interface.reset if isinstance(interface, ILI9486Interface) else lambda: None
+
+            return GPIOInput(e.keypad_config.left_pin, e.keypad_config.right_pin,
+                             e.keypad_config.up_pin, e.keypad_config.down_pin,
+                             e.keypad_config.a_pin, e.keypad_config.b_pin,
+                             e.rotary_config.rotary_device, e.rotary_config.sw_pin,
+                             lambda: state.on_key_left(interface), lambda: state.on_key_right(interface),
+                             lambda: state.on_key_up(interface), lambda: state.on_key_down(interface),
+                             lambda: state.on_key_a(interface), lambda: state.on_key_b(interface),
+                             lambda: state.on_rotary_increase(interface), lambda: state.on_rotary_decrease(interface),
+                             switch_function)
+
+
 def draw_footer(image: Image.Image, state: AppState) -> tuple[Image.Image, int, int]:
     width, height = state.environment.app_config.resolution
     footer_height = 20  # height of the footer
@@ -205,113 +316,23 @@ def is_raspberry_pi() -> bool:
         return False
 
 
-def load_environment() -> Environment:
-    environment.configure()
-    try:
-        return environment.load()
-    except FileNotFoundError:
-        e = Environment()
-        e.dev_mode = not is_raspberry_pi()
-        environment.save(e)
-        return e
-
-
 if __name__ == '__main__':
     INTERFACE: Interface
     INPUT: Input
 
-    env = load_environment()
-    resolution = env.app_config.resolution
-    background = env.app_config.background
-    color = env.app_config.accent
-    color_dark = env.app_config.accent_dark
-    font_standard = env.app_config.font_standard
-    top_offset = env.app_config.app_top_offset
-    side_offset = env.app_config.app_side_offset
-    bottom_offset = env.app_config.app_bottom_offset
+    injector = Injector([AppModule()])
+    app_state = injector.get(AppState)
 
-    app_state = AppState(env)
+    INTERFACE = injector.get(Interface)
+    INPUT = injector.get(Input)
 
-    # wrapping key functions with local interface instance
-    def on_key_left():
-        app_state.on_key_left(INTERFACE)
-
-    def on_key_right():
-        app_state.on_key_right(INTERFACE)
-
-    def on_key_up():
-        app_state.on_key_up(INTERFACE)
-
-    def on_key_down():
-        app_state.on_key_down(INTERFACE)
-
-    def on_key_a():
-        app_state.on_key_a(INTERFACE)
-
-    def on_key_b():
-        app_state.on_key_b(INTERFACE)
-
-    def on_rotary_increase():
-        app_state.on_rotary_increase(INTERFACE)
-
-    def on_rotary_decrease():
-        app_state.on_rotary_decrease(INTERFACE)
-
-    def update_display(partial=False):
-        app_state.update_display(INTERFACE, partial)
-
-    ENVIRONMENT_DATA_PROVIDER: EnvironmentDataProvider
-    LOCATION_PROVIDER: LocationProvider
-
-    if env.dev_mode:
-        from interface.TkInterface import TkInterface
-        from data.FakeEnvironmentDataProvider import FakeEnvironmentDataProvider
-        from data.IPLocationProvider import IPLocationProvider
-
-        __tk = TkInterface(on_key_left, on_key_right, on_key_up, on_key_down, on_key_a, on_key_b,
-                           on_rotary_increase, on_rotary_decrease, lambda _: None,
-                           resolution, background, color_dark)
-        INTERFACE = __tk
-        INPUT = __tk
-        ENVIRONMENT_DATA_PROVIDER = FakeEnvironmentDataProvider()
-        LOCATION_PROVIDER = IPLocationProvider(apply_inaccuracy=True)
-    else:
-        from interface.ILI9486Interface import ILI9486Interface
-        from interface.GPIOInput import GPIOInput
-        from data.BME280EnvironmentDataProvider import BME280EnvironmentDataProvider
-        from data.SerialGPSLocationProvider import SerialGPSLocationProvider
-
-        display_spi = env.display_config.display_device
-        spi_display = ILI9486Interface((display_spi.bus, display_spi.device),
-                                       env.display_config.dc_pin, env.display_config.rst_pin,
-                                       env.display_config.flip_display)
-        INTERFACE = spi_display
-        INPUT = GPIOInput(env.keypad_config.left_pin, env.keypad_config.up_pin,
-                          env.keypad_config.right_pin, env.keypad_config.down_pin,
-                          env.keypad_config.a_pin, env.keypad_config.b_pin,
-                          env.rotary_config.rotary_device, env.rotary_config.sw_pin,
-                          on_key_left, on_key_right, on_key_up, on_key_down, on_key_a, on_key_b,
-                          on_rotary_increase, on_rotary_decrease, spi_display.reset)
-        ENVIRONMENT_DATA_PROVIDER = BME280EnvironmentDataProvider(env.env_sensor_config.port,
-                                                                  env.env_sensor_config.address)
-        LOCATION_PROVIDER = SerialGPSLocationProvider(env.gps_module_config.port, env.gps_module_config.baudrate)
-
-    app_state.add_app(FileManagerApp(resolution, background, color, color_dark, top_offset, side_offset, bottom_offset,
-                                     font_standard)) \
-        .add_app(UpdateApp(resolution, background, color, color_dark, top_offset, side_offset, bottom_offset,
-                           font_standard)) \
-        .add_app(EnvironmentApp(update_display, ENVIRONMENT_DATA_PROVIDER,
-                                resolution, background, color, color_dark, top_offset, side_offset, bottom_offset,
-                                font_standard)) \
-        .add_app(RadioApp(update_display, resolution, background, color, color_dark,
-                          top_offset, side_offset, bottom_offset, font_standard)) \
-        .add_app(DebugApp(resolution, color, color_dark)) \
-        .add_app(ClockApp(update_display, resolution, color)) \
-        .add_app(MapApp(update_display, LOCATION_PROVIDER, OSMTileProvider(background, color, font_standard),
-                        resolution, background, color, color_dark, top_offset, side_offset, bottom_offset,
-                        font_standard
-                        )
-                 )
+    app_state.add_app(injector.get(FileManagerApp)) \
+        .add_app(injector.get(UpdateApp)) \
+        .add_app(injector.get(EnvironmentApp)) \
+        .add_app(injector.get(RadioApp)) \
+        .add_app(injector.get(DebugApp)) \
+        .add_app(injector.get(ClockApp)) \
+        .add_app(injector.get(MapApp))
 
     # initial draw
     app_state.update_display(INTERFACE)

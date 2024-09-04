@@ -1,9 +1,11 @@
+from environment import AppConfig
 from app.App import SelfUpdatingApp
 from core.decorator import override
 from data.LocationProvider import LocationProvider, LocationException, Location
 from data.TileProvider import TileProvider
-from typing import Callable, Any, Optional, Union
-from PIL import Image, ImageDraw, ImageOps, ImageFont
+from injector import inject
+from typing import Callable, Optional, Union
+from PIL import Image, ImageDraw, ImageOps
 import os.path
 import math
 
@@ -109,25 +111,23 @@ class MapApp(SelfUpdatingApp):
         def is_selected(self) -> bool:
             return self.__selection_state == self.SELECTED
 
-    def __init__(self, draw_callback: Callable[[Any], None],
-                 location_provider: LocationProvider, tile_provider: TileProvider, resolution: tuple[int, int],
-                 background: tuple[int, int, int], color: tuple[int, int, int], color_dark: tuple[int, int, int],
-                 app_top_offset: int, app_side_offset: int, app_bottom_offset: int,
-                 font_standard: ImageFont.FreeTypeFont):
+    @inject
+    def __init__(self, draw_callback: Callable[[bool], None],
+                 location_provider: LocationProvider, tile_provider: TileProvider, app_config: AppConfig):
         super().__init__(self.__update_location)
-        self.__resolution = resolution
-        self.__background = background
-        self.__color = color
-        self.__color_dark = color_dark
-        self.__app_top_offset = app_top_offset
-        self.__app_side_offset = app_side_offset
-        self.__app_bottom_offset = app_bottom_offset
-        self.__font = font_standard
+        self.__resolution = app_config.resolution
+        self.__background = app_config.background
+        self.__color = app_config.accent
+        self.__color_dark = app_config.accent_dark
+        self.__app_top_offset = app_config.app_top_offset
+        self.__app_side_offset = app_config.app_side_offset
+        self.__app_bottom_offset = app_config.app_bottom_offset
+        self.__font = app_config.font_standard
 
         # init selection states
-        self.Control.NONE = self.Control.SelectionState(color_dark, background)
-        self.Control.FOCUSED = self.Control.SelectionState(color, background)
-        self.Control.SELECTED = self.Control.SelectionState(background, color)
+        self.Control.NONE = self.Control.SelectionState(self.__color_dark, self.__background)
+        self.Control.FOCUSED = self.Control.SelectionState(self.__color, self.__background)
+        self.Control.SELECTED = self.Control.SelectionState(self.__background, self.__color)
 
         self.__draw_callback = draw_callback
         self.__draw_callback_kwargs = {'partial': True}
