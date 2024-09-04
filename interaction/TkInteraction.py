@@ -38,7 +38,7 @@ class TkInteraction(UnifiedInteraction):
         return image
 
     @override
-    def show(self, image: Image.Image, x0, y0):
+    def show(self, image: Image.Image, x0: int, y0: int):
         if self.__buffer is None:
             self.__buffer = Image.new('RGB', self.__resolution, self.__background)
         self.__buffer.paste(image, (x0, y0))  # overwrites __buffer

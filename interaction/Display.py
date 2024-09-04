@@ -9,5 +9,5 @@ class Display(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def show(self, image: Image.Image, x0, y0):
+    def show(self, image: Image.Image, x0: int, y0: int):
         raise NotImplementedError
