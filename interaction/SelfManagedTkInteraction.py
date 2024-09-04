@@ -1,22 +1,22 @@
 from core.decorator import override
-from interface.UnifiedInteraction import UnifiedInteraction
-from interface.Interface import Interface
-from interface.Input import Input
+from interaction.UnifiedInteraction import UnifiedInteraction
+from interaction.Display import Display
+from interaction.Input import Input
 from typing import Callable
 from PIL import Image, ImageTk
 import tkinter as tk
 
 
-class SelfManagedTkInterface(UnifiedInteraction):
+class SelfManagedTkInteraction(UnifiedInteraction):
 
     BUTTON_W = 15
     BUTTON_H = 6
 
-    def __init__(self, on_key_left: Callable[[Interface], None], on_key_right: Callable[[Interface], None],
-                 on_key_up: Callable[[Interface], None], on_key_down: Callable[[Interface], None],
-                 on_key_a: Callable[[Interface], None], on_key_b: Callable[[Interface], None],
-                 on_rotary_increase: Callable[[Interface], None], on_rotary_decrease: Callable[[Interface], None],
-                 on_rotary_switch: Callable[[Interface], None],
+    def __init__(self, on_key_left: Callable[[Display], None], on_key_right: Callable[[Display], None],
+                 on_key_up: Callable[[Display], None], on_key_down: Callable[[Display], None],
+                 on_key_a: Callable[[Display], None], on_key_b: Callable[[Display], None],
+                 on_rotary_increase: Callable[[Display], None], on_rotary_decrease: Callable[[Display], None],
+                 on_rotary_switch: Callable[[Display], None],
                  resolution: tuple[int, int], background: tuple[int, int, int], ui_background: tuple[int, int, int]):
         Input.__init__(self, on_key_left, on_key_right, on_key_up, on_key_down, on_key_a, on_key_b,
                        on_rotary_increase, on_rotary_decrease, on_rotary_switch)

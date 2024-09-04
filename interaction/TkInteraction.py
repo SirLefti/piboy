@@ -1,7 +1,7 @@
 from core.decorator import override
-from interface.UnifiedInteraction import UnifiedInteraction
-from interface.Interface import Interface
-from interface.Input import Input
+from interaction.UnifiedInteraction import UnifiedInteraction
+from interaction.Display import Display
+from interaction.Input import Input
 from typing import Callable, Optional
 from PIL import Image, ImageTk
 from tkinter import Tk, Canvas, Button, constants, TclError
@@ -9,13 +9,13 @@ import threading
 import time
 
 
-class TkInterface(UnifiedInteraction):
+class TkInteraction(UnifiedInteraction):
 
-    def __init__(self, on_key_left: Callable[[Interface], None], on_key_right: Callable[[Interface], None],
-                 on_key_up: Callable[[Interface], None], on_key_down: Callable[[Interface], None],
-                 on_key_a: Callable[[Interface], None], on_key_b: Callable[[Interface], None],
-                 on_rotary_increase: Callable[[Interface], None], on_rotary_decrease: Callable[[Interface], None],
-                 on_rotary_switch: Callable[[Interface], None],
+    def __init__(self, on_key_left: Callable[[Display], None], on_key_right: Callable[[Display], None],
+                 on_key_up: Callable[[Display], None], on_key_down: Callable[[Display], None],
+                 on_key_a: Callable[[Display], None], on_key_b: Callable[[Display], None],
+                 on_rotary_increase: Callable[[Display], None], on_rotary_decrease: Callable[[Display], None],
+                 on_rotary_switch: Callable[[Display], None],
                  resolution: tuple[int, int], background: tuple[int, int, int], ui_background: tuple[int, int, int]):
         Input.__init__(self, lambda: on_key_left(self), lambda: on_key_right(self),
                        lambda: on_key_up(self), lambda: on_key_down(self),
@@ -49,7 +49,7 @@ BUTTON_W = 15
 BUTTON_H = 6
 
 
-def _tk_thread(tk_interface: TkInterface, resolution: tuple[int, int], ui_background: tuple[int, int, int]):
+def _tk_thread(tk: TkInteraction, resolution: tuple[int, int], ui_background: tuple[int, int, int]):
     root = Tk()
     root.title('PiBoy Simulator - Tkinter')
     bg_color_hex = '#%02x%02x%02x' % ui_background
@@ -59,27 +59,27 @@ def _tk_thread(tk_interface: TkInterface, resolution: tuple[int, int], ui_backgr
     canvas.grid(row=1, column=1, rowspan=4)
 
     # buttons
-    button_left = Button(root, text='left', width=BUTTON_W, height=BUTTON_H, command=tk_interface.on_key_left)
+    button_left = Button(root, text='left', width=BUTTON_W, height=BUTTON_H, command=tk.on_key_left)
     button_left.grid(row=2, column=2)
-    button_up = Button(root, text='up', width=BUTTON_W, height=BUTTON_H, command=tk_interface.on_key_up)
+    button_up = Button(root, text='up', width=BUTTON_W, height=BUTTON_H, command=tk.on_key_up)
     button_up.grid(row=1, column=3)
-    button_right = Button(root, text='right', width=BUTTON_W, height=BUTTON_H, command=tk_interface.on_key_right)
+    button_right = Button(root, text='right', width=BUTTON_W, height=BUTTON_H, command=tk.on_key_right)
     button_right.grid(row=2, column=4)
-    button_down = Button(root, text='down', width=BUTTON_W, height=BUTTON_H, command=tk_interface.on_key_down)
+    button_down = Button(root, text='down', width=BUTTON_W, height=BUTTON_H, command=tk.on_key_down)
     button_down.grid(row=3, column=3)
-    button_a = Button(root, text='button a', width=BUTTON_W, height=BUTTON_H, command=tk_interface.on_key_a)
+    button_a = Button(root, text='button a', width=BUTTON_W, height=BUTTON_H, command=tk.on_key_a)
     button_a.grid(row=3, column=5)
-    button_b = Button(root, text='button b', width=BUTTON_W, height=BUTTON_H, command=tk_interface.on_key_b)
+    button_b = Button(root, text='button b', width=BUTTON_W, height=BUTTON_H, command=tk.on_key_b)
     button_b.grid(row=3, column=6)
-    button_decrease = Button(root, text='-', width=BUTTON_W, height=BUTTON_H, command=tk_interface.on_rotary_decrease)
+    button_decrease = Button(root, text='-', width=BUTTON_W, height=BUTTON_H, command=tk.on_rotary_decrease)
     button_decrease.grid(row=1, column=5)
-    button_increase = Button(root, text='+', width=BUTTON_W, height=BUTTON_H, command=tk_interface.on_rotary_increase)
+    button_increase = Button(root, text='+', width=BUTTON_W, height=BUTTON_H, command=tk.on_rotary_increase)
     button_increase.grid(row=1, column=6)
 
     alive = True
     while alive:
         try:
-            image = tk_interface.take_image()
+            image = tk.take_image()
             if image is not None:
                 # doing this to avoid the image being garbage-collected
                 image_tk = ImageTk.PhotoImage(image)

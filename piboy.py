@@ -10,9 +10,9 @@ from data.LocationProvider import LocationProvider
 from data.EnvironmentDataProvider import EnvironmentDataProvider
 from data.TileProvider import TileProvider
 from data.OSMTileProvider import OSMTileProvider
-from interface.Interface import Interface
-from interface.Input import Input
-from interface.UnifiedInteraction import UnifiedInteraction
+from interaction.Display import Display
+from interaction.Input import Input
+from interaction.UnifiedInteraction import UnifiedInteraction
 from typing import Callable
 from PIL import Image, ImageDraw
 from datetime import datetime
@@ -71,7 +71,7 @@ class AppState:
         if self.__active_app < 0:
             self.__active_app = len(self.__apps) - 1
 
-    def watch_function(self, interface: Interface):
+    def watch_function(self, display: Display):
         while True:
             now = datetime.now()
             # wait for next second
@@ -79,65 +79,65 @@ class AppState:
 
             # draw the complete footer to remove existing clock display
             image, x0, y0 = draw_footer(self.image_buffer, self)
-            interface.show(image, x0, y0)
+            display.show(image, x0, y0)
 
-    def update_display(self, interface: Interface, partial=False):
+    def update_display(self, display: Display, partial=False):
         """Draw call that handles the complete cycle of drawing a new image to the display."""
         image = self.clear_buffer()
         image = draw_base(image, self)
         image, x0, y0 = self.active_app.draw(image, partial)
-        interface.show(image, x0, y0)
+        display.show(image, x0, y0)
 
-    def on_key_left(self, interface: Interface):
+    def on_key_left(self, display: Display):
         self.active_app.on_key_left()
-        self.update_display(interface, partial=True)
+        self.update_display(display, partial=True)
 
-    def on_key_right(self, interface: Interface):
+    def on_key_right(self, display: Display):
         self.active_app.on_key_right()
-        self.update_display(interface, partial=True)
+        self.update_display(display, partial=True)
 
-    def on_key_up(self, interface: Interface):
+    def on_key_up(self, display: Display):
         self.active_app.on_key_up()
-        self.update_display(interface, partial=True)
+        self.update_display(display, partial=True)
 
-    def on_key_down(self, interface: Interface):
+    def on_key_down(self, display: Display):
         self.active_app.on_key_down()
-        self.update_display(interface, partial=True)
+        self.update_display(display, partial=True)
 
-    def on_key_a(self, interface: Interface):
+    def on_key_a(self, display: Display):
         self.active_app.on_key_a()
-        self.update_display(interface, partial=True)
+        self.update_display(display, partial=True)
 
-    def on_key_b(self, interface: Interface):
+    def on_key_b(self, display: Display):
         self.active_app.on_key_b()
-        self.update_display(interface, partial=True)
+        self.update_display(display, partial=True)
 
-    def on_rotary_increase(self, interface: Interface):
+    def on_rotary_increase(self, display: Display):
         self.active_app.on_app_leave()
         self.next_app()
         self.active_app.on_app_enter()
-        self.update_display(interface, partial=False)
+        self.update_display(display, partial=False)
 
-    def on_rotary_decrease(self, interface: Interface):
+    def on_rotary_decrease(self, display: Display):
         self.active_app.on_app_leave()
         self.previous_app()
         self.active_app.on_app_enter()
-        self.update_display(interface, partial=False)
+        self.update_display(display, partial=False)
 
 
 class AppModule(Module):
 
     __unified_instance: UnifiedInteraction | None = None
 
-    def register_external_tk_interface(self, tk_instance: UnifiedInteraction):
+    def register_external_tk_interaction(self, tk_instance: UnifiedInteraction):
         self.__unified_instance = tk_instance
 
     @staticmethod
-    def __create_tk_interface(state: AppState, app_config: AppConfig) -> UnifiedInteraction:
-        from interface.TkInterface import TkInterface
-        return TkInterface(state.on_key_left, state.on_key_right, state.on_key_up, state.on_key_down,
-                           state.on_key_a, state.on_key_b, state.on_rotary_increase, state.on_rotary_decrease,
-                           lambda _: None, app_config.resolution, app_config.background, app_config.accent_dark)
+    def __create_tk_interaction(state: AppState, app_config: AppConfig) -> UnifiedInteraction:
+        from interaction.TkInteraction import TkInteraction
+        return TkInteraction(state.on_key_left, state.on_key_right, state.on_key_up, state.on_key_down,
+                             state.on_key_a, state.on_key_b, state.on_rotary_increase, state.on_rotary_decrease,
+                             lambda _: None, app_config.resolution, app_config.background, app_config.accent_dark)
 
     @singleton
     @provider
@@ -189,46 +189,46 @@ class AppModule(Module):
 
     @singleton
     @provider
-    def provide_draw_callback(self, state: AppState, interface: Interface) -> Callable[[bool], None]:
-        return lambda partial: state.update_display(interface, partial)
+    def provide_draw_callback(self, state: AppState, display: Display) -> Callable[[bool], None]:
+        return lambda partial: state.update_display(display, partial)
 
 
     @singleton
     @provider
-    def provide_interface(self, e: Environment, state: AppState) -> Interface:
+    def provide_display(self, e: Environment, state: AppState) -> Display:
         if e.dev_mode:
             if self.__unified_instance is None:
-                self.__unified_instance = self.__create_tk_interface(state, e.app_config)
+                self.__unified_instance = self.__create_tk_interaction(state, e.app_config)
             return self.__unified_instance
         else:
-            from interface.ILI9486Interface import ILI9486Interface
+            from interaction.ILI9486Display import ILI9486Display
 
             spi_device_config = e.display_config.display_device
-            return ILI9486Interface((spi_device_config.bus, spi_device_config.device),
-                                    e.display_config.dc_pin, e.display_config.rst_pin, e.display_config.flip_display)
+            return ILI9486Display((spi_device_config.bus, spi_device_config.device),
+                                  e.display_config.dc_pin, e.display_config.rst_pin, e.display_config.flip_display)
 
     @singleton
     @provider
-    def provide_input(self, e: Environment, state: AppState, interface: Interface) -> Input:
+    def provide_input(self, e: Environment, state: AppState, display: Display) -> Input:
         if e.dev_mode:
             if self.__unified_instance is None:
-                self.__unified_instance = self.__create_tk_interface(state, e.app_config)
+                self.__unified_instance = self.__create_tk_interaction(state, e.app_config)
             return self.__unified_instance
         else:
-            from interface.GPIOInput import GPIOInput
-            from interface.ILI9486Interface import ILI9486Interface
+            from interaction.GPIOInput import GPIOInput
+            from interaction.ILI9486Display import ILI9486Display
 
-            # make sure that interface is ILI9486Interface to call the reset function, should be always true
-            switch_function = interface.reset if isinstance(interface, ILI9486Interface) else lambda: None
+            # make sure that display is ILI9486Interface to call the reset function, should be always true
+            switch_function = display.reset if isinstance(display, ILI9486Display) else lambda: None
 
             return GPIOInput(e.keypad_config.left_pin, e.keypad_config.right_pin,
                              e.keypad_config.up_pin, e.keypad_config.down_pin,
                              e.keypad_config.a_pin, e.keypad_config.b_pin,
                              e.rotary_config.rotary_device, e.rotary_config.sw_pin,
-                             lambda: state.on_key_left(interface), lambda: state.on_key_right(interface),
-                             lambda: state.on_key_up(interface), lambda: state.on_key_down(interface),
-                             lambda: state.on_key_a(interface), lambda: state.on_key_b(interface),
-                             lambda: state.on_rotary_increase(interface), lambda: state.on_rotary_decrease(interface),
+                             lambda: state.on_key_left(display), lambda: state.on_key_right(display),
+                             lambda: state.on_key_up(display), lambda: state.on_key_down(display),
+                             lambda: state.on_key_a(display), lambda: state.on_key_b(display),
+                             lambda: state.on_rotary_increase(display), lambda: state.on_rotary_decrease(display),
                              switch_function)
 
 
@@ -317,13 +317,10 @@ def is_raspberry_pi() -> bool:
 
 
 if __name__ == '__main__':
-    INTERFACE: Interface
-    INPUT: Input
-
     injector = Injector([AppModule()])
     app_state = injector.get(AppState)
 
-    INTERFACE = injector.get(Interface)
+    DISPLAY = injector.get(Display)
     INPUT = injector.get(Input)
 
     app_state.add_app(injector.get(FileManagerApp)) \
@@ -335,14 +332,14 @@ if __name__ == '__main__':
         .add_app(injector.get(MapApp))
 
     # initial draw
-    app_state.update_display(INTERFACE)
+    app_state.update_display(DISPLAY)
     app_state.active_app.on_app_enter()
 
     try:
         # blocking function that updates the clock
-        app_state.watch_function(INTERFACE)
+        app_state.watch_function(DISPLAY)
     except KeyboardInterrupt:
         pass
     finally:
-        INTERFACE.close()
+        DISPLAY.close()
         INPUT.close()

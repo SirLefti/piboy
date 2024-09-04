@@ -1,12 +1,12 @@
 from core.decorator import override
-from interface.Interface import Interface
+from interaction.Display import Display
 from PIL import Image
 from driver.ILI9486 import ILI9486, Origin
 from spidev import SpiDev
 import RPi.GPIO as GPIO
 
 
-class ILI9486Interface(Interface):
+class ILI9486Display(Display):
 
     def __init__(self, spi_config: tuple[int, int], dc_pin: int, rst_pin: int, flip_display: bool = False):
         GPIO.setmode(GPIO.BCM)

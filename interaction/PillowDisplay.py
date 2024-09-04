@@ -1,9 +1,9 @@
 from core.decorator import override
-from interface.Interface import Interface
+from interaction.Display import Display
 from PIL import Image
 
 
-class PillowInterface(Interface):
+class PillowDisplay(Display):
 
     @override
     def close(self):

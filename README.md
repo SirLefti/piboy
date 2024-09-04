@@ -116,8 +116,8 @@ To enable logging, use the following instead:
 On first run, the PiBoy script will create a ``config.yaml`` if not found. In that config file, you can configure
 everything that relates to appearance and wiring. When running on a Raspberry Pi, ``dev_move`` must be set to ``false``
 if not set by default. For development, it must be set to ``true`` instead, obviously. This setting automatically loads
-the right input and display modules. On a Raspberry Pi, ``ILI9486Interface`` and ``GPIOInput`` are being used. For
-development, ``TkInterface`` or ``SelfManagedTkInterface`` can be used, both implement full input and display
+the right input and display modules. On a Raspberry Pi, ``ILI9486Display`` and ``GPIOInput`` are being used. For
+development, ``TkInteraction`` or ``SelfManagedTkInteraction`` can be used, both implement full input and display
 functionality.
 
 You can define additional color groups under ``app_config/modes`` for your own theme and set the index at

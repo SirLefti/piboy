@@ -1,5 +1,5 @@
 from core.decorator import override
-from interface.Input import Input
+from interaction.Input import Input
 from typing import Callable
 import RPi.GPIO as GPIO
 import evdev
