@@ -16,7 +16,7 @@ class NetworkManagerStatusProvider(NetworkStatusProvider):
 
     def __update_status(self):
         while True:
-            result = subprocess.run(['nmcli', 'networking', 'connectivity', 'check'], capture_output=True, text=True)
+            result = subprocess.run(['nmcli', 'networking', 'connectivity'], capture_output=True, text=True)
             if result.stdout == 'full':
                 self.__status = NetworkStatus.CONNECTED
             else:
