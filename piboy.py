@@ -14,7 +14,7 @@ from data.OSMTileProvider import OSMTileProvider
 from interaction.Display import Display
 from interaction.Input import Input
 from interaction.UnifiedInteraction import UnifiedInteraction
-from typing import Callable
+from typing import Callable, Self
 from PIL import Image, ImageDraw
 from datetime import datetime
 from environment import Environment, AppConfig
@@ -48,7 +48,7 @@ class AppState:
         self.__image_buffer = self.__init_buffer()
         return self.__image_buffer
 
-    def add_app(self, app: App) -> 'AppState':
+    def add_app(self, app: App) -> Self:
         self.__apps.append(app)
         return self
 
