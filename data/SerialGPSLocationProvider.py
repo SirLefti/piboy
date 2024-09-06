@@ -1,5 +1,5 @@
 from core.decorator import override
-from data.LocationProvider import LocationProvider, LocationException, Location
+from data.LocationProvider import LocationProvider, LocationException, Location, LocationStatus
 from typing import Union
 import serial
 import io
@@ -38,3 +38,10 @@ class SerialGPSLocationProvider(LocationProvider):
         if self.__location is None:
             raise LocationException('GPS module has currently no signal')
         return self.__location
+
+    @override
+    def get_status(self) -> LocationStatus:
+        if self.__location is None:
+            return LocationStatus.DISCONNECTED
+        else:
+            return LocationStatus.CONNECTED

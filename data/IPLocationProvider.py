@@ -1,26 +1,8 @@
-from core.decorator import override
-from data.LocationProvider import LocationProvider, LocationException,  Location
-from typing import Callable, Type, Collection
-import time
+from core.decorator import override, retry, RetryException
+from data.LocationProvider import LocationProvider, LocationException, Location, LocationStatus
 import requests
 import json
 import random
-
-
-def retry(exceptions: Collection[Type[Exception]], delay: float = 0, tries: int = -1):
-    def decorator(func: Callable):
-        def wrapper(*args, **kwargs):
-            t = tries
-            while t:
-                try:
-                    return func(*args, **kwargs)
-                except exceptions as e:
-                    t -= 1
-                    if not t:
-                        raise LocationException(f'Max retry {tries} reached, {func.__name__} failed', e)
-                    time.sleep(delay)
-        return wrapper
-    return decorator
 
 
 class IPLocationProvider(LocationProvider):
@@ -29,10 +11,10 @@ class IPLocationProvider(LocationProvider):
         """Creates a location provider using the public IP. Set 'apply_inaccuracy' to 'True' to add a random variation
         to the returned values to emulate a real GPS device."""
         self.__apply_inaccuracy = apply_inaccuracy
+        self.__status = LocationStatus.DISCONNECTED
 
     @retry(exceptions=(requests.exceptions.ConnectionError,), delay=2, tries=5)
-    @override
-    def get_location(self) -> Location:
+    def __fetch_location(self) -> Location:
         response = requests.get('https://ipinfo.io/json')
         if response.status_code != 200:
             raise LocationException(f'Fetching coordinates by IP failed ({response.status_code})')
@@ -53,3 +35,17 @@ class IPLocationProvider(LocationProvider):
                             float(values[1]) + lon_offset / 10000000)
         else:
             return Location(float(values[0]), float(values[1]))
+
+    @override
+    def get_location(self) -> Location:
+        try:
+            location = self.__fetch_location()
+            self.__status = LocationStatus.CONNECTED
+            return location
+        except RetryException:
+            self.__status = LocationStatus.DISCONNECTED
+            raise LocationException('Fetching location failed')
+
+    @override
+    def get_status(self) -> LocationStatus:
+        return self.__status

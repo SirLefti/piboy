@@ -11,4 +11,5 @@ class NetworkStatusProvider(ABC):
 
     @abstractmethod
     def get_status(self) -> NetworkStatus:
+        """Returns the network connection status."""
         raise NotImplementedError

@@ -6,7 +6,7 @@ from app.MapApp import MapApp
 from app.DebugApp import DebugApp
 from app.ClockApp import ClockApp
 from app.EnvironmentApp import EnvironmentApp
-from data.LocationProvider import LocationProvider
+from data.LocationProvider import LocationProvider, LocationStatus
 from data.EnvironmentDataProvider import EnvironmentDataProvider
 from data.NetworkStatusProvider import NetworkStatusProvider, NetworkStatus
 from data.TileProvider import TileProvider
@@ -26,14 +26,16 @@ import os
 
 resources_path = 'resources'
 network_icon = Image.open(os.path.join(resources_path, 'network.png')).convert('1')
+gps_icon = Image.open(os.path.join(resources_path, 'gps.png')).convert('1')
 
 class AppState:
 
     __bit = 0
 
-    def __init__(self, e: Environment, network_status_provider: NetworkStatusProvider):
+    def __init__(self, e: Environment, network_status_provider: NetworkStatusProvider, location_provider: LocationProvider):
         self.__environment = e
         self.__network_status_provider = network_status_provider
+        self.__location_provider = location_provider
         self.__image_buffer = self.__init_buffer()
         self.__apps: list[App] = []
         self.__active_app = 0
@@ -63,6 +65,10 @@ class AppState:
     @property
     def network_status_provider(self) -> NetworkStatusProvider:
         return self.__network_status_provider
+
+    @property
+    def location_provider(self) -> LocationProvider:
+        return self.__location_provider
 
     @property
     def image_buffer(self) -> Image.Image:
@@ -178,8 +184,8 @@ class AppModule(Module):
 
     @singleton
     @provider
-    def provide_app_state(self, e: Environment, network_status_provider: NetworkStatusProvider) -> AppState:
-        return AppState(e, network_status_provider)
+    def provide_app_state(self, e: Environment, network_status_provider: NetworkStatusProvider, location_provider: LocationProvider) -> AppState:
+        return AppState(e, network_status_provider, location_provider)
 
     @singleton
     @provider
@@ -285,6 +291,14 @@ def draw_footer(image: Image.Image, state: AppState) -> tuple[Image.Image, int, 
         (cursor_x + icon_padding, cursor_y + nw_status_padding),
         network_icon, fill=nw_status_color)
     cursor_x += network_icon.width + icon_padding
+
+    # draw gps status
+    gps_status_padding = (footer_height - gps_icon.height) // 2
+    gps_status_color = color_active if state.location_provider.get_status() == LocationStatus.CONNECTED else color_inactive
+    draw.bitmap(
+        (cursor_x + icon_padding, cursor_y + gps_status_padding),
+        gps_icon, fill=gps_status_color)
+    cursor_x += gps_icon.width + icon_padding
 
     # draw time
     date_str = datetime.now().strftime('%d-%m-%Y %H:%M:%S')
