@@ -8,6 +8,7 @@ from app.ClockApp import ClockApp
 from app.EnvironmentApp import EnvironmentApp
 from data.LocationProvider import LocationProvider
 from data.EnvironmentDataProvider import EnvironmentDataProvider
+from data.NetworkStatusProvider import NetworkStatusProvider, NetworkStatus
 from data.TileProvider import TileProvider
 from data.OSMTileProvider import OSMTileProvider
 from interaction.Display import Display
@@ -20,18 +21,28 @@ from environment import Environment, AppConfig
 from injector import Injector, Module, provider, singleton
 import environment
 import time
+import os
 
+
+resources_path = 'resources'
+network_icon = Image.open(os.path.join(resources_path, 'network.png')).convert('1')
 
 class AppState:
 
-    def __init__(self, e: Environment):
+    __bit = 0
+
+    def __init__(self, e: Environment, network_status_provider: NetworkStatusProvider):
         self.__environment = e
+        self.__network_status_provider = network_status_provider
         self.__image_buffer = self.__init_buffer()
         self.__apps: list[App] = []
         self.__active_app = 0
 
     def __init_buffer(self) -> Image.Image:
         return Image.new('RGB', self.__environment.app_config.resolution, self.__environment.app_config.background)
+
+    def __tick(self):
+        self.__bit ^= 1
 
     def clear_buffer(self) -> Image.Image:
         self.__image_buffer = self.__init_buffer()
@@ -42,8 +53,16 @@ class AppState:
         return self
 
     @property
+    def tick(self) -> int:
+        return self.__bit
+
+    @property
     def environment(self) -> Environment:
         return self.__environment
+
+    @property
+    def network_status_provider(self) -> NetworkStatusProvider:
+        return self.__network_status_provider
 
     @property
     def image_buffer(self) -> Image.Image:
@@ -80,6 +99,7 @@ class AppState:
             # draw the complete footer to remove existing clock display
             image, x0, y0 = draw_footer(self.image_buffer, self)
             display.show(image, x0, y0)
+            self.__tick()
 
     def update_display(self, display: Display, partial=False):
         """Draw call that handles the complete cycle of drawing a new image to the display."""
@@ -158,8 +178,8 @@ class AppModule(Module):
 
     @singleton
     @provider
-    def provide_app_state(self, e: Environment) -> AppState:
-        return AppState(e)
+    def provide_app_state(self, e: Environment, network_status_provider: NetworkStatusProvider) -> AppState:
+        return AppState(e, network_status_provider)
 
     @singleton
     @provider
@@ -186,12 +206,20 @@ class AppModule(Module):
     def provide_tile_service(self, e: Environment) -> TileProvider:
         return OSMTileProvider(e.app_config.background, e.app_config.accent, e.app_config.font_standard)
 
+    @singleton
+    @provider
+    def provide_network_status_service(self, e: Environment) -> NetworkStatusProvider:
+        if e.dev_mode:
+            from data.FakeNetworkStatusProvider import FakeNetworkStatusProvider
+            return FakeNetworkStatusProvider()
+        else:
+            from data.NetworkManagerStatusProvider import NetworkManagerStatusProvider
+            return NetworkManagerStatusProvider()
 
     @singleton
     @provider
     def provide_draw_callback(self, state: AppState, display: Display) -> Callable[[bool], None]:
         return lambda partial: state.update_display(display, partial)
-
 
     @singleton
     @provider
@@ -236,20 +264,36 @@ def draw_footer(image: Image.Image, state: AppState) -> tuple[Image.Image, int, 
     width, height = state.environment.app_config.resolution
     footer_height = 20  # height of the footer
     footer_bottom_offset = 3  # spacing to the bottom
+    icon_padding = 3 # padding between status icons
     footer_side_offset = state.environment.app_config.app_side_offset  # spacing to the sides
     font = state.environment.app_config.font_header
     draw = ImageDraw.Draw(image)
 
-    date_str = datetime.now().strftime('%d-%m-%Y %H:%M:%S')
-
     start = (footer_side_offset, height - footer_height - footer_bottom_offset)
     end = (width - footer_side_offset, height - footer_bottom_offset)
+    cursor_x, cursor_y = start
+    color_active = state.environment.app_config.accent
+    color_inactive = color_active if state.tick else state.environment.app_config.background
+
+    # reset area
     draw.rectangle(start + end, fill=state.environment.app_config.accent_dark)
+
+    # draw network status
+    nw_status_padding = (footer_height - network_icon.height) // 2
+    nw_status_color = color_active if state.network_status_provider.get_status() == NetworkStatus.CONNECTED else color_inactive
+    draw.bitmap(
+        (cursor_x + icon_padding, cursor_y + nw_status_padding),
+        network_icon, fill=nw_status_color)
+    cursor_x += network_icon.width + icon_padding
+
+    # draw time
+    date_str = datetime.now().strftime('%d-%m-%Y %H:%M:%S')
     _, _, text_width, text_height = font.getbbox(date_str)
-    text_padding = (footer_height - text_height) / 2
+    text_padding = (footer_height - text_height) // 2
     draw.text(
         (width - footer_side_offset - text_padding - text_width, height - footer_height - footer_bottom_offset +
          text_padding), date_str, state.environment.app_config.accent, font=font)
+
     x0, y0 = start
     return image.crop(start + end), x0, y0
 
