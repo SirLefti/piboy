@@ -101,14 +101,39 @@ Install python dependencies:
 .venv/bin/pip install -r requirements-pi.txt
 ````
 
-Edit the crontab with ``crontab -e`` and add the following:
-````bash
-@reboot cd /home/pi/piboy && .venv/bin/python piboy.py &
+Create a systemd service in ``/etc/systemd/system/piboy.service``:
+````ini
+[Unit]
+Description=PiBoy Python Script
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/pi/piboy
+ExecStart=/home/pi/piboy/.venv/bin/python -u /home/pi/piboy/piboy.py
+StandardOutput=file:/home/pi/piboy/log
+StandardError=file:/home/pi/piboy/err
+Restart=on-failure
+User=pi
+Group=pi
+
+[Install]
+WantedBy=multi-user.target
 ````
 
-To enable logging, use the following instead:
+Reload to get the new configuration:
 ````bash
-@reboot cd /home/pi/piboy && (.venv/bin/python -u piboy.py >log 2>err) &
+sudo systemctl daemon-reload
+````
+
+Activate the new service:
+````bash
+sudo systemctl enable piboy.service
+````
+
+Either restart the Pi or start the service manually:
+````bash
+sudo systemctl start piboy.service
 ````
 
 ## Configuration
