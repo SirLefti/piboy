@@ -110,7 +110,8 @@ class AppState:
     def update_display(self, display: Display, partial=False):
         """Draw call that handles the complete cycle of drawing a new image to the display."""
         image = self.clear_buffer()
-        image = draw_base(image, self)
+        if not partial:
+            image = draw_base(image, self)
         image, x0, y0 = self.active_app.draw(image, partial)
         display.show(image, x0, y0)
 
