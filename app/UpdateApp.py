@@ -94,8 +94,8 @@ class UpdateApp(App):
         def result_text_install(result: CompletedProcess) -> str:
             if result.returncode != 0:
                 return 'error installing updates'
-            # issue: language dependant
-            if result.stdout.rstrip('\n') == 'Already up to date.':
+            if result.stdout.count('\n') == 1:
+                # has only one line break at the end if the message is 'already up to date', but more when updating
                 return 'no updates to install'
             return 'updates installed, restart next'
 
