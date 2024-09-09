@@ -3,7 +3,7 @@ from app.App import App
 from core.decorator import override
 from injector import inject
 from PIL import Image, ImageDraw
-from subprocess import run, CompletedProcess, PIPE
+from subprocess import run, CompletedProcess
 from typing import Callable, Optional
 
 
@@ -73,28 +73,29 @@ class UpdateApp(App):
         def result_text_fetch(result: CompletedProcess) -> str:
             if result.returncode != 0:
                 return 'error fetching updates'
-            if not result.stdout.decode('utf-8'):
+            if not result.stdout:
                 return 'no updates available'
             return 'fetched updates, install next'
 
         def result_text_reset(result: CompletedProcess) -> str:
             if result.returncode != 0:
                 return 'error resetting changes'
-            if not result.stdout.decode('utf-8'):
+            if not result.stdout:
                 return 'no changes to reset'
             return 'reset changes'
 
         def result_text_clean(result: CompletedProcess) -> str:
             if result.returncode != 0:
                 return 'error cleaning files'
-            if not result.stdout.decode('utf-8'):
+            if not result.stdout:
                 return 'no files to clean'
             return 'cleaned files'
 
         def result_text_install(result: CompletedProcess) -> str:
             if result.returncode != 0:
                 return 'error installing updates'
-            if result.stdout.decode('utf-8').rstrip('\n') == 'Already up to date.':
+            # issue: language dependant
+            if result.stdout.rstrip('\n') == 'Already up to date.':
                 return 'no updates to install'
             return 'updates installed, restart next'
 
@@ -126,74 +127,74 @@ class UpdateApp(App):
     @staticmethod
     def __run_fetch() -> CompletedProcess:
         # git fetch does not return stuff into stdout, return output of git log instead
-        result = run(['git', 'fetch'], stdout=PIPE)
+        result = run(['git', 'fetch'])
         if result.returncode != 0:
             return result
-        return run(['git', 'log', '..@{u}', '--pretty=oneline'], stdout=PIPE)
+        return run(['git', 'log', '..@{u}', '--pretty=oneline'], capture_output=True, text=True)
 
     @staticmethod
     def __run_reset() -> CompletedProcess:
-        return run(['git', 'reset', '--hard'], stdout=PIPE)
+        return run(['git', 'reset', '--hard'], capture_output=True, text=True)
 
     @staticmethod
     def __run_clean() -> CompletedProcess:
-        return run(['git', 'clean', '-fd'], stdout=PIPE)
+        return run(['git', 'clean', '-fd'], capture_output=True, text=True)
 
     @staticmethod
     def __run_install() -> CompletedProcess:
-        return run(['git', 'pull'], stdout=PIPE)
+        return run(['git', 'pull'], capture_output=True, text=True)
 
     @staticmethod
     def __run_shutdown() -> CompletedProcess:
-        return run(['sudo', 'shutdown', 'now'], stdout=PIPE)
+        return run(['sudo', 'shutdown', 'now'])
 
     @staticmethod
     def __run_restart() -> CompletedProcess:
-        return run(['sudo', 'reboot', 'now'], stdout=PIPE)
+        return run(['sudo', 'reboot', 'now'])
 
     @staticmethod
     def __get_files_to_reset() -> Optional[int]:
-        result = run(['git', 'diff', '--name-only'], stdout=PIPE)
+        result = run(['git', 'diff', '--name-only'], capture_output=True, text=True)
         if result.returncode != 0:
             return None
         if result.stdout is not None:
-            return result.stdout.decode('utf-8').count('\n')
+            return result.stdout.count('\n')
         return 0
 
     @staticmethod
     def __get_files_to_clean() -> Optional[int]:
-        result = run(['git', 'clean', '-nd'], stdout=PIPE)
+        result = run(['git', 'clean', '-nd'], capture_output=True, text=True)
         if result.returncode != 0:
             return None
         if result.stdout is not None:
-            return result.stdout.decode('utf-8').count('\n')
+            return result.stdout.count('\n')
         return 0
 
     @staticmethod
     def __get_commits_to_update() -> Optional[int]:
-        result = run(['git', 'rev-list', '@{upstream}', '--not', 'HEAD'], stdout=PIPE)
+        result = run(['git', 'rev-list', '@{upstream}', '--not', 'HEAD'], capture_output=True, text=True)
         if result.returncode != 0:
             return None
         if result.stdout is not None:
-            return result.stdout.decode('utf-8').count('\n')
+            return result.stdout.count('\n')
         return 0
 
     @staticmethod
     def __get_branch_name() -> Optional[str]:
-        result = run(['git', 'branch', '--show-current'], stdout=PIPE)
+        result = run(['git', 'branch', '--show-current'], capture_output=True, text=True)
         if result.returncode != 0:
             return None
         if result.stdout is not None:
-            return result.stdout.decode('utf-8')
+            return result.stdout
         return None
 
     @staticmethod
     def __get_remote_name() -> Optional[str]:
-        result = run(['git', 'remote', 'show'], stdout=PIPE)
+        result = run(['git', 'remote', 'show'], capture_output=True, text=True)
         if result.returncode != 0:
             return None
         if result.stdout is not None:
-            return result.stdout.decode('utf-8')
+            return result.stdout
         return None
 
     def __update_counts(self):
@@ -219,7 +220,7 @@ class UpdateApp(App):
         if self.__result is not None or not partial:
             # log action responses
             if self.__result is not None and self.__result.stdout:
-                print(self.__result.stdout.decode('utf-8').rstrip('\n'))
+                print(self.__result.stdout.rstrip('\n'))
             self.__result = None
 
             # clear existing logs
