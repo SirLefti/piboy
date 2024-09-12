@@ -4,6 +4,7 @@ from core.decorator import override
 from injector import inject
 from PIL import Image, ImageDraw, ImageOps
 from typing import Callable, Optional
+import resources
 import os
 import shutil
 
@@ -227,10 +228,6 @@ class FileManagerApp(App):
         right, bottom = right_bottom  # unpacking bottom right anchor point
         font = self.__font
 
-        resources_path = 'resources'
-        file_icon = 'file.png'
-        directory_icon = 'directory.png'
-
         # draw background if this directory is selected
         if is_selected:
             draw.rectangle(left_top + right_bottom, fill=self.__color_dark)
@@ -266,11 +263,9 @@ class FileManagerApp(App):
                     break
 
                 if os.path.isfile(os.path.join(state.directory, file)):
-                    icon = Image.open(os.path.join(resources_path, file_icon)).convert('1')
-                    draw.bitmap(start, ImageOps.invert(icon), fill=self.__color)
+                    draw.bitmap(start, ImageOps.invert(resources.file_icon), fill=self.__color)
                 else:
-                    icon = Image.open(os.path.join(resources_path, directory_icon)).convert('1')
-                    draw.bitmap(start, ImageOps.invert(icon), fill=self.__color)
+                    draw.bitmap(start, ImageOps.invert(resources.directory_icon), fill=self.__color)
 
                 while font.getbbox(file)[2] > right - left - symbol_dimensions - 2 * symbol_padding:
                     file = file[:-1]  # cut off last char until it fits

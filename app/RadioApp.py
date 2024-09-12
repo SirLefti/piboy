@@ -6,6 +6,7 @@ from injector import inject
 from PIL import Image, ImageDraw
 from typing import Callable, Optional
 from subprocess import run, PIPE
+import resources
 import pyaudio
 import wave
 import os
@@ -287,17 +288,6 @@ class RadioApp(SelfUpdatingApp):
         self.Control.SelectionState.NONE = self.Control.SelectionState(self.__color_dark, self.__background, False, False)
         self.Control.SelectionState.FOCUSED = self.Control.SelectionState(self.__color, self.__background, True, False)
 
-        resources_path = 'resources'
-        stop_icon = Image.open(os.path.join(resources_path, 'stop.png')).convert('1')
-        previous_icon = Image.open(os.path.join(resources_path, 'previous.png')).convert('1')
-        play_icon = Image.open(os.path.join(resources_path, 'play.png')).convert('1')
-        pause_icon = Image.open(os.path.join(resources_path, 'pause.png')).convert('1')
-        skip_icon = Image.open(os.path.join(resources_path, 'skip.png')).convert('1')
-        order_icon = Image.open(os.path.join(resources_path, 'order.png')).convert('1')
-        random_icon = Image.open(os.path.join(resources_path, 'random.png')).convert('1')
-        volume_decrease_icon = Image.open(os.path.join(resources_path, 'volume_decrease.png')).convert('1')
-        volume_increase_icon = Image.open(os.path.join(resources_path, 'volume_increase.png')).convert('1')
-
         def play_action() -> bool:
             """
             Loads current selected file if no stream is loaded.
@@ -402,13 +392,13 @@ class RadioApp(SelfUpdatingApp):
 
         control_group = self.ControlGroup()
         self.__controls = [
-            self.InstantControl(stop_icon, stop_action, control_group),
-            self.InstantControl(previous_icon, prev_action),
-            self.SwitchControl(play_icon, pause_icon, pause_action, play_action, control_group),
-            self.InstantControl(skip_icon, skip_action),
-            self.SwitchControl(order_icon, random_icon, order_action, random_action),
-            self.InstantControl(volume_decrease_icon, decrease_volume_action),
-            self.InstantControl(volume_increase_icon, increase_volume_action)
+            self.InstantControl(resources.stop_icon, stop_action, control_group),
+            self.InstantControl(resources.previous_icon, prev_action),
+            self.SwitchControl(resources.play_icon, resources.pause_icon, pause_action, play_action, control_group),
+            self.InstantControl(resources.skip_icon, skip_action),
+            self.SwitchControl(resources.order_icon, resources.random_icon, order_action, random_action),
+            self.InstantControl(resources.volume_decrease_icon, decrease_volume_action),
+            self.InstantControl(resources.volume_increase_icon, increase_volume_action)
         ]
         self.__selected_control_index = 2
 

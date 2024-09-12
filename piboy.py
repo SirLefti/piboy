@@ -19,14 +19,10 @@ from PIL import Image, ImageDraw
 from datetime import datetime
 from environment import Environment, AppConfig
 from injector import Injector, Module, provider, singleton
+import resources
 import environment
 import time
-import os
 
-
-resources_path = 'resources'
-network_icon = Image.open(os.path.join(resources_path, 'network.png')).convert('1')
-gps_icon = Image.open(os.path.join(resources_path, 'gps.png')).convert('1')
 
 class AppState:
 
@@ -286,20 +282,20 @@ def draw_footer(image: Image.Image, state: AppState) -> tuple[Image.Image, int, 
     draw.rectangle(start + end, fill=state.environment.app_config.accent_dark)
 
     # draw network status
-    nw_status_padding = (footer_height - network_icon.height) // 2
+    nw_status_padding = (footer_height - resources.network_icon.height) // 2
     nw_status_color = color_active if state.network_status_provider.get_status() == NetworkStatus.CONNECTED else color_inactive
     draw.bitmap(
         (cursor_x + icon_padding, cursor_y + nw_status_padding),
-        network_icon, fill=nw_status_color)
-    cursor_x += network_icon.width + icon_padding
+        resources.network_icon, fill=nw_status_color)
+    cursor_x += resources.network_icon.width + icon_padding
 
     # draw gps status
-    gps_status_padding = (footer_height - gps_icon.height) // 2
+    gps_status_padding = (footer_height - resources.gps_icon.height) // 2
     gps_status_color = color_active if state.location_provider.get_status() == LocationStatus.CONNECTED else color_inactive
     draw.bitmap(
         (cursor_x + icon_padding, cursor_y + gps_status_padding),
-        gps_icon, fill=gps_status_color)
-    cursor_x += gps_icon.width + icon_padding
+        resources.gps_icon, fill=gps_status_color)
+    cursor_x += resources.gps_icon.width + icon_padding
 
     # draw time
     date_str = datetime.now().strftime('%d-%m-%Y %H:%M:%S')

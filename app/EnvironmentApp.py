@@ -5,7 +5,7 @@ from data.EnvironmentDataProvider import EnvironmentDataProvider, EnvironmentDat
 from injector import inject
 from PIL import Image, ImageDraw
 from typing import Callable
-import os
+import resources
 
 
 class EnvironmentApp(SelfUpdatingApp):
@@ -32,10 +32,9 @@ class EnvironmentApp(SelfUpdatingApp):
         except TimeoutError:
             pass
 
-        resources_path = 'resources'
-        self.__t_icon = Image.open(os.path.join(resources_path, 'temperature.png')).convert('1')
-        self.__p_icon = Image.open(os.path.join(resources_path, 'pressure.png')).convert('1')
-        self.__h_icon = Image.open(os.path.join(resources_path, 'humidity.png')).convert('1')
+        self.__t_icon = resources.temperature_icon
+        self.__p_icon = resources.pressure_icon
+        self.__h_icon = resources.humidity_icon
 
     @property
     @override

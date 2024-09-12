@@ -6,7 +6,7 @@ from data.TileProvider import TileProvider
 from injector import inject
 from typing import Callable, Optional, Union
 from PIL import Image, ImageDraw, ImageOps
-import os.path
+import resources
 import math
 
 
@@ -143,12 +143,6 @@ class MapApp(SelfUpdatingApp):
         except LocationException:
             self.__connection_lost = True
 
-        resources_path = 'resources'
-        minus_icon = Image.open(os.path.join(resources_path, 'minus.png')).convert('1')
-        plus_icon = Image.open(os.path.join(resources_path, 'plus.png')).convert('1')
-        move_icon = Image.open(os.path.join(resources_path, 'move.png')).convert('1')
-        focus_icon = Image.open(os.path.join(resources_path, 'focus.png')).convert('1')
-
         def zoom_in():
             if self.__zoom + 1 in self.__tile_provider.zoom_range:
                 self.__zoom = self.__zoom + 1
@@ -174,15 +168,15 @@ class MapApp(SelfUpdatingApp):
             self.__y_offset += 1
 
         self.__controls: list[MapApp.Control] = [
-            self.Control(ImageOps.invert(minus_icon), initial_state=self.Control.NONE,
+            self.Control(ImageOps.invert(resources.minus_icon), initial_state=self.Control.NONE,
                          on_select=zoom_out, instant_action=True),
-            self.Control(ImageOps.invert(plus_icon), initial_state=self.Control.NONE,
+            self.Control(ImageOps.invert(resources.plus_icon), initial_state=self.Control.NONE,
                          on_select=zoom_in, instant_action=True),
-            self.Control(ImageOps.invert(move_icon), initial_state=self.Control.NONE,
+            self.Control(ImageOps.invert(resources.move_icon), initial_state=self.Control.NONE,
                          on_key_left=move_left, on_key_right=move_right,
                          on_key_up=move_up, on_key_down=move_down,
                          on_select=self.stop_updating, on_deselect=self.start_updating),
-            self.Control(ImageOps.invert(focus_icon), initial_state=self.Control.NONE,
+            self.Control(ImageOps.invert(resources.focus_icon), initial_state=self.Control.NONE,
                          on_select=reset_offset, instant_action=True)
         ]
         self.__focused_control_index = 0
