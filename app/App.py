@@ -1,9 +1,11 @@
-from core.decorator import override
-from abc import ABC, abstractmethod
-from typing import Optional, Callable
-from PIL import Image
 import threading
 import time
+from abc import ABC, abstractmethod
+from typing import Callable, Optional
+
+from PIL import Image
+
+from core.decorator import override
 
 
 class App(ABC):

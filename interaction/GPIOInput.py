@@ -1,9 +1,11 @@
+import threading
+from typing import Callable
+
+import evdev
+import RPi.GPIO as GPIO
+
 from core.decorator import override
 from interaction.Input import Input
-from typing import Callable
-import RPi.GPIO as GPIO
-import evdev
-import threading
 
 
 class GPIOInput(Input):

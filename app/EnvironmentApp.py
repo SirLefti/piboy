@@ -1,11 +1,13 @@
-from environment import AppConfig
-from app.App import SelfUpdatingApp
-from core.decorator import override
-from data.EnvironmentDataProvider import EnvironmentDataProvider, EnvironmentData
+from typing import Callable
+
 from injector import inject
 from PIL import Image, ImageDraw
-from typing import Callable
+
 import resources
+from app.App import SelfUpdatingApp
+from core.decorator import override
+from data.EnvironmentDataProvider import EnvironmentData, EnvironmentDataProvider
+from environment import AppConfig
 
 
 class EnvironmentApp(SelfUpdatingApp):

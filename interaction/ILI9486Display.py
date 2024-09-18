@@ -1,10 +1,12 @@
-from core.decorator import override
-from interaction.Display import Display
-from PIL import Image
-from driver.ILI9486 import ILI9486, Origin
-from spidev import SpiDev
-import RPi.GPIO as GPIO
 import threading
+
+import RPi.GPIO as GPIO
+from PIL import Image
+from spidev import SpiDev
+
+from core.decorator import override
+from driver.ILI9486 import ILI9486, Origin
+from interaction.Display import Display
 
 
 class ILI9486Display(Display):

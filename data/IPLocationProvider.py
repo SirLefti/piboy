@@ -1,8 +1,10 @@
-from core.decorator import override, retry, RetryException
-from data.LocationProvider import LocationProvider, LocationException, Location, LocationStatus
-import requests
 import json
 import random
+
+import requests
+
+from core.decorator import RetryException, override, retry
+from data.LocationProvider import Location, LocationException, LocationProvider, LocationStatus
 
 
 class IPLocationProvider(LocationProvider):

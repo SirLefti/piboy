@@ -1,12 +1,14 @@
-from core.decorator import override
-from interaction.UnifiedInteraction import UnifiedInteraction
-from interaction.Display import Display
-from interaction.Input import Input
-from typing import Callable, Optional
-from PIL import Image, ImageTk
-from tkinter import Tk, Canvas, Button, constants, TclError
 import threading
 import time
+from tkinter import Button, Canvas, TclError, Tk, constants
+from typing import Callable, Optional
+
+from PIL import Image, ImageTk
+
+from core.decorator import override
+from interaction.Display import Display
+from interaction.Input import Input
+from interaction.UnifiedInteraction import UnifiedInteraction
 
 
 class TkInteraction(UnifiedInteraction):

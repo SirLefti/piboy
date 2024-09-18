@@ -1,7 +1,6 @@
-import typing
 import sys
 import time
-
+import typing
 
 try:
     if sys.version_info >= (3, 12):

@@ -1,10 +1,12 @@
-from environment import AppConfig
-from app.App import App
-from core.decorator import override
+from subprocess import CompletedProcess, run
+from typing import Callable, Optional
+
 from injector import inject
 from PIL import Image, ImageDraw
-from subprocess import run, CompletedProcess
-from typing import Callable, Optional
+
+from app.App import App
+from core.decorator import override
+from environment import AppConfig
 
 
 class UpdateApp(App):

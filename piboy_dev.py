@@ -1,15 +1,17 @@
+import threading
+
+from injector import Injector
+
 from app.ClockApp import ClockApp
 from app.DebugApp import DebugApp
+from app.EnvironmentApp import EnvironmentApp
 from app.FileManagerApp import FileManagerApp
+from app.MapApp import MapApp
 from app.RadioApp import RadioApp
 from app.UpdateApp import UpdateApp
-from app.MapApp import MapApp
-from app.EnvironmentApp import EnvironmentApp
-from interaction.SelfManagedTkInteraction import SelfManagedTkInteraction
 from environment import Environment
-from piboy import AppState, AppModule
-from injector import Injector
-import threading
+from interaction.SelfManagedTkInteraction import SelfManagedTkInteraction
+from piboy import AppModule, AppState
 
 """
 This pi-boy script uses the SelfManagedTkInteraction, which follows the usual mainloop approach. This makes it

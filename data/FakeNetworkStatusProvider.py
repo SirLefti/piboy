@@ -1,5 +1,5 @@
 from core.decorator import override
-from data.NetworkStatusProvider import NetworkStatusProvider, NetworkStatus
+from data.NetworkStatusProvider import NetworkStatus, NetworkStatusProvider
 
 
 class FakeNetworkStatusProvider(NetworkStatusProvider):

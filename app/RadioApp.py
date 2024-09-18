@@ -1,17 +1,19 @@
-from environment import AppConfig
+import os
+import random
+import re
+import wave
 from abc import ABC, abstractmethod
-from app.App import SelfUpdatingApp
-from core.decorator import override
+from subprocess import PIPE, run
+from typing import Callable, Optional
+
+import pyaudio
 from injector import inject
 from PIL import Image, ImageDraw
-from typing import Callable, Optional
-from subprocess import run, PIPE
+
 import resources
-import pyaudio
-import wave
-import os
-import re
-import random
+from app.App import SelfUpdatingApp
+from core.decorator import override
+from environment import AppConfig
 
 
 class RadioApp(SelfUpdatingApp):

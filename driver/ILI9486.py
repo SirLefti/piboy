@@ -18,11 +18,12 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-from enum import Enum
 import time
+from enum import Enum
+
 import numpy as np
-from PIL import Image, ImageDraw
 import RPi.GPIO as GPIO
+from PIL import Image, ImageDraw
 from spidev import SpiDev
 
 # constants

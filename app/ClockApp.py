@@ -1,11 +1,13 @@
-from environment import AppConfig
-from app.App import SelfUpdatingApp
-from core.decorator import override
+import math
+from datetime import datetime
+from typing import Any, Callable
+
 from injector import inject
 from PIL import Image, ImageDraw
-from typing import Callable, Any
-from datetime import datetime
-import math
+
+from app.App import SelfUpdatingApp
+from core.decorator import override
+from environment import AppConfig
 
 
 class ClockApp(SelfUpdatingApp):

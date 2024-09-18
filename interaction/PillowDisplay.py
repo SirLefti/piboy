@@ -1,6 +1,7 @@
+from PIL import Image
+
 from core.decorator import override
 from interaction.Display import Display
-from PIL import Image
 
 
 class PillowDisplay(Display):

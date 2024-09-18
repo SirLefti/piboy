@@ -1,8 +1,9 @@
-from data.NetworkStatusProvider import NetworkStatusProvider, NetworkStatus
-from core.decorator import override
 import subprocess
 import threading
 import time
+
+from core.decorator import override
+from data.NetworkStatusProvider import NetworkStatus, NetworkStatusProvider
 
 
 class NetworkManagerStatusProvider(NetworkStatusProvider):

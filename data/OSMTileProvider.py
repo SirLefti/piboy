@@ -1,12 +1,14 @@
-from core.decorator import override
-from data.TileProvider import TileProvider, TileInfo
+import math
+import os
+import time
 from typing import Iterable
+
+import requests
 from PIL import Image, ImageDraw, ImageFont, UnidentifiedImageError
 from requests.exceptions import ConnectionError
-import os
-import requests
-import math
-import time
+
+from core.decorator import override
+from data.TileProvider import TileInfo, TileProvider
 
 
 class OSMTileProvider(TileProvider):

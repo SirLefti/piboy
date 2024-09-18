@@ -1,7 +1,8 @@
 from dataclasses import dataclass, field
-from PIL import ImageFont
-from yaml import Loader, FullLoader, UnsafeLoader, Dumper, MappingNode, Node
+
 import yaml
+from PIL import ImageFont
+from yaml import Dumper, FullLoader, Loader, MappingNode, Node, UnsafeLoader
 
 
 @dataclass

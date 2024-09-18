@@ -1,8 +1,9 @@
-from environment import AppConfig
-from app.App import App
-from core.decorator import override
 from injector import inject
 from PIL import Image, ImageDraw
+
+from app.App import App
+from core.decorator import override
+from environment import AppConfig
 
 
 class DebugApp(App):

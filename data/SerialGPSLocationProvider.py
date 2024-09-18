@@ -1,10 +1,12 @@
-from core.decorator import override
-from data.LocationProvider import LocationProvider, LocationException, Location, LocationStatus
-from typing import Union
-import serial
 import io
-import pynmea2
 import threading
+from typing import Union
+
+import pynmea2
+import serial
+
+from core.decorator import override
+from data.LocationProvider import Location, LocationException, LocationProvider, LocationStatus
 
 
 class SerialGPSLocationProvider(LocationProvider):

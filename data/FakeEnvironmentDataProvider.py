@@ -1,6 +1,7 @@
-from core.decorator import override
-from data.EnvironmentDataProvider import EnvironmentDataProvider, EnvironmentData
 import random
+
+from core.decorator import override
+from data.EnvironmentDataProvider import EnvironmentData, EnvironmentDataProvider
 
 
 class FakeEnvironmentDataProvider(EnvironmentDataProvider):

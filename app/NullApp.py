@@ -1,6 +1,7 @@
+from PIL import Image
+
 from app.App import App
 from core.decorator import override
-from PIL import Image
 
 
 class NullApp(App):

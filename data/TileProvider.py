@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Iterable
+
 from PIL import Image
 
 

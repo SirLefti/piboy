@@ -1,27 +1,29 @@
+import time
+from datetime import datetime
+from typing import Callable, Self
+
+from injector import Injector, Module, provider, singleton
+from PIL import Image, ImageDraw
+
+import environment
+import resources
 from app.App import App
+from app.ClockApp import ClockApp
+from app.DebugApp import DebugApp
+from app.EnvironmentApp import EnvironmentApp
 from app.FileManagerApp import FileManagerApp
+from app.MapApp import MapApp
 from app.RadioApp import RadioApp
 from app.UpdateApp import UpdateApp
-from app.MapApp import MapApp
-from app.DebugApp import DebugApp
-from app.ClockApp import ClockApp
-from app.EnvironmentApp import EnvironmentApp
-from data.LocationProvider import LocationProvider, LocationStatus
 from data.EnvironmentDataProvider import EnvironmentDataProvider
-from data.NetworkStatusProvider import NetworkStatusProvider, NetworkStatus
-from data.TileProvider import TileProvider
+from data.LocationProvider import LocationProvider, LocationStatus
+from data.NetworkStatusProvider import NetworkStatus, NetworkStatusProvider
 from data.OSMTileProvider import OSMTileProvider
+from data.TileProvider import TileProvider
+from environment import AppConfig, Environment
 from interaction.Display import Display
 from interaction.Input import Input
 from interaction.UnifiedInteraction import UnifiedInteraction
-from typing import Callable, Self
-from PIL import Image, ImageDraw
-from datetime import datetime
-from environment import Environment, AppConfig
-from injector import Injector, Module, provider, singleton
-import resources
-import environment
-import time
 
 
 class AppState:

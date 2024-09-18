@@ -1,6 +1,6 @@
 import os
-from PIL import Image
 
+from PIL import Image
 
 resources_path = 'resources'
 

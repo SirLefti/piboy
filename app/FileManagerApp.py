@@ -1,12 +1,14 @@
-from environment import AppConfig
-from app.App import App
-from core.decorator import override
-from injector import inject
-from PIL import Image, ImageDraw, ImageOps
-from typing import Callable, Optional
-import resources
 import os
 import shutil
+from typing import Callable, Optional
+
+from injector import inject
+from PIL import Image, ImageDraw, ImageOps
+
+import resources
+from app.App import App
+from core.decorator import override
+from environment import AppConfig
 
 
 class FileManagerApp(App):

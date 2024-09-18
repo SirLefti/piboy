@@ -1,10 +1,12 @@
+import tkinter as tk
+from typing import Callable
+
+from PIL import Image, ImageTk
+
 from core.decorator import override
-from interaction.UnifiedInteraction import UnifiedInteraction
 from interaction.Display import Display
 from interaction.Input import Input
-from typing import Callable
-from PIL import Image, ImageTk
-import tkinter as tk
+from interaction.UnifiedInteraction import UnifiedInteraction
 
 
 class SelfManagedTkInteraction(UnifiedInteraction):
