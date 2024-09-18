@@ -6,7 +6,6 @@ from injector import Injector, Module, provider, singleton
 from PIL import Image, ImageDraw
 
 import environment
-import resources
 from app.App import App
 from app.ClockApp import ClockApp
 from app.DebugApp import DebugApp
@@ -15,6 +14,7 @@ from app.FileManagerApp import FileManagerApp
 from app.MapApp import MapApp
 from app.RadioApp import RadioApp
 from app.UpdateApp import UpdateApp
+from core import resources
 from data.EnvironmentDataProvider import EnvironmentDataProvider
 from data.LocationProvider import LocationProvider, LocationStatus
 from data.NetworkStatusProvider import NetworkStatus, NetworkStatusProvider

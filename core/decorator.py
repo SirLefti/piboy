@@ -1,6 +1,6 @@
 import sys
 import time
-import typing
+from typing import Any, Callable, Optional, Type, TypeVar
 
 try:
     if sys.version_info >= (3, 12):
@@ -11,19 +11,19 @@ try:
         from typing_extensions import override
 except ImportError:
     # if the package is not installed, define a mock, because it is just needed for type checking
-    _F = typing.TypeVar("_F", bound=typing.Callable[..., typing.Any])
+    _F = TypeVar("_F", bound=Callable[..., Any])
     def override(_: _F, /) -> _F: return _
 
 
 class RetryException(Exception):
 
-    def __init__(self, message: str, inner_exception: typing.Optional[Exception] = None):
+    def __init__(self, message: str, inner_exception: Optional[Exception] = None):
         self.message = message
         self.inner_exception = inner_exception
 
 
-def retry(exceptions: typing.Collection[typing.Type[Exception]], delay: float = 0, tries: int = -1):
-    def decorator(func: typing.Callable):
+def retry(exceptions: tuple[Type[Exception]], delay: float = 0, tries: int = -1):
+    def decorator(func: Callable):
         def wrapper(*args, **kwargs):
             t = tries
             while t:

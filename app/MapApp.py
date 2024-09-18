@@ -4,8 +4,8 @@ from typing import Callable, Optional, Union
 from injector import inject
 from PIL import Image, ImageDraw, ImageOps
 
-import resources
 from app.App import SelfUpdatingApp
+from core import resources
 from core.decorator import override
 from data.LocationProvider import Location, LocationException, LocationProvider
 from data.TileProvider import TileProvider

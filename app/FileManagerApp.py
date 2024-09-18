@@ -5,8 +5,8 @@ from typing import Callable, Optional
 from injector import inject
 from PIL import Image, ImageDraw, ImageOps
 
-import resources
 from app.App import App
+from core import resources
 from core.decorator import override
 from environment import AppConfig
 
