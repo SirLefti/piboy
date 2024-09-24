@@ -1,6 +1,8 @@
 import os
 import random
 import re
+import threading
+import time
 import wave
 from abc import ABC, abstractmethod
 from subprocess import PIPE, run
@@ -193,20 +195,28 @@ class RadioApp(SelfUpdatingApp):
 
     class AudioPlayer:
 
-        def __init__(self):
+        def __init__(self, callback_next: Callable[[], None]):
             self.__player = pyaudio.PyAudio()
             self.__total_frames = 0
             self.__played_frames = 0
             self.__wave_read: Optional[wave.Wave_read] = None
             self.__stream: Optional[pyaudio.Stream] = None
+            self.__callback_next = callback_next
+            self.__is_continuing = False
 
         def __stream_callback(self, _1, frame_count, _2, _3) -> tuple[bytes, int]:
             data = self.__wave_read.readframes(frame_count)
             self.__played_frames += frame_count
             if self.__played_frames >= self.__total_frames:
+                thread_call_next = threading.Thread(target=self.__delayed_call_next, args=(), daemon=True)
+                thread_call_next.start()
                 return bytes(), pyaudio.paComplete
             else:
                 return data, pyaudio.paContinue
+
+        def __delayed_call_next(self, delay: int = 1):
+            time.sleep(delay)
+            self.__callback_next()
 
         def load_file(self, file_path: str):
             self.__wave_read = wave.open(file_path, 'rb')
@@ -223,12 +233,14 @@ class RadioApp(SelfUpdatingApp):
         def start_stream(self) -> bool:
             if self.__stream:
                 self.__stream.start_stream()
+                self.__is_continuing = True
                 return True
             return False
 
         def pause_stream(self) -> bool:
             if self.__stream:
                 self.__stream.stop_stream()
+                self.__is_continuing = False
                 return True
             return False
 
@@ -237,6 +249,7 @@ class RadioApp(SelfUpdatingApp):
                 self.__stream.stop_stream()
                 self.__stream.close()
                 self.__stream = None
+                self.__is_continuing = False
                 self.__total_frames = 0
                 self.__played_frames = 0
                 return True
@@ -251,8 +264,16 @@ class RadioApp(SelfUpdatingApp):
             return self.__stream is not None and self.__stream.is_active()
 
         @property
+        def is_continuing(self) -> bool:
+            return self.__is_continuing
+
+        @property
         def progress(self) -> Optional[float]:
-            return (self.__played_frames / self.__total_frames) if self.__total_frames != 0 else None
+            if self.__total_frames == 0:
+                return None
+            if self.__total_frames <= self.__played_frames:
+                return 1
+            return self.__played_frames / self.__total_frames
 
     @inject
     def __init__(self, draw_callback: Callable[[bool], None], app_config: AppConfig):
@@ -277,7 +298,6 @@ class RadioApp(SelfUpdatingApp):
         self.__top_index = 0  # what is on top in case the list is greater than screen space
         self.__playlist: list[int] = list(range(0, len(self.__files)))  # order of the tracks to play
         self.__playing_index = 0  # what we are currently playing from the playlist
-        self.__player = self.AudioPlayer()
         self.__is_random = False
         self.__volume: Optional[int] = None
         try:
@@ -285,6 +305,17 @@ class RadioApp(SelfUpdatingApp):
             self.__volume = self.__get_volume()
         except (FileNotFoundError, ValueError):
             pass
+
+        def call_next():
+            # go to next file if player was not paused or stopped between end of file and callback
+            if self.__player.is_continuing:
+                self.__playing_index = (self.__playing_index + 1) % len(self.__files)
+                self.__selected_index = self.__playlist[self.__playing_index]
+                self.__player.stop_stream()
+                self.__player.load_file(os.path.join(self.__directory, self.__files[self.__playlist[self.__playing_index]]))
+                self.__player.start_stream()
+
+        self.__player = self.AudioPlayer(call_next)
 
         # init selection states
         self.Control.SelectionState.NONE = self.Control.SelectionState(self.__color_dark, self.__background, False, False)
