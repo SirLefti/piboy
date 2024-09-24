@@ -275,6 +275,8 @@ class RadioApp(SelfUpdatingApp):
                 return 1
             return self.__played_frames / self.__total_frames
 
+    __playback_control_group = ControlGroup()
+
     @inject
     def __init__(self, draw_callback: Callable[[bool], None], app_config: AppConfig):
         super().__init__(self.__self_update)
@@ -301,139 +303,139 @@ class RadioApp(SelfUpdatingApp):
         self.__is_random = False
         self.__volume: Optional[int] = None
         try:
-            # will only work on raspberry pi for no
+            # will only work on raspberry pi for now
             self.__volume = self.__get_volume()
         except (FileNotFoundError, ValueError):
             pass
 
-        def call_next():
-            # go to next file if player was not paused or stopped between end of file and callback
-            if self.__player.is_continuing:
-                self.__playing_index = (self.__playing_index + 1) % len(self.__files)
-                self.__selected_index = self.__playlist[self.__playing_index]
-                self.__player.stop_stream()
-                self.__player.load_file(os.path.join(self.__directory, self.__files[self.__playlist[self.__playing_index]]))
-                self.__player.start_stream()
-
-        self.__player = self.AudioPlayer(call_next)
+        self.__player = self.AudioPlayer(self.__call_next)
 
         # init selection states
         self.Control.SelectionState.NONE = self.Control.SelectionState(self.__color_dark, self.__background, False, False)
         self.Control.SelectionState.FOCUSED = self.Control.SelectionState(self.__color, self.__background, True, False)
 
-        def play_action() -> bool:
-            """
-            Loads current selected file if no stream is loaded.
-            Resumes playing a loaded stream.
-            :return: `True` if stream was started, else `False` (e.g. playlist is empty)
-            """
-            if len(self.__playlist) == 0:
-                return False
-            if self.__selected_index != self.__playlist[self.__playing_index]:
-                self.__playing_index = self.__playlist.index(self.__selected_index)
-                if self.__player.has_stream:
-                    self.__player.stop_stream()
-            if not self.__player.has_stream:
-                self.__player.load_file(os.path.join(self.__directory,
-                                                     self.__files[self.__playlist[self.__playing_index]]))
-            self.__player.start_stream()
-            return True
-
-        def pause_action() -> bool:
-            """
-            Pauses a currently loaded stream.
-            :return: `True` if stream was paused, else `False` (e.g. there was no active stream)
-            """
-            return self.__player.pause_stream()
-
-        def stop_action():
-            """
-            Stops and clears a currently loaded stream.
-            """
-            self.__player.stop_stream()
-
-        def prev_action():
-            """
-            Stops and clears a stream, selects a previous track and plays it if a stream is loaded.
-            Just selects a previous track otherwise.
-            """
-            self.__playing_index = (self.__playing_index - 1) % len(self.__files)
-            self.__selected_index = self.__playlist[self.__playing_index]
-
-            if self.__player.is_active:
-                stop_action()
-                play_action()
-
-        def skip_action():
-            """
-            Stops and clears a stream, selects a next track and plays it if a stream is loaded.
-            Just selects a next track otherwise.
-            """
-            self.__playing_index = (self.__playing_index + 1) % len(self.__files)
-            self.__selected_index = self.__playlist[self.__playing_index]
-
-            if self.__player.is_active:
-                stop_action()
-                play_action()
-
-        def random_action() -> bool:
-            """
-            Shuffles the playlist and places the current index at the track we are currently playing or looking at.
-            :return: always `True`
-            """
-            self.__is_random = True
-            random.shuffle(self.__playlist)
-            # set playlist index to the track we are currently playing or looking at
-            self.__playing_index = self.__playlist.index(self.__selected_index)
-            return True
-
-        def order_action() -> bool:
-            """
-            Creates an ordered playlist and places the current index at the track we are currently playing or looking
-            at.
-            :return: always `True`
-            """
-            self.__is_random = False
-            self.__playlist = list(range(0, len(self.__files)))
-            # set playlist index to the track we are currently playing or looking at
-            self.__playing_index = self.__selected_index
-            return True
-
-        def decrease_volume_action():
-            """
-            Decreases the volume by one volume step. Only works on Linux with `amixer`
-            """
-            current_value = self.__get_volume()
-            if current_value % self.__VOLUME_STEP == 0:
-                self.__set_volume(max(current_value - self.__VOLUME_STEP, 0))
-            else:
-                aligned_value = current_value // self.__VOLUME_STEP * self.__VOLUME_STEP
-                self.__set_volume(max(aligned_value - self.__VOLUME_STEP, 0))
-            self.__volume = self.__get_volume()
-
-        def increase_volume_action():
-            """
-            Increases the volume by one volume step. Only works on Linux with `amixer`
-            """
-            current_value = self.__get_volume()
-            if current_value % self.__VOLUME_STEP == 0:
-                self.__set_volume(min(current_value + self.__VOLUME_STEP, 100))
-            else:
-                aligned_value = (current_value + self.__VOLUME_STEP) // self.__VOLUME_STEP * self.__VOLUME_STEP
-                self.__set_volume(min(aligned_value + self.__VOLUME_STEP, 100))
-            self.__volume = self.__get_volume()
-
         control_group = self.ControlGroup()
         self.__controls = [
-            self.InstantControl(resources.stop_icon, stop_action, control_group),
-            self.InstantControl(resources.previous_icon, prev_action),
-            self.SwitchControl(resources.play_icon, resources.pause_icon, pause_action, play_action, control_group),
-            self.InstantControl(resources.skip_icon, skip_action),
-            self.SwitchControl(resources.order_icon, resources.random_icon, order_action, random_action),
-            self.InstantControl(resources.volume_decrease_icon, decrease_volume_action),
-            self.InstantControl(resources.volume_increase_icon, increase_volume_action)
+            self.InstantControl(resources.stop_icon, self.stop_action, control_group),
+            self.InstantControl(resources.previous_icon, self.prev_action),
+            self.SwitchControl(resources.play_icon, resources.pause_icon, self.pause_action, self.play_action, control_group),
+            self.InstantControl(resources.skip_icon, self.skip_action),
+            self.SwitchControl(resources.order_icon, resources.random_icon, self.order_action, self.random_action),
+            self.InstantControl(resources.volume_decrease_icon, self.decrease_volume_action),
+            self.InstantControl(resources.volume_increase_icon, self.increase_volume_action)
         ]
         self.__selected_control_index = 2
+
+    def play_action(self) -> bool:
+        """
+        Loads current selected file if no stream is loaded.
+        Resumes playing a loaded stream.
+        :return: `True` if stream was started, else `False` (e.g. playlist is empty)
+        """
+        if len(self.__playlist) == 0:
+            return False
+        if self.__selected_index != self.__playlist[self.__playing_index]:
+            self.__playing_index = self.__playlist.index(self.__selected_index)
+            if self.__player.has_stream:
+                self.__player.stop_stream()
+        if not self.__player.has_stream:
+            self.__player.load_file(os.path.join(self.__directory,
+                                                 self.__files[self.__playlist[self.__playing_index]]))
+        self.__player.start_stream()
+        return True
+
+    def pause_action(self) -> bool:
+        """
+        Pauses a currently loaded stream.
+        :return: `True` if stream was paused, else `False` (e.g. there was no active stream)
+        """
+        return self.__player.pause_stream()
+
+    def stop_action(self):
+        """
+        Stops and clears a currently loaded stream.
+        """
+        self.__player.stop_stream()
+
+    def prev_action(self):
+        """
+        Stops and clears a stream, selects a previous track and plays it if a stream is loaded.
+        Just selects a previous track otherwise.
+        """
+        self.__playing_index = (self.__playing_index - 1) % len(self.__files)
+        self.__selected_index = self.__playlist[self.__playing_index]
+
+        if self.__player.is_active:
+            self.stop_action()
+            self.play_action()
+
+    def skip_action(self):
+        """
+        Stops and clears a stream, selects a next track and plays it if a stream is loaded.
+        Just selects a next track otherwise.
+        """
+        self.__playing_index = (self.__playing_index + 1) % len(self.__files)
+        self.__selected_index = self.__playlist[self.__playing_index]
+
+        if self.__player.is_active:
+            self.stop_action()
+            self.play_action()
+
+    def random_action(self) -> bool:
+        """
+        Shuffles the playlist and places the current index at the track we are currently playing or looking at.
+        :return: always `True`
+        """
+        self.__is_random = True
+        random.shuffle(self.__playlist)
+        # set playlist index to the track we are currently playing or looking at
+        self.__playing_index = self.__playlist.index(self.__selected_index)
+        return True
+
+    def order_action(self) -> bool:
+        """
+        Creates an ordered playlist and places the current index at the track we are currently playing or looking
+        at.
+        :return: always `True`
+        """
+        self.__is_random = False
+        self.__playlist = list(range(0, len(self.__files)))
+        # set playlist index to the track we are currently playing or looking at
+        self.__playing_index = self.__selected_index
+        return True
+
+    def decrease_volume_action(self):
+        """
+        Decreases the volume by one volume step. Only works on Linux with `amixer`
+        """
+        current_value = self.__get_volume()
+        if current_value % self.__VOLUME_STEP == 0:
+            self.__set_volume(max(current_value - self.__VOLUME_STEP, 0))
+        else:
+            aligned_value = current_value // self.__VOLUME_STEP * self.__VOLUME_STEP
+            self.__set_volume(max(aligned_value - self.__VOLUME_STEP, 0))
+        self.__volume = self.__get_volume()
+
+    def increase_volume_action(self):
+        """
+        Increases the volume by one volume step. Only works on Linux with `amixer`
+        """
+        current_value = self.__get_volume()
+        if current_value % self.__VOLUME_STEP == 0:
+            self.__set_volume(min(current_value + self.__VOLUME_STEP, 100))
+        else:
+            aligned_value = (current_value + self.__VOLUME_STEP) // self.__VOLUME_STEP * self.__VOLUME_STEP
+            self.__set_volume(min(aligned_value + self.__VOLUME_STEP, 100))
+        self.__volume = self.__get_volume()
+
+    def __call_next(self):
+        # go to next file if player was not paused or stopped between end of file and callback
+        if self.__player.is_continuing:
+            self.__playing_index = (self.__playing_index + 1) % len(self.__files)
+            self.__selected_index = self.__playlist[self.__playing_index]
+            self.__player.stop_stream()
+            self.__player.load_file(os.path.join(self.__directory, self.__files[self.__playlist[self.__playing_index]]))
+            self.__player.start_stream()
 
     def __self_update(self):
         self.__draw_callback(**self.__draw_callback_kwargs)
