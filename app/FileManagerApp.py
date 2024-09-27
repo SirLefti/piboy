@@ -312,7 +312,12 @@ class FileManagerApp(App):
         end = (width / 2, height - self.__app_bottom_offset)
         draw.rectangle(start + end, fill=self.__color)
 
-        return image, 0, 0
+        if partial:
+            left_top = (self.__app_side_offset, self.__app_top_offset)
+            right_bottom = (width - self.__app_side_offset, height - self.__app_bottom_offset)
+            return image.crop(left_top + right_bottom), *left_top   # noqa (unpacking type check fail)
+        else:
+            return image, 0, 0
 
     def _enter(self):
         path = os.path.join(self.__active_directory.directory, self.__active_directory.files[self.__active_directory
