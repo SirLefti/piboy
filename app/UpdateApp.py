@@ -125,8 +125,7 @@ class UpdateApp(App):
             self.Option('install updates', [
                 (self.__run_install, result_text_install),
                 (self.__run_install_dependencies, result_text_install_dependencies)
-            ],
-                        count_action=get_commits_to_update, count_name='commits'),
+            ], count_action=get_commits_to_update, count_name='commits'),
             self.Option('shutdown', [(self.__run_shutdown, result_text_shutdown)]),
             self.Option('restart', [(self.__run_restart, result_text_restart)])
         ]
