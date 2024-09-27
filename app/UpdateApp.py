@@ -53,6 +53,7 @@ class UpdateApp(App):
         self.__app_bottom_offset = app_config.app_bottom_offset
         self.__font = app_config.font_standard
 
+        self.__action_pending = False
         self.__selected_index = 0
         self.__files_to_reset: Optional[int] = None
         self.__files_to_clean: Optional[int] = None
@@ -292,18 +293,24 @@ class UpdateApp(App):
 
     @override
     def on_key_a(self):
-        option = self.__options[self.__selected_index]
-        def process_all():
-            for action, result_text_action in option.actions:
-                result = action()
-                # Log complete output
-                print(result.stdout.rstrip('\n'))
-                self.__results.append(result_text_action(result))
-                self.__update_counts()
-                self.__draw_callback(True)
+        if self.__action_pending:
+            self.__results.append('action pending')
+            self.__draw_callback(True)
+        else:
+            def process_all():
+                option = self.__options[self.__selected_index]
+                self.__action_pending = True
+                for action, result_text_action in option.actions:
+                    result = action()
+                    # Log complete output
+                    print(result.stdout.rstrip('\n'))
+                    self.__results.append(result_text_action(result))
+                    self.__update_counts()
+                    self.__draw_callback(True)
+                self.__action_pending = False
 
-        thread = threading.Thread(target=process_all, args=(), daemon=True)
-        thread.start()
+            thread = threading.Thread(target=process_all, args=(), daemon=True)
+            thread.start()
 
 
     @override
