@@ -1,3 +1,5 @@
+import sys
+import threading
 from subprocess import CompletedProcess, run
 from typing import Callable, Optional
 
@@ -15,13 +17,11 @@ class UpdateApp(App):
 
     class Option:
 
-        def __init__(self, name: str, action: Callable[[], CompletedProcess],
-                     result_text_action: Callable[[CompletedProcess], str],
-                     count_action: Optional[Callable[[], Optional[int]]] = None,
-                     count_name: Optional[str] = None):
+        def __init__(self, name: str,
+                     actions: list[tuple[Callable[[], CompletedProcess[str]], Callable[[CompletedProcess[str]], str]]],
+                     count_action: Optional[Callable[[], Optional[int]]] = None, count_name: Optional[str] = None):
             self.__name = name
-            self.__action = action
-            self.__result_text_action = result_text_action
+            self.__actions = actions
             self.__count_action = count_action
             self.__count_name = count_name
 
@@ -30,12 +30,8 @@ class UpdateApp(App):
             return self.__name
 
         @property
-        def action(self) -> Callable[[], CompletedProcess]:
-            return self.__action
-
-        @property
-        def result_text_action(self) -> Callable[[CompletedProcess], str]:
-            return self.__result_text_action
+        def actions(self) -> list[tuple[Callable[[], CompletedProcess[str]], Callable[[CompletedProcess[str]], str]]]:
+            return self.__actions
 
         @property
         def count_action(self) -> Optional[Callable[[], Optional[int]]]:
@@ -46,7 +42,8 @@ class UpdateApp(App):
             return self.__count_name
 
     @inject
-    def __init__(self, app_config: AppConfig):
+    def __init__(self, draw_callback: Callable[[bool], None], app_config: AppConfig):
+        self.__draw_callback = draw_callback
         self.__resolution = app_config.resolution
         self.__background = app_config.background
         self.__color = app_config.accent
@@ -72,28 +69,28 @@ class UpdateApp(App):
         def get_commits_to_update() -> Optional[int]:
             return self.__commits_to_update
 
-        def result_text_fetch(result: CompletedProcess) -> str:
+        def result_text_fetch(result: CompletedProcess[str]) -> str:
             if result.returncode != 0:
                 return 'error fetching updates'
             if not result.stdout:
                 return 'no updates available'
             return 'fetched updates, install next'
 
-        def result_text_reset(result: CompletedProcess) -> str:
+        def result_text_reset(result: CompletedProcess[str]) -> str:
             if result.returncode != 0:
                 return 'error resetting changes'
             if not result.stdout:
                 return 'no changes to reset'
             return 'reset changes'
 
-        def result_text_clean(result: CompletedProcess) -> str:
+        def result_text_clean(result: CompletedProcess[str]) -> str:
             if result.returncode != 0:
                 return 'error cleaning files'
             if not result.stdout:
                 return 'no files to clean'
             return 'cleaned files'
 
-        def result_text_install(result: CompletedProcess) -> str:
+        def result_text_install(result: CompletedProcess[str]) -> str:
             if result.returncode != 0:
                 return 'error installing updates'
             if result.stdout.count('\n') == 1:
@@ -101,58 +98,72 @@ class UpdateApp(App):
                 return 'no updates to install'
             return 'updates installed, restart next'
 
-        def result_text_shutdown(result: CompletedProcess) -> str:
+        def result_text_install_dependencies(result: CompletedProcess[str]) -> str:
+            if result.returncode != 0:
+                return 'error installing lib updates'
+            if result.stdout.count('Successfully installed') == 0:
+                return 'no lib updates to install'
+            return 'lib updates installed, restart next'
+
+        def result_text_shutdown(result: CompletedProcess[str]) -> str:
             if result.returncode != 0:
                 return 'error shutting down'
             else:
                 return 'shutting down...'
 
-        def result_text_restart(result: CompletedProcess) -> str:
+        def result_text_restart(result: CompletedProcess[str]) -> str:
             if result.returncode != 0:
                 return 'error restarting'
             return 'restarting...'
 
         self.__options = [
-            self.Option('reset changes', self.__run_reset, result_text_reset,
+            self.Option('reset changes',[(self.__run_reset, result_text_reset)],
                         count_action=get_files_to_reset, count_name='files'),
-            self.Option('clean files', self.__run_clean, result_text_clean,
+            self.Option('clean files', [(self.__run_clean, result_text_clean)],
                         count_action=get_files_to_clean, count_name='files'),
-            self.Option('fetch updates', self.__run_fetch, result_text_fetch),
-            self.Option('install updates', self.__run_install, result_text_install,
+            self.Option('fetch updates', [(self.__run_fetch, result_text_fetch)]),
+            self.Option('install updates', [
+                (self.__run_install, result_text_install),
+                (self.__run_install_dependencies, result_text_install_dependencies)
+            ],
                         count_action=get_commits_to_update, count_name='commits'),
-            self.Option('shutdown', self.__run_shutdown, result_text_shutdown),
-            self.Option('restart', self.__run_restart, result_text_restart)
+            self.Option('shutdown', [(self.__run_shutdown, result_text_shutdown)]),
+            self.Option('restart', [(self.__run_restart, result_text_restart)])
         ]
-        self.__result: Optional[CompletedProcess] = None
         self.__results: list[str] = []
+        self.__last_results_length = len(self.__results)
 
     @staticmethod
-    def __run_fetch() -> CompletedProcess:
+    def __run_fetch() -> CompletedProcess[str]:
         # git fetch does not return stuff into stdout, return output of git log instead
-        result = run(['git', 'fetch'])
+        result = run(['git', 'fetch'], capture_output=True, text=True)
         if result.returncode != 0:
             return result
         return run(['git', 'log', '..@{u}', '--pretty=oneline'], capture_output=True, text=True)
 
     @staticmethod
-    def __run_reset() -> CompletedProcess:
+    def __run_reset() -> CompletedProcess[str]:
         return run(['git', 'reset', '--hard'], capture_output=True, text=True)
 
     @staticmethod
-    def __run_clean() -> CompletedProcess:
+    def __run_clean() -> CompletedProcess[str]:
         return run(['git', 'clean', '-fd'], capture_output=True, text=True)
 
     @staticmethod
-    def __run_install() -> CompletedProcess:
+    def __run_install() -> CompletedProcess[str]:
         return run(['git', 'pull'], capture_output=True, text=True)
 
     @staticmethod
-    def __run_shutdown() -> CompletedProcess:
-        return run(['sudo', 'shutdown', 'now'])
+    def __run_install_dependencies() -> CompletedProcess[str]:
+        return run([sys.executable, '-m', 'pip', 'install', '-r', 'requirements-pi.txt'], capture_output=True, text=True)
 
     @staticmethod
-    def __run_restart() -> CompletedProcess:
-        return run(['sudo', 'reboot', 'now'])
+    def __run_shutdown() -> CompletedProcess[str]:
+        return run(['sudo', 'shutdown', 'now'], text=True)
+
+    @staticmethod
+    def __run_restart() -> CompletedProcess[str]:
+        return run(['sudo', 'reboot', 'now'], text=True)
 
     @staticmethod
     def __get_files_to_reset() -> Optional[int]:
@@ -219,11 +230,8 @@ class UpdateApp(App):
         draw = ImageDraw.Draw(image)
 
         # part: result history
-        if self.__result is not None or not partial:
-            # log action responses
-            if self.__result is not None and self.__result.stdout:
-                print(self.__result.stdout.rstrip('\n'))
-            self.__result = None
+        if self.__last_results_length != len(self.__results) or not partial:
+            self.__last_results_length = len(self.__results)
 
             # clear existing logs
             history_cursor: tuple[int, int] = (width // 2 + self.CENTER_OFFSET, left_top[1])
@@ -286,10 +294,18 @@ class UpdateApp(App):
     @override
     def on_key_a(self):
         option = self.__options[self.__selected_index]
-        result = option.action()
-        self.__result = result
-        self.__results.append(option.result_text_action(result))
-        self.__update_counts()
+        def process_all():
+            for action, result_text_action in option.actions:
+                result = action()
+                # Log complete output
+                print(result.stdout.rstrip('\n'))
+                self.__results.append(result_text_action(result))
+                self.__update_counts()
+                self.__draw_callback(True)
+
+        thread = threading.Thread(target=process_all, args=(), daemon=True)
+        thread.start()
+
 
     @override
     def on_app_enter(self):
