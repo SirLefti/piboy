@@ -121,6 +121,7 @@ class DisplayConfig:
 class Environment:
     dev_mode: bool = True
     env_sensor_config: I2CConfig = field(default_factory=lambda: I2CConfig(1, 0x76))
+    adc_config: I2CConfig = field(default_factory=lambda: I2CConfig(1, 0x48))
     gps_module_config: SerialConfig = field(default_factory=lambda: SerialConfig('/dev/serial0', 9600))
     app_config: AppConfig = field(default_factory=lambda: AppConfig())
     keypad_config: KeypadConfig = field(default_factory=lambda: KeypadConfig())
