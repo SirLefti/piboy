@@ -1,6 +1,6 @@
 import smbus2
 import time
-
+from collections import deque
 from core.decorator import override
 from data.BatteryStatusProvider import BatteryStatusProvider
 
@@ -14,6 +14,8 @@ class ADS1115BatteryStatusProvider(BatteryStatusProvider):
 
     __V_CHARGED = 4.2
     __V_DISCHARGED = 2.9
+
+    __last_levels = deque(maxlen=10)
 
     def __init__(self, port: int, address: int):
         self.__bus = smbus2.SMBus(port)
@@ -35,9 +37,11 @@ class ADS1115BatteryStatusProvider(BatteryStatusProvider):
     @override
     def get_state_of_charge(self) -> float:
         voltage = self.__read_channel()
-        if voltage < self.__V_DISCHARGED:
+        self.__last_levels.append(voltage)
+        smoothed_voltage = sum(self.__last_levels) / len(self.__last_levels)
+        if smoothed_voltage < self.__V_DISCHARGED:
             return 0
-        elif voltage > self.__V_CHARGED:
+        elif smoothed_voltage > self.__V_CHARGED:
             return 1
         else:
-            return (voltage - self.__V_DISCHARGED) / (self.__V_CHARGED - self.__V_DISCHARGED)
+            return (smoothed_voltage - self.__V_DISCHARGED) / (self.__V_CHARGED - self.__V_DISCHARGED)
