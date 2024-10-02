@@ -97,7 +97,7 @@ class UpdateApp(App):
             if result.stdout.count('\n') == 1:
                 # has only one line break at the end if the message is 'already up to date', but more when updating
                 return 'no updates to install'
-            return 'updates installed, restart next'
+            return 'updates installed, wait for libs'
 
         def result_text_install_dependencies(result: CompletedProcess[str]) -> str:
             if result.returncode != 0:
