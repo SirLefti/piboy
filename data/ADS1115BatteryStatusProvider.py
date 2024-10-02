@@ -1,4 +1,5 @@
 import smbus2
+import time
 
 from core.decorator import override
 from data.BatteryStatusProvider import BatteryStatusProvider
@@ -6,10 +7,37 @@ from data.BatteryStatusProvider import BatteryStatusProvider
 
 class ADS1115BatteryStatusProvider(BatteryStatusProvider):
 
+    __CONVERSION_REG = 0x00
+    __CONFIG_REG = 0x01
+
+    __FSR = 6.144 # full scale range
+
+    __V_CHARGED = 4.2
+    __V_DISCHARGED = 2.9
+
     def __init__(self, port: int, address: int):
         self.__bus = smbus2.SMBus(port)
         self.__address = address
 
+    def __read_channel(self, channel=0):
+        config = [
+            0b11000001 | (channel << 4), # GND as reference, select channel
+            0b10000011                   # default settings
+        ]
+        self.__bus.write_i2c_block_data(self.__address, self.__CONFIG_REG, config)
+        time.sleep(0.1)
+        word_data = self.__bus.read_word_data(self.__address, self.__CONVERSION_REG)
+        # swap bytes in word
+        raw_data = ((word_data & 0xFF) << 8) | (word_data >> 8)
+        # 0x000 - 0x7FFF -> 0 ... +FSR | 0x8000 - 0xFFFF -> -FSR ... 0
+        return (raw_data if raw_data < 0x8000 else raw_data - 0x10000) * self.__FSR / 0x8000
+
     @override
     def get_state_of_charge(self) -> float:
-        return 1.0
+        voltage = self.__read_channel()
+        if voltage < self.__V_DISCHARGED:
+            return 0
+        elif voltage > self.__V_CHARGED:
+            return 1
+        else:
+            return (voltage - self.__V_DISCHARGED) / (self.__V_CHARGED - self.__V_DISCHARGED)
