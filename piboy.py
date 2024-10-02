@@ -6,6 +6,7 @@ from injector import Injector, Module, provider, singleton
 from PIL import Image, ImageDraw
 
 import environment
+from BatteryStatusProvider import BatteryStatusProvider
 from app.App import App
 from app.ClockApp import ClockApp
 from app.DebugApp import DebugApp
@@ -30,10 +31,12 @@ class AppState:
 
     __bit = 0
 
-    def __init__(self, e: Environment, network_status_provider: NetworkStatusProvider, location_provider: LocationProvider):
+    def __init__(self, e: Environment, network_status_provider: NetworkStatusProvider,
+                 location_provider: LocationProvider, battery_status_provider: BatteryStatusProvider):
         self.__environment = e
         self.__network_status_provider = network_status_provider
         self.__location_provider = location_provider
+        self.__battery_status_provider = battery_status_provider
         self.__image_buffer = self.__init_buffer()
         self.__apps: list[App] = []
         self.__active_app = 0
@@ -67,6 +70,10 @@ class AppState:
     @property
     def location_provider(self) -> LocationProvider:
         return self.__location_provider
+
+    @property
+    def battery_status_provider(self) -> BatteryStatusProvider:
+        return self.__battery_status_provider
 
     @property
     def image_buffer(self) -> Image.Image:
@@ -183,8 +190,10 @@ class AppModule(Module):
 
     @singleton
     @provider
-    def provide_app_state(self, e: Environment, network_status_provider: NetworkStatusProvider, location_provider: LocationProvider) -> AppState:
-        return AppState(e, network_status_provider, location_provider)
+    def provide_app_state(self, e: Environment, network_status_provider: NetworkStatusProvider,
+                          location_provider: LocationProvider,
+                          battery_status_provider: BatteryStatusProvider) -> AppState:
+        return AppState(e, network_status_provider, location_provider, battery_status_provider)
 
     @singleton
     @provider
@@ -220,6 +229,16 @@ class AppModule(Module):
         else:
             from data.NetworkManagerStatusProvider import NetworkManagerStatusProvider
             return NetworkManagerStatusProvider()
+
+    @singleton
+    @provider
+    def provide_battery_status_service(self, e: Environment) -> BatteryStatusProvider:
+        if e.dev_mode:
+            from data.FakeBatteryStatusProvider import FakeBatteryStatusProvider
+            return FakeBatteryStatusProvider()
+        else:
+            from data.ADS1115BatteryStatusProvider import ADS1115BatteryStatusProvider
+            return ADS1115BatteryStatusProvider(e.adc_config.port, e.adc_config.address)
 
     @singleton
     @provider
@@ -298,6 +317,12 @@ def draw_footer(image: Image.Image, state: AppState) -> tuple[Image.Image, int, 
         (cursor_x + icon_padding, cursor_y + gps_status_padding),
         resources.gps_icon, fill=gps_status_color)
     cursor_x += resources.gps_icon.width + icon_padding
+
+    # draw battery status
+    state_of_charge_str = f'{state.battery_status_provider.get_state_of_charge():.0%}'
+    _, _, text_width, text_height = font.getbbox(state_of_charge_str)
+    draw.text((cursor_x + icon_padding, cursor_y), state_of_charge_str, state.environment.app_config.accent, font=font)
+    cursor_x += text_width
 
     # draw time
     date_str = datetime.now().strftime('%d-%m-%Y %H:%M:%S')
