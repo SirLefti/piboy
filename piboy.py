@@ -305,32 +305,29 @@ def draw_footer(image: Image.Image, state: AppState) -> tuple[Image.Image, int, 
     # draw network status
     nw_status_padding = (footer_height - resources.network_icon.height) // 2
     nw_status_color = color_active if state.network_status_provider.get_status() == NetworkStatus.CONNECTED else color_inactive
-    draw.bitmap(
-        (cursor_x + icon_padding, cursor_y + nw_status_padding),
-        resources.network_icon, fill=nw_status_color)
+    draw.bitmap((cursor_x + icon_padding, cursor_y + nw_status_padding), resources.network_icon, fill=nw_status_color)
     cursor_x += resources.network_icon.width + icon_padding
 
     # draw gps status
     gps_status_padding = (footer_height - resources.gps_icon.height) // 2
     gps_status_color = color_active if state.location_provider.get_status() == LocationStatus.CONNECTED else color_inactive
-    draw.bitmap(
-        (cursor_x + icon_padding, cursor_y + gps_status_padding),
-        resources.gps_icon, fill=gps_status_color)
+    draw.bitmap((cursor_x + icon_padding, cursor_y + gps_status_padding), resources.gps_icon, fill=gps_status_color)
     cursor_x += resources.gps_icon.width + icon_padding
 
     # draw battery status
     state_of_charge_str = f'{state.battery_status_provider.get_state_of_charge():.0%}'
     _, _, text_width, text_height = font.getbbox(state_of_charge_str)
-    draw.text((cursor_x + icon_padding, cursor_y), state_of_charge_str, state.environment.app_config.accent, font=font)
+    text_padding = (footer_height - text_height) // 2
+    draw.text((cursor_x + icon_padding, cursor_y + text_padding), state_of_charge_str,
+              state.environment.app_config.accent, font=font)
     cursor_x += text_width
 
     # draw time
     date_str = datetime.now().strftime('%d-%m-%Y %H:%M:%S')
     _, _, text_width, text_height = font.getbbox(date_str)
     text_padding = (footer_height - text_height) // 2
-    draw.text(
-        (width - footer_side_offset - text_padding - text_width, height - footer_height - footer_bottom_offset +
-         text_padding), date_str, state.environment.app_config.accent, font=font)
+    draw.text((width - footer_side_offset - text_padding - text_width, cursor_y + text_padding), date_str,
+              state.environment.app_config.accent, font=font)
 
     x0, y0 = start
     return image.crop(start + end), x0, y0
