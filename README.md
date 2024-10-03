@@ -64,6 +64,7 @@ Modules:
 - BME280 environment sensor
 - NEO-6M GPS module
 - DS3231 RTC clock (optional, but recommended)
+- ADS1115 analog-digital converter
 
 Battery power:
 - MT3608 power converter
@@ -71,7 +72,14 @@ Battery power:
 - 18650 battery cell (others can fit as well)
 - toggle switch
 
-Additional parts depending on case version. Battery power and modules are not supported internally by prototype 1.
+Additional parts depending on case version.
+
+> **NOTE:**<br>
+> Prototype 1 does not support modules and battery power internally.
+
+> **NOTE:**<br>
+> Prototype 2 supports BME280, NEO-6M, DS3231 and battery power. ADS1115 can be squeezed in as well, but there is no
+> documentation.
 
 ## Installation
 
@@ -160,9 +168,10 @@ See [instructions for prototype 2](docs/prototype2/ASSEMBLY.md).
 
 ### Module specific instructions
 
-* [BME280](./docs/BME280.md)
+* [BME280 environmental sensor](./docs/BME280.md)
 * [DS3231 RTC clock](./docs/DS3231.md)
 * [NEO-6M GPS module](./docs/NEO-6M.md)
+* [ADS1115 analog-digital converter](./docs/ADS1115.md)
 * [KY-040 rotary encoder](./docs/rotary-encoder.md)
 * [Keypad](./docs/keypad.md)
 
