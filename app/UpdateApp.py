@@ -303,7 +303,10 @@ class UpdateApp(App):
                 for action, result_text_action in option.actions:
                     result = action()
                     # Log complete output
-                    print(result.stdout.rstrip('\n'))
+                    if result.stdout:
+                        print(result.stdout.rstrip('\n'))
+                    if result.stderr:
+                        print(result.stderr.rstrip('\n'), file=sys.stderr)
                     self.__results.append(result_text_action(result))
                     self.__update_counts()
                     self.__draw_callback(True)
