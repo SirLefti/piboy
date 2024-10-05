@@ -144,6 +144,9 @@ Either restart the Pi or start the service manually:
 sudo systemctl start piboy.service
 ````
 
+> **NOTE:**<br>
+> Please refer to the module specific instructions for additional steps to make everything work.
+
 ## Configuration
 
 On first run, the PiBoy script will create a ``config.yaml`` if not found. In that config file, you can configure
