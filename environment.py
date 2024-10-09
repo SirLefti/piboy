@@ -42,6 +42,9 @@ class AppConfig:
     width: int = 480
     height: int = 320
     modes: list[ColorConfig] = None
+    # cached properties
+    __font_header: ImageFont.FreeTypeFont | None = None
+    __font_standard: ImageFont.FreeTypeFont | None = None
 
     def __post_init__(self):
         if self.modes is None:
@@ -64,11 +67,15 @@ class AppConfig:
 
     @property
     def font_header(self) -> ImageFont.FreeTypeFont:
-        return ImageFont.truetype(self.font_name, self.font_header_size)
+        if self.__font_header is None:
+            self.__font_header = ImageFont.truetype(self.font_name, self.font_header_size)
+        return self.__font_header
 
     @property
     def font_standard(self) -> ImageFont.FreeTypeFont:
-        return ImageFont.truetype(self.font_name, self.font_standard_size)
+        if self.__font_standard is None:
+            self.__font_standard = ImageFont.truetype(self.font_name, self.font_standard_size)
+        return self.__font_standard
 
     @property
     def background(self) -> tuple[int, int, int]:
