@@ -18,18 +18,6 @@ The RX pin on the module can be skipped and is not needed for now.
 
 ## Configuration
 
-Add the following entry to `/boot/firmware/config.txt`:
-```
-enable_uart=1
-```
-
-Remove this from `/boot/firmware/cmdline.txt`:
-```
-console=serial0,115200 
-```
-
-Reboot the Pi.
-
 Check if the module is wired correctly and sends some data:
 ```bash
 sudo cat /dev/serial0

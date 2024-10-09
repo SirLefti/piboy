@@ -90,8 +90,11 @@ Install system dependencies:
 sudo apt install git libopenjp2-7 libportaudio2 libopenblas0 python3-rpi-lgpio fonts-freefont-ttf
 ````
 
-Call ``sudo raspi-config`` and then select ``Interface Options > SPI`` to enable SPI.
-Then select ``Interface Options > I2C`` to enable I2C.
+Call `sudo raspi-config`, select `Interface Options > SPI` and choose `Yes` to enable SPI.
+Then select `Interface Options > I2C` and choose `Yes` to enable I2C.
+Then also select `Interface Options > Serial Port` and choose `No` in the first pop-up and `Yes` in the second
+pop-up. The last pop-up should then inform you, that the serial login shell is disabled and the serial interface is
+enabled.
 
 Clone repository and go into it:
 ````bash
