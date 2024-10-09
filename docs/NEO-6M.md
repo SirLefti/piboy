@@ -49,7 +49,7 @@ Open a python console and test it out:
 >>> import pynmea2
 >>> device = serial.Serial('/dev/serial0', baudrate=9600, timeout=0.5)
 >>> io_wrapper = io.TextIOWrapper(io.BufferedRWPair(device, device))
->>> while 1:
+>>> while True:
 ...     data = io_wrapper.readline()
 ...     if data[0:6] == '$GPRMC':
 ...         message = pynmea2.parse(data)

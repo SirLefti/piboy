@@ -1,5 +1,6 @@
 import io
 import threading
+import time
 from typing import Union
 
 import pynmea2
@@ -20,7 +21,7 @@ class SerialGPSLocationProvider(LocationProvider):
         self.__thread.start()
 
     def __update_location(self):
-        while 1:
+        while True:
             try:
                 data = self.__io_wrapper.readline()
                 if data[0:6] == '$GPRMC':
@@ -31,7 +32,8 @@ class SerialGPSLocationProvider(LocationProvider):
                     else:
                         self.__location = None
             except serial.SerialException:
-                pass
+                # connection issues: wait before trying again to avoid cpu load if the problem persists
+                time.sleep(5)
             except pynmea2.ParseError:
                 pass
 
