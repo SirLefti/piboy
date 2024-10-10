@@ -1,4 +1,4 @@
-import threading
+from multiprocessing import Process, Queue
 
 import RPi.GPIO as GPIO
 from PIL import Image
@@ -11,8 +11,8 @@ from interaction.Display import Display
 
 class ILI9486Display(Display):
 
-    __queue: list[tuple[Image.Image, int, int]] = []
-    __render_thread: threading.Thread | None = None
+    __queue: Queue[tuple[Image.Image, int, int]] = Queue()
+    __render_process: Process | None = None
 
     def __init__(self, spi_config: tuple[int, int], dc_pin: int, rst_pin: int, flip_display: bool = False):
         GPIO.setmode(GPIO.BCM)
@@ -26,8 +26,9 @@ class ILI9486Display(Display):
         self.__display = lcd
 
     def __process_queue(self):
-        while len(self.__queue) > 0:
-            image, x0, y0 = self.__queue.pop(0)
+        while True:
+            # if the queue is empty, the process will sleep
+            image, x0, y0 = self.__queue.get()
             self.__display.display(image, x0, y0)
 
     @override
@@ -38,10 +39,10 @@ class ILI9486Display(Display):
 
     @override
     def show(self, image: Image.Image, x0: int, y0: int):
-        self.__queue.append((image, x0, y0))
-        if self.__render_thread is None or not self.__render_thread.is_alive():
-            self.__render_thread = threading.Thread(target=self.__process_queue, args=(), daemon=True)
-            self.__render_thread.start()
+        self.__queue.put((image, x0, y0))
+        if self.__render_process is None or not self.__render_process.is_alive():
+            self.__render_process = Process(target=self.__process_queue, daemon=True)
+            self.__render_process.start()
 
     def reset(self):
         self.__display.begin()

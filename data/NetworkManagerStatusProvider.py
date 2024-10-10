@@ -1,6 +1,6 @@
 import subprocess
-import threading
 import time
+from multiprocessing import Process
 
 from core.decorator import override
 from data.NetworkStatusProvider import NetworkStatus, NetworkStatusProvider
@@ -12,8 +12,8 @@ class NetworkManagerStatusProvider(NetworkStatusProvider):
     __status = NetworkStatus.DISCONNECTED
 
     def __init__(self):
-        self.__thread = threading.Thread(target=self.__update_status, args=(), daemon=True)
-        self.__thread.start()
+        self.__process = Process(target=self.__update_status, args=(), daemon=True, name='network-status-update')
+        self.__process.start()
 
     def __update_status(self):
         while True:
