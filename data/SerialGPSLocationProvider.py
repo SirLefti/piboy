@@ -6,8 +6,9 @@ from typing import Union
 import pynmea2
 import serial
 
+from core.data import ConnectionStatus
 from core.decorator import override
-from data.LocationProvider import Location, LocationException, LocationProvider, LocationStatus
+from data.LocationProvider import Location, LocationException, LocationProvider
 
 
 class SerialGPSLocationProvider(LocationProvider):
@@ -17,6 +18,7 @@ class SerialGPSLocationProvider(LocationProvider):
         io.BufferedReader(self.__device)
         self.__io_wrapper = io.TextIOWrapper(io.BufferedRWPair(self.__device, self.__device))
         self.__location: Union[Location, None] = None
+        self.__device_status = ConnectionStatus.DISCONNECTED
         self.__process = Process(target=self.__update_location, args=(), daemon=True, name='gps-location-update')
         self.__process.start()
 
@@ -24,6 +26,7 @@ class SerialGPSLocationProvider(LocationProvider):
         while True:
             try:
                 data = self.__io_wrapper.readline()
+                self.__device_status = ConnectionStatus.CONNECTED
                 if data[0:6] == '$GPRMC':
                     message = pynmea2.parse(data)
                     # lat and lon are strings that are empty if the connection is lost
@@ -33,6 +36,7 @@ class SerialGPSLocationProvider(LocationProvider):
                         self.__location = None
             except serial.SerialException:
                 # connection issues: wait before trying again to avoid cpu load if the problem persists
+                self.__device_status = ConnectionStatus.DISCONNECTED
                 time.sleep(5)
             except pynmea2.ParseError:
                 pass
@@ -44,8 +48,12 @@ class SerialGPSLocationProvider(LocationProvider):
         return self.__location
 
     @override
-    def get_status(self) -> LocationStatus:
+    def get_status(self) -> ConnectionStatus:
         if self.__location is None:
-            return LocationStatus.DISCONNECTED
+            return ConnectionStatus.DISCONNECTED
         else:
-            return LocationStatus.CONNECTED
+            return ConnectionStatus.CONNECTED
+
+    @override
+    def get_device_status(self) -> ConnectionStatus:
+        return self.__device_status

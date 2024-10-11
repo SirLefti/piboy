@@ -2,14 +2,15 @@ import subprocess
 import time
 from multiprocessing import Process
 
+from core.data import ConnectionStatus
 from core.decorator import override
-from data.NetworkStatusProvider import NetworkStatus, NetworkStatusProvider
+from data.NetworkStatusProvider import NetworkStatusProvider
 
 
 class NetworkManagerStatusProvider(NetworkStatusProvider):
     """Data provider for the network status using debians network-manager."""
 
-    __status = NetworkStatus.DISCONNECTED
+    __status = ConnectionStatus.DISCONNECTED
 
     def __init__(self):
         self.__process = Process(target=self.__update_status, args=(), daemon=True, name='network-status-update')
@@ -19,11 +20,11 @@ class NetworkManagerStatusProvider(NetworkStatusProvider):
         while True:
             result = subprocess.run(['nmcli', 'networking', 'connectivity'], capture_output=True, text=True)
             if 'full' in result.stdout:
-                self.__status = NetworkStatus.CONNECTED
+                self.__status = ConnectionStatus.CONNECTED
             else:
-                self.__status = NetworkStatus.DISCONNECTED
+                self.__status = ConnectionStatus.DISCONNECTED
             time.sleep(10)
 
     @override
-    def get_status(self) -> NetworkStatus:
+    def get_status(self) -> ConnectionStatus:
         return self.__status

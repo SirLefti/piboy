@@ -15,10 +15,11 @@ from app.MapApp import MapApp
 from app.RadioApp import RadioApp
 from app.UpdateApp import UpdateApp
 from core import resources
+from core.data import ConnectionStatus
 from data.BatteryStatusProvider import BatteryStatusProvider
 from data.EnvironmentDataProvider import EnvironmentDataProvider
-from data.LocationProvider import LocationProvider, LocationStatus
-from data.NetworkStatusProvider import NetworkStatus, NetworkStatusProvider
+from data.LocationProvider import LocationProvider
+from data.NetworkStatusProvider import NetworkStatusProvider
 from data.OSMTileProvider import OSMTileProvider
 from data.TileProvider import TileProvider
 from environment import AppConfig, Environment
@@ -32,11 +33,13 @@ class AppState:
     __bit = 0
 
     def __init__(self, e: Environment, network_status_provider: NetworkStatusProvider,
-                 location_provider: LocationProvider, battery_status_provider: BatteryStatusProvider):
+                 location_provider: LocationProvider, battery_status_provider: BatteryStatusProvider,
+                 environment_data_provider: EnvironmentDataProvider):
         self.__environment = e
         self.__network_status_provider = network_status_provider
         self.__location_provider = location_provider
         self.__battery_status_provider = battery_status_provider
+        self.__environment_data_provider = environment_data_provider
         self.__image_buffer = self.__init_buffer()
         self.__apps: list[App] = []
         self.__active_app = 0
@@ -74,6 +77,10 @@ class AppState:
     @property
     def battery_status_provider(self) -> BatteryStatusProvider:
         return self.__battery_status_provider
+
+    @property
+    def environment_data_provider(self) -> EnvironmentDataProvider:
+        return self.__environment_data_provider
 
     @property
     def image_buffer(self) -> Image.Image:
@@ -192,8 +199,10 @@ class AppModule(Module):
     @provider
     def provide_app_state(self, e: Environment, network_status_provider: NetworkStatusProvider,
                           location_provider: LocationProvider,
-                          battery_status_provider: BatteryStatusProvider) -> AppState:
-        return AppState(e, network_status_provider, location_provider, battery_status_provider)
+                          battery_status_provider: BatteryStatusProvider,
+                          environment_data_provider: EnvironmentDataProvider) -> AppState:
+        return AppState(e, network_status_provider, location_provider, battery_status_provider,
+                        environment_data_provider)
 
     @singleton
     @provider
@@ -304,13 +313,13 @@ def draw_footer(image: Image.Image, state: AppState) -> tuple[Image.Image, int, 
 
     # draw network status
     nw_status_padding = (footer_height - resources.network_icon.height) // 2
-    nw_status_color = color_active if state.network_status_provider.get_status() == NetworkStatus.CONNECTED else color_inactive
+    nw_status_color = color_active if state.network_status_provider.get_status() == ConnectionStatus.CONNECTED else color_inactive
     draw.bitmap((cursor_x + icon_padding, cursor_y + nw_status_padding), resources.network_icon, fill=nw_status_color)
     cursor_x += resources.network_icon.width + icon_padding
 
     # draw gps status
     gps_status_padding = (footer_height - resources.gps_icon.height) // 2
-    gps_status_color = color_active if state.location_provider.get_status() == LocationStatus.CONNECTED else color_inactive
+    gps_status_color = color_active if state.location_provider.get_status() == ConnectionStatus.CONNECTED else color_inactive
     draw.bitmap((cursor_x + icon_padding, cursor_y + gps_status_padding), resources.gps_icon, fill=gps_status_color)
     cursor_x += resources.gps_icon.width + icon_padding
 

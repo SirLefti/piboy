@@ -1,15 +1,12 @@
 from abc import ABC, abstractmethod
-from enum import Enum
 
+from core.data import ConnectionStatus
 
-class NetworkStatus(Enum):
-    CONNECTED = 1
-    DISCONNECTED = 2
 
 class NetworkStatusProvider(ABC):
     """Data provider for the network status."""
 
     @abstractmethod
-    def get_status(self) -> NetworkStatus:
+    def get_status(self) -> ConnectionStatus:
         """Returns the network connection status."""
         raise NotImplementedError

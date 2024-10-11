@@ -1,5 +1,6 @@
 import random
 
+from core.data import ConnectionStatus
 from core.decorator import override
 from data.EnvironmentDataProvider import EnvironmentData, EnvironmentDataProvider
 
@@ -18,3 +19,7 @@ class FakeEnvironmentDataProvider(EnvironmentDataProvider):
             self.__fake_pressure + random.randint(-25, 25) / 100,
             self.__fake_humidity + random.randint(-25, 25) / 10000
         )
+
+    @override
+    def get_device_status(self) -> ConnectionStatus:
+        return ConnectionStatus.CONNECTED

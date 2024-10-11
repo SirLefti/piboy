@@ -1,18 +1,14 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from enum import Enum
 from typing import Optional
+
+from core.data import ConnectionStatus
 
 
 @dataclass
 class Location:
     latitude: float
     longitude: float
-
-
-class LocationStatus(Enum):
-    CONNECTED = 1
-    DISCONNECTED = 2
 
 
 class LocationProvider(ABC):
@@ -24,8 +20,13 @@ class LocationProvider(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_status(self) -> LocationStatus:
+    def get_status(self) -> ConnectionStatus:
         """Returns the connection status of the location provider."""
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_device_status(self) -> ConnectionStatus:
+        """Returns the connection status of the hardware module."""
         raise NotImplementedError
 
 
