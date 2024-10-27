@@ -40,7 +40,7 @@ class ILI9486Display(Display):
     def show(self, image: Image.Image, x0: int, y0: int):
         self.__queue.append((image, x0, y0))
         if self.__render_thread is None or not self.__render_thread.is_alive():
-            self.__render_thread = threading.Thread(target=self.__process_queue, daemon=True)
+            self.__render_thread = threading.Thread(target=self.__process_queue, args=(), daemon=True)
             self.__render_thread.start()
 
     def reset(self):
