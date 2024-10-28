@@ -1,7 +1,8 @@
+import re
 import sys
 import threading
 from subprocess import CompletedProcess, run
-from typing import Callable, Optional
+from typing import Callable, Collection, Optional
 
 from injector import inject
 from PIL import Image, ImageDraw
@@ -11,35 +12,53 @@ from core.decorator import override
 from environment import AppConfig
 
 
+# type aliases
+ActionCallable = Callable[[], CompletedProcess[str]]
+ResultTextCallable = Callable[[CompletedProcess[str]], str]
+ContinueCallable = Callable[[CompletedProcess[str]], bool]
+ActionDefinition = tuple[ActionCallable, ResultTextCallable] | tuple[ActionCallable, ResultTextCallable, ContinueCallable]
+
+
 class UpdateApp(App):
     LINE_HEIGHT = 20
     CENTER_OFFSET = 10
 
     class Option:
 
-        def __init__(self, name: str,
-                     actions: list[tuple[Callable[[], CompletedProcess[str]], Callable[[CompletedProcess[str]], str]]],
-                     count_action: Optional[Callable[[], Optional[int]]] = None, count_name: Optional[str] = None):
-            self.__name = name
-            self.__actions = actions
-            self.__count_action = count_action
-            self.__count_name = count_name
+        def __init__(self, name: str, *actions: ActionDefinition):
+            self._name = name
+            self._actions = actions
 
         @property
         def name(self) -> str:
-            return self.__name
+            return self._name
 
         @property
-        def actions(self) -> list[tuple[Callable[[], CompletedProcess[str]], Callable[[CompletedProcess[str]], str]]]:
-            return self.__actions
+        def actions(self) -> Collection[ActionDefinition]:
+            return self._actions
+
+    class OptionWithCount(Option):
+
+        def __init__(self, name: str, *actions: ActionDefinition, count_action: Callable[[], Optional[int]], count_name: str):
+            super().__init__(name, *actions)
+            self._count_action = count_action
+            self._count_name = count_name
+
+        @property
+        def name(self) -> str:
+            count = self._count_action()
+            if count is not None:
+                return f'{self._name} ({count} {self._count_name})'
+            else:
+                return f'{self._name} (error)'
 
         @property
         def count_action(self) -> Optional[Callable[[], Optional[int]]]:
-            return self.__count_action
+            return self._count_action
 
         @property
         def count_name(self) -> Optional[str]:
-            return self.__count_name
+            return self._count_name
 
     @inject
     def __init__(self, draw_callback: Callable[[bool], None], app_config: AppConfig):
@@ -103,7 +122,7 @@ class UpdateApp(App):
             if result.returncode != 0:
                 return 'error installing lib updates'
             if result.stdout.count('Successfully installed') == 0:
-                return 'no lib updates to install'
+                return 'no lib updates to install, restart next'
             return 'lib updates installed, restart next'
 
         def result_text_shutdown(result: CompletedProcess[str]) -> str:
@@ -117,18 +136,24 @@ class UpdateApp(App):
                 return 'error restarting'
             return 'restarting...'
 
+        def continue_if_requirements_changed(result: CompletedProcess[str]) -> bool:
+            if result.returncode != 0:
+                return False
+            requirements_file_check = re.compile(r'requirements.*\.txt')
+            return any(requirements_file_check.search(line) for line in result.stdout.split('\n'))
+
         self.__options = [
-            self.Option('reset changes',[(self.__run_reset, result_text_reset)],
-                        count_action=get_files_to_reset, count_name='files'),
-            self.Option('clean files', [(self.__run_clean, result_text_clean)],
-                        count_action=get_files_to_clean, count_name='files'),
-            self.Option('fetch updates', [(self.__run_fetch, result_text_fetch)]),
-            self.Option('install updates', [
-                (self.__run_install, result_text_install),
-                (self.__run_install_dependencies, result_text_install_dependencies)
-            ], count_action=get_commits_to_update, count_name='commits'),
-            self.Option('shutdown', [(self.__run_shutdown, result_text_shutdown)]),
-            self.Option('restart', [(self.__run_restart, result_text_restart)])
+            self.OptionWithCount('reset changes', (self.__run_reset, result_text_reset),
+                                 count_action=get_files_to_reset, count_name='files'),
+            self.OptionWithCount('clean files', (self.__run_clean, result_text_clean),
+                                 count_action=get_files_to_clean, count_name='files'),
+            self.Option('fetch updates', (self.__run_fetch, result_text_fetch)),
+            self.OptionWithCount('install updates',
+                                 (self.__run_install, result_text_install, continue_if_requirements_changed),
+                                 (self.__run_install_dependencies, result_text_install_dependencies),
+                                 count_action=get_commits_to_update, count_name='commits'),
+            self.Option('shutdown', (self.__run_shutdown, result_text_shutdown)),
+            self.Option('restart', (self.__run_restart, result_text_restart))
         ]
         self.__results: list[str] = []
         self.__last_results_length = len(self.__results)
@@ -256,12 +281,6 @@ class UpdateApp(App):
             else:
                 draw.rectangle(cursor + (width // 2, cursor[1] + self.LINE_HEIGHT), fill=self.__background)
             text = option.name
-            if option.count_action is not None and option.count_name:
-                count = option.count_action()
-                if count is not None:
-                    text = f'{text} ({count} {option.count_name})'
-                else:
-                    text = f'{text} (error)'
             draw.text(cursor, text, fill=self.__color, font=font)
             cursor = (cursor[0], cursor[1] + self.LINE_HEIGHT)
             right_bottom = (max(right_bottom[0], width // 2), max(right_bottom[1], cursor[1]))
@@ -300,21 +319,25 @@ class UpdateApp(App):
             def process_all():
                 option = self.__options[self.__selected_index]
                 self.__action_pending = True
-                for action, result_text_action in option.actions:
-                    result = action()
+                for action_definition in option.actions:
+                    action_callable, result_text_callable, continue_callable \
+                        = action_definition if len(action_definition) == 3 else (*action_definition, None)
+                    result = action_callable()
                     # Log complete output
                     if result.stdout:
                         print(result.stdout.rstrip('\n'))
                     if result.stderr:
                         print(result.stderr.rstrip('\n'), file=sys.stderr)
-                    self.__results.append(result_text_action(result))
+                    self.__results.append(result_text_callable(result))
                     self.__update_counts()
                     self.__draw_callback(True)
+                    if continue_callable is not None:
+                        if not continue_callable(result):
+                            break
                 self.__action_pending = False
 
             thread = threading.Thread(target=process_all, args=(), daemon=True)
             thread.start()
-
 
     @override
     def on_app_enter(self):
