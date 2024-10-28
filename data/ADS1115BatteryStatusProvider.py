@@ -1,6 +1,7 @@
-import smbus2
 import time
 from collections import deque
+
+import smbus2
 
 from core.data import ConnectionStatus
 from core.decorator import override

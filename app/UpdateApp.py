@@ -11,7 +11,6 @@ from app.App import App
 from core.decorator import override
 from environment import AppConfig
 
-
 # type aliases
 ActionCallable = Callable[[], CompletedProcess[str]]
 ResultTextCallable = Callable[[CompletedProcess[str]], str]
