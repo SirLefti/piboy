@@ -44,6 +44,7 @@ class UpdateApp(App):
             self._count_name = count_name
 
         @property
+        @override
         def name(self) -> str:
             count = self._count_action()
             if count is not None:
