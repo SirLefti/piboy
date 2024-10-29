@@ -78,11 +78,5 @@ class GPIOInput(Input):
     def __gpio_b(self, _):
         self.on_key_b()
 
-    def __gpio_rotary_increase(self, _):
-        self.on_rotary_increase()
-
-    def __gpio_rotary_decrease(self, _):
-        self.on_rotary_decrease()
-
     def __gpio_rotary_switch(self, _):
         self.on_rotary_switch()
