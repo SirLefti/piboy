@@ -54,7 +54,7 @@ Base:
 - Raspberry Pi (full size board with all 40 pins recommended)
 - 3.5" SPI display module (with an ILI9486 display driver chip)
 - rotary encoder module (KY-040)
-- 6x micro push buttons (6mm x 6mm)
+- 6x micro push buttons (6 mm x 6 mm)
 - perf board/proto board (14x9 holes required)
 - wires, general soldering stuff
 - rotary encoder knob (optional, choose one you like)
@@ -66,6 +66,12 @@ Modules:
 - DS3231 RTC clock (optional, but recommended)
 - ADS1115 analog-digital converter
 
+Audio:
+- PAM8403 amplifier with potentiometer
+- 2x Mini Speakers (e.g. Loudity 16 mm or Adafruit Oval 20 mm x 30 mm)
+- capacitor ~1000 µF, 25 V (optional, but recommended to stabilize power when turning on the PAM8403)
+- potentiometer knob (optional, choose one you like)
+
 Battery power:
 - MT3608 power converter
 - TP4056 battery charging controller
@@ -75,11 +81,11 @@ Battery power:
 Additional parts depending on case version.
 
 > **NOTE:**<br>
-> Prototype 1 does not support modules and battery power internally.
+> Prototype 1 does not support modules, audio and battery power internally.
 
 > **NOTE:**<br>
 > Prototype 2 supports BME280, NEO-6M, DS3231 and battery power. ADS1115 can be squeezed in as well, but there is no
-> documentation.
+> documentation. Audio is not supported internally
 
 ## Installation
 
