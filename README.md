@@ -219,10 +219,9 @@ further details.
 * [x] environment sensors (temperature, humidity, ...)
 * [x] GPS module
 * [x] battery power
-* [ ] speaker for radio app
+* [x] speaker for radio app
+* [x] battery status
 * [ ] auto-mount usb drives (previous solution does not work any more)
-* [ ] other apps (?)
-* [ ] battery status (?)
 * [ ] improved case
 * [ ] utilities
 
