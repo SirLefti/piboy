@@ -1,19 +1,16 @@
 import os
 import random
 import re
-import threading
-import time
-import wave
 from abc import ABC, abstractmethod
 from subprocess import PIPE, run
 from typing import Callable, Optional
 
-import pyaudio
 from injector import inject
 from PIL import Image, ImageDraw
 
 from app.App import SelfUpdatingApp
 from core import resources
+from core.audio import MultiprocessingAudioPlayer
 from core.decorator import override
 from environment import AppConfig
 
@@ -193,88 +190,6 @@ class RadioApp(SelfUpdatingApp):
             super()._handle_control_group()
             self._on_select()
 
-    class AudioPlayer:
-
-        def __init__(self, callback_next: Callable[[], None]):
-            self.__player = pyaudio.PyAudio()
-            self.__total_frames = 0
-            self.__played_frames = 0
-            self.__wave_read: Optional[wave.Wave_read] = None
-            self.__stream: Optional[pyaudio.Stream] = None
-            self.__callback_next = callback_next
-            self.__is_continuing = False
-
-        def __stream_callback(self, _1, frame_count, _2, _3) -> tuple[bytes, int]:
-            data = self.__wave_read.readframes(frame_count)
-            self.__played_frames += frame_count
-            if self.__played_frames >= self.__total_frames:
-                thread_call_next = threading.Thread(target=self.__delayed_call_next, args=(), daemon=True)
-                thread_call_next.start()
-                return bytes(), pyaudio.paComplete
-            else:
-                return data, pyaudio.paContinue
-
-        def __delayed_call_next(self, delay: int = 1):
-            time.sleep(delay)
-            self.__callback_next()
-
-        def load_file(self, file_path: str):
-            self.__wave_read = wave.open(file_path, 'rb')
-            self.__total_frames = self.__wave_read.getnframes()
-            self.__played_frames = 0
-
-            self.__stream = self.__player.open(format=self.__player.get_format_from_width(
-                self.__wave_read.getsampwidth()),
-                channels=self.__wave_read.getnchannels(),
-                rate=self.__wave_read.getframerate(),
-                output=True,
-                stream_callback=self.__stream_callback)
-
-        def start_stream(self) -> bool:
-            if self.__stream:
-                self.__stream.start_stream()
-                self.__is_continuing = True
-                return True
-            return False
-
-        def pause_stream(self) -> bool:
-            if self.__stream:
-                self.__stream.stop_stream()
-                self.__is_continuing = False
-                return True
-            return False
-
-        def stop_stream(self) -> bool:
-            if self.__stream:
-                self.__stream.stop_stream()
-                self.__stream.close()
-                self.__stream = None
-                self.__is_continuing = False
-                self.__total_frames = 0
-                self.__played_frames = 0
-                return True
-            return False
-
-        @property
-        def has_stream(self) -> bool:
-            return self.__stream is not None
-
-        @property
-        def is_active(self) -> bool:
-            return self.__stream is not None and self.__stream.is_active()
-
-        @property
-        def is_continuing(self) -> bool:
-            return self.__is_continuing
-
-        @property
-        def progress(self) -> Optional[float]:
-            if self.__total_frames == 0:
-                return None
-            if self.__total_frames <= self.__played_frames:
-                return 1
-            return self.__played_frames / self.__total_frames
-
     __playback_control_group = ControlGroup()
 
     @inject
@@ -308,7 +223,7 @@ class RadioApp(SelfUpdatingApp):
         except (FileNotFoundError, ValueError):
             pass
 
-        self.__player = self.AudioPlayer(self.__call_next)
+        self.__player = MultiprocessingAudioPlayer(self.__call_next)
 
         # init selection states
         self.Control.SelectionState.NONE = self.Control.SelectionState(self.__color_dark, self.__background, False, False)
@@ -429,13 +344,11 @@ class RadioApp(SelfUpdatingApp):
         self.__volume = self.__get_volume()
 
     def __call_next(self):
-        # go to next file if player was not paused or stopped between end of file and callback
-        if self.__player.is_continuing:
-            self.__playing_index = (self.__playing_index + 1) % len(self.__files)
-            self.__selected_index = self.__playlist[self.__playing_index]
-            self.__player.stop_stream()
-            self.__player.load_file(os.path.join(self.__directory, self.__files[self.__playlist[self.__playing_index]]))
-            self.__player.start_stream()
+        self.__playing_index = (self.__playing_index + 1) % len(self.__files)
+        self.__selected_index = self.__playlist[self.__playing_index]
+        self.__player.stop_stream()
+        self.__player.load_file(os.path.join(self.__directory, self.__files[self.__playlist[self.__playing_index]]))
+        self.__player.start_stream()
 
     def __self_update(self):
         self.__draw_callback(**self.__draw_callback_kwargs)
