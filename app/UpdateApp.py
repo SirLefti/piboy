@@ -287,18 +287,17 @@ class UpdateApp(App):
             draw.text(cursor, text, fill=self.__color, font=font)
             cursor = (cursor[0], cursor[1] + self.LINE_HEIGHT)
             right_bottom = (max(right_bottom[0], width // 2), max(right_bottom[1], cursor[1]))
-        draw.line((width // 2, left_top[1]) + (width // 2, cursor[1]), fill=self.__color, width=1)
+        draw.line((width // 2, left_top[1]) + (width // 2, height - self.__app_bottom_offset),
+                  fill=self.__color, width=1)
 
         # part: repository and branch information
-        if not partial:
-            # information does not change, so just draw it initially
-            unknown = 'unknown'
-            _, _, _, text_height_branch = font.getbbox(self.__branch_name or unknown)
-            _, _, _, text_height_remote = font.getbbox(self.__remote_name or unknown)
-            draw.text((self.__app_side_offset, height - self.__app_bottom_offset - text_height_branch -
-                       text_height_remote), f'branch: {self.__branch_name or unknown}', fill=self.__color, font=font)
-            draw.text((self.__app_side_offset, height - self.__app_bottom_offset - text_height_remote),
-                      f'remote: {self.__remote_name or unknown}', fill=self.__color, font=font)
+        unknown = 'unknown'
+        _, _, _, text_height_branch = font.getbbox(self.__branch_name or unknown)
+        _, _, _, text_height_remote = font.getbbox(self.__remote_name or unknown)
+        draw.text((self.__app_side_offset, height - self.__app_bottom_offset - text_height_branch -
+                   text_height_remote), f'branch: {self.__branch_name or unknown}', fill=self.__color, font=font)
+        draw.text((self.__app_side_offset, height - self.__app_bottom_offset - text_height_remote),
+                  f'remote: {self.__remote_name or unknown}', fill=self.__color, font=font)
 
         if partial:
             return image.crop(left_top + right_bottom), *left_top  # noqa (unpacking type check fail)
