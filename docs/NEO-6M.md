@@ -20,11 +20,16 @@ The RX pin on the module can be skipped and is not needed for now.
 
 Check if the module is wired correctly and sends some data:
 ```bash
-sudo cat /dev/serial0
+cat /dev/serial0
 ```
 It might return lines like this:
 ```
 $GPTXT,01,01,01,NMEA unknown msg*58
+```
+
+If not, try this instead:
+```bash
+tail -f /dev/serial0
 ```
 
 If the blue LED on the module is blinking, it has already found its position and sends messages with the position. Go
