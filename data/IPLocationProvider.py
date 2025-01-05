@@ -55,4 +55,4 @@ class IPLocationProvider(LocationProvider):
 
     @override
     def get_device_status(self) -> ConnectionStatus:
-        return ConnectionStatus.CONNECTED
+        return self.__status
