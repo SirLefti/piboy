@@ -1,6 +1,7 @@
 from enum import Enum
 
 
-class ConnectionStatus(Enum):
-    CONNECTED = 1,
-    DISCONNECTED = 2
+class DeviceStatus(Enum):
+    OPERATIONAL = 1,
+    NO_DATA = 2,
+    UNAVAILABLE = 3

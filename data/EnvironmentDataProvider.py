@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
-from core.data import ConnectionStatus
+from core.data import DeviceStatus
 
 
 @dataclass
@@ -20,6 +20,6 @@ class EnvironmentDataProvider(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_device_status(self) -> ConnectionStatus:
+    def get_device_status(self) -> DeviceStatus:
         """Returns the connection status of the hardware module."""
         raise NotImplementedError

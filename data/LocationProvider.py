@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Optional
 
-from core.data import ConnectionStatus
+from core.data import DeviceStatus
 
 
 @dataclass
@@ -20,12 +20,12 @@ class LocationProvider(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_status(self) -> ConnectionStatus:
+    def get_status(self) -> DeviceStatus:
         """Returns the connection status of the location provider."""
         raise NotImplementedError
 
     @abstractmethod
-    def get_device_status(self) -> ConnectionStatus:
+    def get_device_status(self) -> DeviceStatus:
         """Returns the connection status of the hardware module."""
         raise NotImplementedError
 

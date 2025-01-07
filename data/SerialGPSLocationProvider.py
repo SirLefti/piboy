@@ -6,7 +6,7 @@ from typing import Union
 import pynmea2
 import serial
 
-from core.data import ConnectionStatus
+from core.data import DeviceStatus
 from core.decorator import override
 from data.LocationProvider import Location, LocationException, LocationProvider
 
@@ -17,7 +17,7 @@ class SerialGPSLocationProvider(LocationProvider):
         self.__device = serial.Serial(port, baudrate=baudrate, timeout=0.5)
         self.__io_wrapper = io.TextIOWrapper(io.BufferedReader(self.__device))
         self.__location: Union[Location, None] = None
-        self.__device_status = ConnectionStatus.DISCONNECTED
+        self.__device_status = DeviceStatus.UNAVAILABLE
         self.__thread = threading.Thread(target=self.__update_location, args=(), daemon=True)
         self.__thread.start()
 
@@ -25,18 +25,21 @@ class SerialGPSLocationProvider(LocationProvider):
         while True:
             try:
                 dataset = self.__io_wrapper.readline()
-                self.__device_status = ConnectionStatus.CONNECTED
+                if len(dataset) == 0:
+                    self.__device_status = DeviceStatus.UNAVAILABLE
                 for data in dataset:
                     if data[0:6] == '$GPRMC':
                         message = pynmea2.parse(data)
                         # lat and lon are strings that are empty if the connection is lost
                         if message.lat != '' and message.lon != '':
+                            self.__device_status = DeviceStatus.OPERATIONAL
                             self.__location = Location(message.latitude, message.longitude)
                         else:
+                            self.__device_status = DeviceStatus.NO_DATA
                             self.__location = None
             except serial.SerialException:
                 # connection issues: wait before trying again to avoid cpu load if the problem persists
-                self.__device_status = ConnectionStatus.DISCONNECTED
+                self.__device_status = DeviceStatus.UNAVAILABLE
                 time.sleep(5)
             except pynmea2.ParseError:
                 pass
@@ -48,12 +51,12 @@ class SerialGPSLocationProvider(LocationProvider):
         return self.__location
 
     @override
-    def get_status(self) -> ConnectionStatus:
+    def get_status(self) -> DeviceStatus:
         if self.__location is None:
-            return ConnectionStatus.DISCONNECTED
+            return DeviceStatus.NO_DATA
         else:
-            return ConnectionStatus.CONNECTED
+            return DeviceStatus.OPERATIONAL
 
     @override
-    def get_device_status(self) -> ConnectionStatus:
+    def get_device_status(self) -> DeviceStatus:
         return self.__device_status

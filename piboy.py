@@ -15,7 +15,7 @@ from app.MapApp import MapApp
 from app.RadioApp import RadioApp
 from app.UpdateApp import UpdateApp
 from core import resources
-from core.data import ConnectionStatus
+from core.data import DeviceStatus
 from data.BatteryStatusProvider import BatteryStatusProvider
 from data.EnvironmentDataProvider import EnvironmentDataProvider
 from data.LocationProvider import LocationProvider
@@ -305,21 +305,24 @@ def draw_footer(image: Image.Image, state: AppState) -> tuple[Image.Image, int, 
     start = (footer_side_offset, height - footer_height - footer_bottom_offset)
     end = (width - footer_side_offset, height - footer_bottom_offset)
     cursor_x, cursor_y = start
-    color_active = state.environment.app_config.accent
-    color_inactive = color_active if state.tick else state.environment.app_config.background
+    status_color = {
+        DeviceStatus.OPERATIONAL: state.environment.app_config.accent,
+        DeviceStatus.NO_DATA: state.environment.app_config.accent if state.tick else state.environment.app_config.background,
+        DeviceStatus.UNAVAILABLE: state.environment.app_config.background
+    }
 
     # reset area
     draw.rectangle(start + end, fill=state.environment.app_config.accent_dark)
 
     # draw network status
     nw_status_padding = (footer_height - resources.network_icon.height) // 2
-    nw_status_color = color_active if state.network_status_provider.get_status() == ConnectionStatus.CONNECTED else color_inactive
+    nw_status_color = status_color[state.network_status_provider.get_status()]
     draw.bitmap((cursor_x + icon_padding, cursor_y + nw_status_padding), resources.network_icon, fill=nw_status_color)
     cursor_x += resources.network_icon.width + icon_padding
 
     # draw gps status
     gps_status_padding = (footer_height - resources.gps_icon.height) // 2
-    gps_status_color = color_active if state.location_provider.get_status() == ConnectionStatus.CONNECTED else color_inactive
+    gps_status_color = status_color[state.location_provider.get_status()]
     draw.bitmap((cursor_x + icon_padding, cursor_y + gps_status_padding), resources.gps_icon, fill=gps_status_color)
     cursor_x += resources.gps_icon.width + icon_padding
 
