@@ -322,7 +322,7 @@ def draw_footer(image: Image.Image, state: AppState) -> tuple[Image.Image, int, 
 
     # draw gps status
     gps_status_padding = (footer_height - resources.gps_icon.height) // 2
-    gps_status_color = status_color[state.location_provider.get_status()]
+    gps_status_color = status_color[state.location_provider.get_device_status()]
     draw.bitmap((cursor_x + icon_padding, cursor_y + gps_status_padding), resources.gps_icon, fill=gps_status_color)
     cursor_x += resources.gps_icon.width + icon_padding
 

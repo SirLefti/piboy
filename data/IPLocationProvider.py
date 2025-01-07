@@ -50,9 +50,5 @@ class IPLocationProvider(LocationProvider):
             raise LocationException('Fetching location failed')
 
     @override
-    def get_status(self) -> DeviceStatus:
-        return self.__status
-
-    @override
     def get_device_status(self) -> DeviceStatus:
         return self.__status

@@ -51,12 +51,5 @@ class SerialGPSLocationProvider(LocationProvider):
         return self.__location
 
     @override
-    def get_status(self) -> DeviceStatus:
-        if self.__location is None:
-            return DeviceStatus.NO_DATA
-        else:
-            return DeviceStatus.OPERATIONAL
-
-    @override
     def get_device_status(self) -> DeviceStatus:
         return self.__device_status

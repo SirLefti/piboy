@@ -21,5 +21,5 @@ class EnvironmentDataProvider(ABC):
 
     @abstractmethod
     def get_device_status(self) -> DeviceStatus:
-        """Returns the connection status of the hardware module."""
+        """Returns the device status of the hardware module."""
         raise NotImplementedError

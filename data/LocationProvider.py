@@ -20,13 +20,8 @@ class LocationProvider(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_status(self) -> DeviceStatus:
-        """Returns the connection status of the location provider."""
-        raise NotImplementedError
-
-    @abstractmethod
     def get_device_status(self) -> DeviceStatus:
-        """Returns the connection status of the hardware module."""
+        """Returns the device status of the hardware module."""
         raise NotImplementedError
 
 
