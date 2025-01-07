@@ -41,7 +41,7 @@ Open a python console and test it out:
 >>> import io
 >>> import pynmea2
 >>> device = serial.Serial('/dev/serial0', baudrate=9600, timeout=0.5)
->>> io_wrapper = io.TextIOWrapper(io.BufferedRWPair(device, device))
+>>> io_wrapper = io.TextIOWrapper(io.BufferedReader(device))
 >>> while True:
 ...     data = io_wrapper.readline()
 ...     if data[0:6] == '$GPRMC':
