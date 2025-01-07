@@ -24,7 +24,7 @@ class SerialGPSLocationProvider(LocationProvider):
     def __update_location(self):
         while True:
             try:
-                dataset = self.__io_wrapper.readline()
+                dataset = self.__io_wrapper.readlines()
                 if len(dataset) == 0:
                     self.__device_status = DeviceStatus.UNAVAILABLE
                 for data in dataset:
@@ -42,6 +42,8 @@ class SerialGPSLocationProvider(LocationProvider):
                 self.__device_status = DeviceStatus.UNAVAILABLE
                 time.sleep(5)
             except pynmea2.ParseError:
+                pass
+            except UnicodeDecodeError:
                 pass
 
     @override
