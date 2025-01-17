@@ -1,5 +1,5 @@
 import math
-from typing import Callable, Optional, Union
+from typing import Any, Callable, Generator, Optional, Union
 
 from injector import inject
 from PIL import Image, ImageDraw, ImageOps
@@ -202,7 +202,7 @@ class MapApp(SelfUpdatingApp):
             self.__draw_callback(**self.__draw_callback_kwargs)
 
     @override
-    def draw(self, image: Image.Image, partial=False) -> tuple[Image.Image, int, int]:
+    def draw(self, image: Image.Image, partial=False) -> Generator[tuple[Image.Image, int, int], Any, None]:
         draw = ImageDraw.Draw(image)
         width, height = self.__app_size
         left_top = (0, 0)
@@ -356,9 +356,9 @@ class MapApp(SelfUpdatingApp):
 
         if partial:
             right_bottom = width, height
-            return image.crop(left_top + right_bottom), *left_top  # noqa (unpacking type check fail)
+            yield image.crop(left_top + right_bottom), *left_top  # noqa (unpacking type check fail)
         else:
-            return image, 0, 0
+            yield image, 0, 0
 
     @override
     def on_key_left(self):

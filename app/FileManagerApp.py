@@ -1,6 +1,6 @@
 import os
 import shutil
-from typing import Callable, Optional
+from typing import Any, Callable, Generator, Optional
 
 from injector import inject
 from PIL import Image, ImageDraw, ImageOps
@@ -280,7 +280,7 @@ class FileManagerApp(App):
             self.__draw_error(draw, left_top, right_bottom, 'Permission denied')
 
     @override
-    def draw(self, image: Image.Image, partial=False) -> tuple[Image.Image, int, int]:
+    def draw(self, image: Image.Image, partial=False) -> Generator[tuple[Image.Image, int, int], Any, None]:
         width, height = self.__app_size
         is_left_tab = self.__selected_tab == 0
         is_right_tab = self.__selected_tab == 1
@@ -290,31 +290,24 @@ class FileManagerApp(App):
         draw_right = not partial or is_right_tab or tab_changed
         draw = ImageDraw.Draw(image)
 
+        def draw_split_line():
+            start = (width / 2 - 1, 0)
+            end = (width / 2, height)
+            draw.rectangle(start + end, fill=self.__color)
+
         if draw_left:
             left_top = (0, 0)
-            right_bottom = (int(width / 2) - 1, height)
+            right_bottom = (int(width / 2), height)
             self.__draw_directory(draw, left_top, right_bottom, self.__left_directory, is_selected=is_left_tab)
-            if partial and not tab_changed:
-                return image.crop(left_top + right_bottom), *left_top  # noqa (unpacking type check fail)
+            draw_split_line()
+            yield image.crop(left_top + right_bottom), *left_top  # noqa (unpacking type check fail)
 
         if draw_right:
-            left_top = (int(width / 2) + 1, 0)
+            left_top = (int(width / 2), 0)
             right_bottom = (width, height)
             self.__draw_directory(draw, left_top, right_bottom, self.__right_directory, is_selected=is_right_tab)
-            if partial and not tab_changed:
-                return image.crop(left_top + right_bottom), *left_top   # noqa (unpacking type check fail)
-
-        # split line
-        start = (width / 2 - 1, 0)
-        end = (width / 2, height)
-        draw.rectangle(start + end, fill=self.__color)
-
-        if partial:
-            left_top = (0, 0)
-            right_bottom = (width, height)
-            return image.crop(left_top + right_bottom), *left_top   # noqa (unpacking type check fail)
-        else:
-            return image, 0, 0
+            draw_split_line()
+            yield image.crop(left_top + right_bottom), *left_top   # noqa (unpacking type check fail)
 
     def _enter(self):
         path = os.path.join(self.__active_directory.directory, self.__active_directory.files[self.__active_directory

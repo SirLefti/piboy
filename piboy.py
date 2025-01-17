@@ -1,6 +1,6 @@
 import time
 from datetime import datetime
-from typing import Callable, Self
+from typing import Any, Callable, Generator, Self
 
 from injector import Injector, Module, provider, singleton
 from PIL import Image, ImageDraw
@@ -15,7 +15,7 @@ from app.MapApp import MapApp
 from app.RadioApp import RadioApp
 from app.UpdateApp import UpdateApp
 from core import resources
-from core.data import DeviceStatus, ConnectionStatus
+from core.data import ConnectionStatus, DeviceStatus
 from data.BatteryStatusProvider import BatteryStatusProvider
 from data.EnvironmentDataProvider import EnvironmentDataProvider
 from data.LocationProvider import LocationProvider
@@ -134,13 +134,11 @@ class AppState:
         """Draw call that handles the complete cycle of drawing a new image to the display."""
         image = self.clear_buffer()
         if not partial:
-            image = draw_base(image, self)
-            patch, x0, y0 = self.active_app.draw(image.crop(self.__app_bbox), partial)
-            image.paste(patch, self.__app_anchor)
-            display.show(image, x0, y0)
-        else:
-            x_offset, y_offset = self.__app_anchor
-            patch, x0, y0 = self.active_app.draw(image.crop(self.__app_bbox), partial)
+            for patch, x0, y0 in draw_base(image, self):
+                display.show(patch, x0, y0)
+
+        x_offset, y_offset = self.__app_anchor
+        for patch, x0, y0 in self.active_app.draw(image.crop(self.__app_bbox), partial):
             display.show(patch, x0 + x_offset, y0 + y_offset)
 
     def on_key_left(self, display: Display):
@@ -413,10 +411,9 @@ def draw_header(image: Image.Image, state: AppState) -> tuple[Image.Image, int, 
     return image.crop(partial_start + partial_end), x0, y0
 
 
-def draw_base(image: Image.Image, state: AppState) -> Image.Image:
-    draw_header(image, state)
-    draw_footer(image, state)
-    return image
+def draw_base(image: Image.Image, state: AppState) -> Generator[tuple[Image.Image, int, int], Any, None]:
+    yield draw_header(image, state)
+    yield draw_footer(image, state)
 
 
 def is_raspberry_pi() -> bool:

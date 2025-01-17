@@ -2,7 +2,7 @@ import re
 import sys
 import threading
 from subprocess import CompletedProcess, run
-from typing import Callable, Collection, Optional
+from typing import Any, Callable, Collection, Generator, Optional
 
 from injector import inject
 from PIL import Image, ImageDraw
@@ -249,7 +249,7 @@ class UpdateApp(App):
         return 'SYS'
 
     @override
-    def draw(self, image: Image.Image, partial=False) -> tuple[Image.Image, int, int]:
+    def draw(self, image: Image.Image, partial=False) -> Generator[tuple[Image.Image, int, int], Any, None]:
         width, height = self.__app_size
         font = self.__font
 
@@ -297,9 +297,9 @@ class UpdateApp(App):
                   f'remote: {self.__remote_name or unknown}', fill=self.__color, font=font)
 
         if partial:
-            return image.crop(left_top + right_bottom), *left_top  # noqa (unpacking type check fail)
+            yield image.crop(left_top + right_bottom), *left_top  # noqa (unpacking type check fail)
         else:
-            return image, 0, 0
+            yield image, 0, 0
 
     @override
     def on_key_up(self):

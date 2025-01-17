@@ -1,6 +1,6 @@
 import math
 from datetime import datetime
-from typing import Any, Callable
+from typing import Any, Callable, Generator
 
 from injector import inject
 from PIL import Image, ImageDraw
@@ -28,7 +28,7 @@ class ClockApp(SelfUpdatingApp):
         return 'CLK'
 
     @override
-    def draw(self, image: Image.Image, partial=False) -> tuple[Image.Image, int, int]:
+    def draw(self, image: Image.Image, partial=False) -> Generator[tuple[Image.Image, int, int], Any, None]:
         width, height = self.__app_size
         center_x, center_y = int(width / 2), int(height / 2)
         size = 200
@@ -77,9 +77,9 @@ class ClockApp(SelfUpdatingApp):
         draw.line(((center_x, center_y) + (center_x + s_x, center_y + s_y)), fill=self.__color)
 
         if partial:
-            return image.crop(((left, top) + (right, bottom))), left, top
+            yield image.crop(((left, top) + (right, bottom))), left, top
         else:
-            return image, 0, 0
+            yield image, 0, 0
 
     @property
     @override

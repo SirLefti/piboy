@@ -1,3 +1,5 @@
+from typing import Any, Generator
+
 from injector import inject
 from PIL import Image, ImageDraw
 
@@ -26,7 +28,7 @@ class DebugApp(App):
         return 'DBG'
 
     @override
-    def draw(self, image: Image.Image, partial=False) -> tuple[Image.Image, int, int]:
+    def draw(self, image: Image.Image, partial=False) -> Generator[tuple[Image.Image, int, int], Any, None]:
         width, height = self.__app_size
         center_x, center_y = int(width / 2), int(height / 2)
 
@@ -80,9 +82,9 @@ class DebugApp(App):
             max_y = max(points_all, key=lambda e: e[1])[1]
             min_x = min(points_all, key=lambda e: e[0])[0]
             min_y = min(points_all, key=lambda e: e[1])[1]
-            return image.crop((min_x, min_y) + (max_x, max_y)), min_x, min_y
+            yield image.crop((min_x, min_y) + (max_x, max_y)), min_x, min_y
         else:
-            return image, 0, 0
+            yield image, 0, 0
 
     @override
     def on_key_left(self):

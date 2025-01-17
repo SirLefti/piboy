@@ -6,7 +6,7 @@ import time
 import wave
 from abc import ABC, abstractmethod
 from subprocess import PIPE, run
-from typing import Callable, Optional
+from typing import Any, Callable, Generator, Optional
 
 import pyaudio
 from injector import inject
@@ -448,7 +448,7 @@ class RadioApp(SelfUpdatingApp):
         return 1.0
 
     @override
-    def draw(self, image: Image.Image, partial=False) -> tuple[Image.Image, int, int]:
+    def draw(self, image: Image.Image, partial=False) -> Generator[tuple[Image.Image, int, int], Any, None]:
         draw = ImageDraw.Draw(image)
         width, height = self.__app_size
 
@@ -510,9 +510,9 @@ class RadioApp(SelfUpdatingApp):
 
         if partial:
             right_bottom = width, height
-            return image.crop(left_top + right_bottom), *left_top  # noqa (unpacking type check fail)
+            yield image.crop(left_top + right_bottom), *left_top  # noqa (unpacking type check fail)
         else:
-            return image, 0, 0
+            yield image, 0, 0
 
     def __get_files(self) -> list[str]:
         return sorted([f for f in os.listdir(self.__directory) if os.path.splitext(f)[1] in
