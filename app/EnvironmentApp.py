@@ -16,13 +16,10 @@ class EnvironmentApp(SelfUpdatingApp):
     def __init__(self, draw_callback: Callable[[bool], None],
                  data_provider: EnvironmentDataProvider, app_config: AppConfig):
         super().__init__(self.__update_data)
-        self.__resolution = app_config.resolution
+        self.__app_size = app_config.app_size
         self.__background = app_config.background
         self.__color = app_config.accent
         self.__color_dark = app_config.accent_dark
-        self.__app_top_offset = app_config.app_top_offset
-        self.__app_side_offset = app_config.app_side_offset
-        self.__app_bottom_offset = app_config.app_bottom_offset
         self.__font = app_config.font_standard
 
         self.__draw_callback = draw_callback
@@ -58,10 +55,9 @@ class EnvironmentApp(SelfUpdatingApp):
     @override
     def draw(self, image: Image.Image, partial=False) -> tuple[Image.Image, int, int]:
         draw = ImageDraw.Draw(image)
-        width, height = self.__resolution
+        width, height = self.__app_size
         icon_gap = 10
-        left_top = ((width - self.__t_icon.width - self.__p_icon.width - self.__h_icon.width - 2 * icon_gap) // 2,
-                    self.__app_top_offset + 50)
+        left_top = ((width - self.__t_icon.width - self.__p_icon.width - self.__h_icon.width - 2 * icon_gap) // 2, 50)
 
         temperature_xy = left_top
         pressure_xy = (temperature_xy[0] + self.__t_icon.width + icon_gap, temperature_xy[1])

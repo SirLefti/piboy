@@ -66,6 +66,10 @@ class AppConfig:
         return self.width, self.height
 
     @property
+    def app_size(self) -> tuple[int, int]:
+        return self.width - 2 * self.app_side_offset, self.height - self.app_top_offset - self.app_bottom_offset
+
+    @property
     def font_header(self) -> ImageFont.FreeTypeFont:
         if self.__font_header is None:
             self.__font_header = ImageFont.truetype(self.font_name, self.font_header_size)

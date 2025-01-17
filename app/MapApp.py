@@ -117,13 +117,10 @@ class MapApp(SelfUpdatingApp):
     def __init__(self, draw_callback: Callable[[bool], None],
                  location_provider: LocationProvider, tile_provider: TileProvider, app_config: AppConfig):
         super().__init__(self.__update_location)
-        self.__resolution = app_config.resolution
+        self.__app_size = app_config.app_size
         self.__background = app_config.background
         self.__color = app_config.accent
         self.__color_dark = app_config.accent_dark
-        self.__app_top_offset = app_config.app_top_offset
-        self.__app_side_offset = app_config.app_side_offset
-        self.__app_bottom_offset = app_config.app_bottom_offset
         self.__font = app_config.font_standard
 
         # init selection states
@@ -207,15 +204,14 @@ class MapApp(SelfUpdatingApp):
     @override
     def draw(self, image: Image.Image, partial=False) -> tuple[Image.Image, int, int]:
         draw = ImageDraw.Draw(image)
-        width, height = self.__resolution
-        left_top = (self.__app_side_offset, self.__app_top_offset)
+        width, height = self.__app_size
+        left_top = (0, 0)
         side_tab_width = 120
         side_tab_padding = 5
         line_height = 20
         font = self.__font
 
-        size = (width - 2 * self.__app_side_offset - side_tab_width,
-                height - self.__app_top_offset - self.__app_bottom_offset)
+        size = (width - side_tab_width, height)
 
         lat: Union[float, None] = None
         lon: Union[float, None] = None
@@ -359,7 +355,7 @@ class MapApp(SelfUpdatingApp):
             cursor = (cursor[0], cursor[1] - self.__CONTROL_SIZE - 2 * self.__CONTROL_PADDING)
 
         if partial:
-            right_bottom = width - self.__app_side_offset, height - self.__app_bottom_offset
+            right_bottom = width, height
             return image.crop(left_top + right_bottom), *left_top  # noqa (unpacking type check fail)
         else:
             return image, 0, 0

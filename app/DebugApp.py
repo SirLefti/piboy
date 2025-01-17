@@ -16,7 +16,7 @@ class DebugApp(App):
         self.__button_down = False
         self.__button_a = False
         self.__button_b = False
-        self.__resolution = app_config.resolution
+        self.__app_size = app_config.app_size
         self.__color = app_config.accent
         self.__color_dark = app_config.accent_dark
 
@@ -27,7 +27,7 @@ class DebugApp(App):
 
     @override
     def draw(self, image: Image.Image, partial=False) -> tuple[Image.Image, int, int]:
-        width, height = self.__resolution
+        width, height = self.__app_size
         center_x, center_y = int(width / 2), int(height / 2)
 
         dpad_offset = 40

@@ -122,13 +122,10 @@ class FileManagerApp(App):
 
     @inject
     def __init__(self, app_config: AppConfig):
-        self.__resolution = app_config.resolution
+        self.__app_size = app_config.app_size
         self.__background = app_config.background
         self.__color = app_config.accent
         self.__color_dark = app_config.accent_dark
-        self.__app_top_offset = app_config.app_top_offset
-        self.__app_side_offset = app_config.app_side_offset
-        self.__app_bottom_offset = app_config.app_bottom_offset
         self.__font = app_config.font_standard
 
         self.__left_directory = self.DirectoryState()
@@ -284,7 +281,7 @@ class FileManagerApp(App):
 
     @override
     def draw(self, image: Image.Image, partial=False) -> tuple[Image.Image, int, int]:
-        width, height = self.__resolution
+        width, height = self.__app_size
         is_left_tab = self.__selected_tab == 0
         is_right_tab = self.__selected_tab == 1
         tab_changed = self.__tab_changed
@@ -294,27 +291,27 @@ class FileManagerApp(App):
         draw = ImageDraw.Draw(image)
 
         if draw_left:
-            left_top = (self.__app_side_offset, self.__app_top_offset)
-            right_bottom = (int(width / 2) - 1, height - self.__app_bottom_offset)
+            left_top = (0, 0)
+            right_bottom = (int(width / 2) - 1, height)
             self.__draw_directory(draw, left_top, right_bottom, self.__left_directory, is_selected=is_left_tab)
             if partial and not tab_changed:
                 return image.crop(left_top + right_bottom), *left_top  # noqa (unpacking type check fail)
 
         if draw_right:
-            left_top = (int(width / 2) + 1, self.__app_top_offset)
-            right_bottom = (width - self.__app_side_offset, height - self.__app_bottom_offset)
+            left_top = (int(width / 2) + 1, 0)
+            right_bottom = (width, height)
             self.__draw_directory(draw, left_top, right_bottom, self.__right_directory, is_selected=is_right_tab)
             if partial and not tab_changed:
                 return image.crop(left_top + right_bottom), *left_top   # noqa (unpacking type check fail)
 
         # split line
-        start = (width / 2 - 1, self.__app_top_offset)
-        end = (width / 2, height - self.__app_bottom_offset)
+        start = (width / 2 - 1, 0)
+        end = (width / 2, height)
         draw.rectangle(start + end, fill=self.__color)
 
         if partial:
-            left_top = (self.__app_side_offset, self.__app_top_offset)
-            right_bottom = (width - self.__app_side_offset, height - self.__app_bottom_offset)
+            left_top = (0, 0)
+            right_bottom = (width, height)
             return image.crop(left_top + right_bottom), *left_top   # noqa (unpacking type check fail)
         else:
             return image, 0, 0

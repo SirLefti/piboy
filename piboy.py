@@ -59,6 +59,17 @@ class AppState:
         return self
 
     @property
+    def __app_anchor(self) -> tuple[int, int]:
+        return self.__environment.app_config.app_side_offset, self.__environment.app_config.app_top_offset
+
+    @property
+    def __app_bbox(self) -> tuple[int, int, int, int]:
+        return (self.__environment.app_config.app_side_offset,
+                self.__environment.app_config.app_top_offset,
+                self.__environment.app_config.width - self.__environment.app_config.app_side_offset,
+                self.__environment.app_config.height - self.__environment.app_config.app_bottom_offset)
+
+    @property
     def tick(self) -> int:
         return self.__bit
 
@@ -124,8 +135,13 @@ class AppState:
         image = self.clear_buffer()
         if not partial:
             image = draw_base(image, self)
-        image, x0, y0 = self.active_app.draw(image, partial)
-        display.show(image, x0, y0)
+            patch, x0, y0 = self.active_app.draw(image.crop(self.__app_bbox), partial)
+            image.paste(patch, self.__app_anchor)
+            display.show(image, x0, y0)
+        else:
+            x_offset, y_offset = self.__app_anchor
+            patch, x0, y0 = self.active_app.draw(image.crop(self.__app_bbox), partial)
+            display.show(patch, x0 + x_offset, y0 + y_offset)
 
     def on_key_left(self, display: Display):
         self.active_app.on_key_left()

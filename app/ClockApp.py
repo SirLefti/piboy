@@ -16,7 +16,7 @@ class ClockApp(SelfUpdatingApp):
     def __init__(self, update_callback: Callable[[bool], None], app_config: AppConfig):
         super().__init__(self.__draw_partial)
         self.__update_callback: Callable[[Any], None] = update_callback
-        self.__resolution = app_config.resolution
+        self.__app_size = app_config.app_size
         self.__color = app_config.accent
 
     def __draw_partial(self):
@@ -29,7 +29,7 @@ class ClockApp(SelfUpdatingApp):
 
     @override
     def draw(self, image: Image.Image, partial=False) -> tuple[Image.Image, int, int]:
-        width, height = self.__resolution
+        width, height = self.__app_size
         center_x, center_y = int(width / 2), int(height / 2)
         size = 200
         quarters_length = 15
