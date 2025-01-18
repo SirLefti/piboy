@@ -317,7 +317,7 @@ def draw_footer(image: Image.Image, state: AppState) -> tuple[Image.Image, int, 
     draw = ImageDraw.Draw(image)
 
     start = (footer_side_offset, height - footer_height - footer_bottom_offset)
-    end = (width - footer_side_offset, height - footer_bottom_offset)
+    end = (width - footer_side_offset - 1, height - footer_bottom_offset)
     cursor_x, cursor_y = start
     connection_status_color = {
         ConnectionStatus.CONNECTED: state.environment.app_config.accent,
