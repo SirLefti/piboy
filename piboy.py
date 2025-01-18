@@ -379,10 +379,10 @@ def draw_header(image: Image.Image, state: AppState) -> tuple[Image.Image, int, 
     end = (header_side_offset, header_top_offset)
     draw.line(start + end, fill=color_accent)
     start = end
-    end = (width - header_side_offset, header_top_offset)
+    end = (width - header_side_offset - 1, header_top_offset)
     draw.line(start + end, fill=color_accent)
     start = end
-    end = (width - header_side_offset, header_top_offset + vertical_line)
+    end = (width - header_side_offset - 1, header_top_offset + vertical_line)
     draw.line(start + end, fill=color_accent)
 
     # draw app short name header
