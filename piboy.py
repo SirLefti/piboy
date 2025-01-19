@@ -440,7 +440,9 @@ if __name__ == '__main__':
         .add_app(injector.get(ClockApp)) \
         .add_app(injector.get(MapApp))
 
-    # initial draw
+    # initially draw the empty buffer to initialize all pixels on the hardware module
+    DISPLAY.show(app_state.image_buffer, 0, 0)
+    # then continue with the initial draw call
     app_state.update_display(DISPLAY)
     app_state.active_app.on_app_enter()
 
