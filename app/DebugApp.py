@@ -117,32 +117,32 @@ class DebugApp(App):
     @override
     def on_key_left(self):
         self.__last_state = self.__state
-        self.__state = [True, False, False, False, False, False]
+        self.__state = [e == self.INDEX_LEFT for e in range(6)]
 
     @override
     def on_key_right(self):
         self.__last_state = self.__state
-        self.__state = [False, True, False, False, False, False]
+        self.__state = [e == self.INDEX_RIGHT for e in range(6)]
 
     @override
     def on_key_up(self):
         self.__last_state = self.__state
-        self.__state = [False, False, True, False, False, False]
+        self.__state = self.__state = [e == self.INDEX_UP for e in range(6)]
 
     @override
     def on_key_down(self):
         self.__last_state = self.__state
-        self.__state = [False, False, False, True, False, False]
+        self.__state = self.__state = [e == self.INDEX_DOWN for e in range(6)]
 
     @override
     def on_key_a(self):
         self.__last_state = self.__state
-        self.__state = [False, False, False, False, True, False]
+        self.__state = self.__state = [e == self.INDEX_A for e in range(6)]
 
     @override
     def on_key_b(self):
         self.__last_state = self.__state
-        self.__state = [False, False, False, False, False, True]
+        self.__state = self.__state = [e == self.INDEX_B for e in range(6)]
 
     @override
     def on_app_leave(self):
