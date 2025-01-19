@@ -1,4 +1,4 @@
-from typing import Any, Generator
+from typing import Any, Generator, Iterable
 
 from injector import inject
 from PIL import Image, ImageDraw
@@ -9,15 +9,19 @@ from environment import AppConfig
 
 
 class DebugApp(App):
+    
+    INDEX_LEFT = 0
+    INDEX_RIGHT = 1
+    INDEX_UP = 2
+    INDEX_DOWN = 3
+    INDEX_A = 4
+    INDEX_B = 5
 
     @inject
     def __init__(self, app_config: AppConfig):
-        self.__button_left = False
-        self.__button_right = False
-        self.__button_up = False
-        self.__button_down = False
-        self.__button_a = False
-        self.__button_b = False
+        # left, right, up, down, a, b
+        self.__state = [False, False, False, False, False, False]
+        self.__last_state = [False, False, False, False, False, False]
         self.__app_size = app_config.app_size
         self.__color = app_config.accent
         self.__color_dark = app_config.accent_dark
@@ -26,6 +30,15 @@ class DebugApp(App):
     @override
     def title(self) -> str:
         return 'DBG'
+
+    @staticmethod
+    def __get_bbox(coordinates: Iterable[tuple[int, int]]) -> tuple[int, int, int, int]:
+        max_x = max(coordinates, key=lambda e: e[0])[0]
+        max_y = max(coordinates, key=lambda e: e[1])[1]
+        min_x = min(coordinates, key=lambda e: e[0])[0]
+        min_y = min(coordinates, key=lambda e: e[1])[1]
+        # expanding by +1 to include all drawn pixels by cropping
+        return min_x, min_y, max_x + 1, max_y + 1
 
     @override
     def draw(self, image: Image.Image, partial=False) -> Generator[tuple[Image.Image, int, int], Any, None]:
@@ -40,111 +53,98 @@ class DebugApp(App):
 
         draw = ImageDraw.Draw(image)
 
-        points_left = [
-            (center_x - dpad_offset - dpad_spacing, center_y - button_size // 2),
-            (center_x - dpad_offset - dpad_spacing, center_y + button_size // 2),
-            (center_x - dpad_offset - dpad_spacing - button_size, center_y)
-        ]
-        draw.polygon(points_left, fill=(self.__color if self.__button_left else self.__color_dark))
+        draw_left = not partial or self.__state[self.INDEX_LEFT] != self.__last_state[self.INDEX_LEFT]
+        draw_right = not partial or self.__state[self.INDEX_RIGHT] != self.__last_state[self.INDEX_RIGHT]
+        draw_up = not partial or self.__state[self.INDEX_UP] != self.__last_state[self.INDEX_UP]
+        draw_down = not partial or self.__state[self.INDEX_DOWN] != self.__last_state[self.INDEX_DOWN]
+        draw_a = not partial or self.__state[self.INDEX_A] != self.__last_state[self.INDEX_A]
+        draw_b = not partial or self.__state[self.INDEX_B] != self.__last_state[self.INDEX_B]
 
-        points_right = [
-            (center_x - dpad_offset + dpad_spacing, center_y - button_size // 2),
-            (center_x - dpad_offset + dpad_spacing, center_y + button_size // 2),
-            (center_x - dpad_offset + dpad_spacing + button_size, center_y)
-        ]
-        draw.polygon(points_right, fill=(self.__color if self.__button_right else self.__color_dark))
+        if draw_left:
+            points_left = [
+                (center_x - dpad_offset - dpad_spacing, center_y - button_size // 2),
+                (center_x - dpad_offset - dpad_spacing, center_y + button_size // 2),
+                (center_x - dpad_offset - dpad_spacing - button_size, center_y)
+            ]
+            draw.polygon(points_left, fill=(self.__color if self.__state[self.INDEX_LEFT] else self.__color_dark))
+            bbox = self.__get_bbox(points_left)
+            yield image.crop(bbox), bbox[0], bbox[1]
 
-        points_up = [
-            (center_x - dpad_offset - button_size // 2, center_y - dpad_spacing),
-            (center_x - dpad_offset + button_size // 2, center_y - dpad_spacing),
-            (center_x - dpad_offset, center_y - dpad_spacing - button_size)
-        ]
-        draw.polygon(points_up, fill=(self.__color if self.__button_up else self.__color_dark))
+        if draw_right:
+            points_right = [
+                (center_x - dpad_offset + dpad_spacing, center_y - button_size // 2),
+                (center_x - dpad_offset + dpad_spacing, center_y + button_size // 2),
+                (center_x - dpad_offset + dpad_spacing + button_size, center_y)
+            ]
+            draw.polygon(points_right, fill=(self.__color if self.__state[self.INDEX_RIGHT] else self.__color_dark))
+            bbox = self.__get_bbox(points_right)
+            yield image.crop(bbox), bbox[0], bbox[1]
 
-        points_down = [
-            (center_x - dpad_offset - button_size // 2, center_y + dpad_spacing),
-            (center_x - dpad_offset + button_size // 2, center_y + dpad_spacing),
-            (center_x - dpad_offset, center_y + dpad_spacing + button_size)
-        ]
-        draw.polygon(points_down, fill=(self.__color if self.__button_down else self.__color_dark))
+        if draw_up:
+            points_up = [
+                (center_x - dpad_offset - button_size // 2, center_y - dpad_spacing),
+                (center_x - dpad_offset + button_size // 2, center_y - dpad_spacing),
+                (center_x - dpad_offset, center_y - dpad_spacing - button_size)
+            ]
+            draw.polygon(points_up, fill=(self.__color if self.__state[self.INDEX_UP] else self.__color_dark))
+            bbox = self.__get_bbox(points_up)
+            yield image.crop(bbox), bbox[0], bbox[1]
 
-        points_a = ((center_x + action_offset - button_size // 2, center_y - button_size - action_spacing // 2),
-                    (center_x + action_offset + button_size // 2, center_y - action_spacing // 2))
-        draw.rectangle(points_a, fill=(self.__color if self.__button_a else self.__color_dark))
+        if draw_down:
+            points_down = [
+                (center_x - dpad_offset - button_size // 2, center_y + dpad_spacing),
+                (center_x - dpad_offset + button_size // 2, center_y + dpad_spacing),
+                (center_x - dpad_offset, center_y + dpad_spacing + button_size)
+            ]
+            draw.polygon(points_down, fill=(self.__color if self.__state[self.INDEX_DOWN] else self.__color_dark))
+            bbox = self.__get_bbox(points_down)
+            yield image.crop(bbox), bbox[0], bbox[1]
 
-        points_b = ((center_x + action_offset - button_size // 2, center_y + action_spacing // 2),
-                    (center_x + action_offset + button_size // 2, center_y + button_size + action_spacing // 2))
-        draw.rectangle(points_b, fill=(self.__color if self.__button_b else self.__color_dark))
+        if draw_a:
+            points_a = ((center_x + action_offset - button_size // 2, center_y - button_size - action_spacing // 2),
+                        (center_x + action_offset + button_size // 2, center_y - action_spacing // 2))
+            draw.rectangle(points_a, fill=(self.__color if self.__state[self.INDEX_A] else self.__color_dark))
+            bbox = self.__get_bbox(points_a)
+            yield image.crop(bbox), bbox[0], bbox[1]
 
-        if partial:
-            points_all = [*points_left, *points_right, *points_up, *points_down, *points_a, *points_b]
-            max_x = max(points_all, key=lambda e: e[0])[0]
-            max_y = max(points_all, key=lambda e: e[1])[1]
-            min_x = min(points_all, key=lambda e: e[0])[0]
-            min_y = min(points_all, key=lambda e: e[1])[1]
-            yield image.crop((min_x, min_y) + (max_x, max_y)), min_x, min_y
-        else:
-            yield image, 0, 0
+        if draw_b:
+            points_b = ((center_x + action_offset - button_size // 2, center_y + action_spacing // 2),
+                        (center_x + action_offset + button_size // 2, center_y + button_size + action_spacing // 2))
+            draw.rectangle(points_b, fill=(self.__color if self.__state[self.INDEX_B] else self.__color_dark))
+            bbox = self.__get_bbox(points_b)
+            yield image.crop(bbox), bbox[0], bbox[1]
 
     @override
     def on_key_left(self):
-        self.__button_left = True
-        self.__button_right = False
-        self.__button_up = False
-        self.__button_down = False
-        self.__button_a = False
-        self.__button_b = False
+        self.__last_state = self.__state
+        self.__state = [True, False, False, False, False, False]
 
     @override
     def on_key_right(self):
-        self.__button_left = False
-        self.__button_right = True
-        self.__button_up = False
-        self.__button_down = False
-        self.__button_a = False
-        self.__button_b = False
+        self.__last_state = self.__state
+        self.__state = [False, True, False, False, False, False]
 
     @override
     def on_key_up(self):
-        self.__button_left = False
-        self.__button_right = False
-        self.__button_up = True
-        self.__button_down = False
-        self.__button_a = False
-        self.__button_b = False
+        self.__last_state = self.__state
+        self.__state = [False, False, True, False, False, False]
 
     @override
     def on_key_down(self):
-        self.__button_left = False
-        self.__button_right = False
-        self.__button_up = False
-        self.__button_down = True
-        self.__button_a = False
-        self.__button_b = False
+        self.__last_state = self.__state
+        self.__state = [False, False, False, True, False, False]
 
     @override
     def on_key_a(self):
-        self.__button_left = False
-        self.__button_right = False
-        self.__button_up = False
-        self.__button_down = False
-        self.__button_a = True
-        self.__button_b = False
+        self.__last_state = self.__state
+        self.__state = [False, False, False, False, True, False]
 
     @override
     def on_key_b(self):
-        self.__button_left = False
-        self.__button_right = False
-        self.__button_up = False
-        self.__button_down = False
-        self.__button_a = False
-        self.__button_b = True
+        self.__last_state = self.__state
+        self.__state = [False, False, False, False, False, True]
 
     @override
     def on_app_leave(self):
-        self.__button_left = False
-        self.__button_right = False
-        self.__button_up = False
-        self.__button_down = False
-        self.__button_a = False
-        self.__button_b = False
+        self.__state = [False, False, False, False, False, False]
+        self.__last_state = [False, False, False, False, False, False]

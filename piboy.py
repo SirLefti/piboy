@@ -133,13 +133,17 @@ class AppState:
     def update_display(self, display: Display, partial=False):
         """Draw call that handles the complete cycle of drawing a new image to the display."""
         image = self.clear_buffer()
-        if not partial:
+        app_bbox = self.__app_bbox
+        x_offset, y_offset = self.__app_anchor
+        if partial:
+            for patch, x0, y0 in self.active_app.draw(image.crop(app_bbox), partial):
+                display.show(patch, x0 + x_offset, y0 + y_offset)
+        else:
             for patch, x0, y0 in draw_base(image, self):
                 display.show(patch, x0, y0)
-
-        x_offset, y_offset = self.__app_anchor
-        for patch, x0, y0 in self.active_app.draw(image.crop(self.__app_bbox), partial):
-            display.show(patch, x0 + x_offset, y0 + y_offset)
+            for patch, x0, y0 in self.active_app.draw(image.crop(app_bbox), partial):
+                image.paste(patch, (x0 + x_offset, y0 + y_offset))
+            display.show(image.crop(app_bbox), x_offset, y_offset)
 
     def on_key_left(self, display: Display):
         self.active_app.on_key_left()
