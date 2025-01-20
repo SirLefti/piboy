@@ -297,8 +297,11 @@ class AppModule(Module):
             from interaction.GPIOInput import GPIOInput
             from interaction.ILI9486Display import ILI9486Display
 
-            # make sure that display is ILI9486Interface to call the reset function, should be always true
-            switch_function = display.reset if isinstance(display, ILI9486Display) else lambda: None
+            def reset_and_init():
+                # make sure that display is ILI9486Interface to call the reset function, should be always true
+                if isinstance(display, ILI9486Display):
+                    display.reset()
+                display.show(state.clear_buffer(), 0, 0)
 
             return GPIOInput(e.keypad_config.left_pin, e.keypad_config.right_pin,
                              e.keypad_config.up_pin, e.keypad_config.down_pin,
@@ -308,7 +311,7 @@ class AppModule(Module):
                              lambda: state.on_key_up(display), lambda: state.on_key_down(display),
                              lambda: state.on_key_a(display), lambda: state.on_key_b(display),
                              lambda: state.on_rotary_increase(display), lambda: state.on_rotary_decrease(display),
-                             switch_function)
+                             reset_and_init)
 
 
 def draw_footer(image: Image.Image, state: AppState) -> tuple[Image.Image, int, int]:
