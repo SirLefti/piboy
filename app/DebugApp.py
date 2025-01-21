@@ -77,7 +77,9 @@ class DebugApp(SelfUpdatingApp):
     @override
     def draw(self, image: Image.Image, partial=False) -> Generator[tuple[Image.Image, int, int], Any, None]:
         width, height = self.__app_size
-        r_center_x, r_center_y = int(width / 4) * 3, int(height / 2)
+        center_x, center_y = int(width / 4), int(height / 2)
+        # center of right side
+        r_center_x = center_x * 3
 
         device_spacing = 20
 
@@ -92,10 +94,15 @@ class DebugApp(SelfUpdatingApp):
         cursor = (10, 10)
         for index, device_name in enumerate(self.__devices):
             if not partial or self.__device_state[index] != self.__last_device_state[index]:
+                last_text = f'{device_name}: {self.__last_device_state[index]}'.replace('DeviceStatus.', '')
+                last_text_width, last_text_height = self.__font.getbbox(last_text)[2:]
+
                 text = f'{device_name}: {self.__device_state[index]}'.replace('DeviceStatus.', '')
                 text_width, text_height = self.__font.getbbox(text)[2:]
-                draw.text(cursor, text, font=self.__font)
-                bbox = (cursor[0], cursor[1], cursor[0] + text_width, cursor[1] + text_height)
+                draw.text(cursor, text, self.__color, font=self.__font)
+
+                bbox = (cursor[0], cursor[1], cursor[0]
+                        + max(last_text_width, text_width), cursor[1] + max(last_text_height, text_height))
                 yield image.crop(bbox), *cursor
             # always move the cursor, even if we did not perform a draw call, because it is already there
             cursor = (cursor[0], cursor[1] + device_spacing)
@@ -109,9 +116,9 @@ class DebugApp(SelfUpdatingApp):
 
         if draw_left:
             points_left = [
-                (r_center_x - dpad_offset - dpad_spacing, r_center_y - button_size // 2),
-                (r_center_x - dpad_offset - dpad_spacing, r_center_y + button_size // 2),
-                (r_center_x - dpad_offset - dpad_spacing - button_size, r_center_y)
+                (r_center_x - dpad_offset - dpad_spacing, center_y - button_size // 2),
+                (r_center_x - dpad_offset - dpad_spacing, center_y + button_size // 2),
+                (r_center_x - dpad_offset - dpad_spacing - button_size, center_y)
             ]
             draw.polygon(points_left, fill=(self.__color if self.__key_state[self.INDEX_LEFT] else self.__color_dark))
             bbox = self.__get_bbox(points_left)
@@ -119,9 +126,9 @@ class DebugApp(SelfUpdatingApp):
 
         if draw_right:
             points_right = [
-                (r_center_x - dpad_offset + dpad_spacing, r_center_y - button_size // 2),
-                (r_center_x - dpad_offset + dpad_spacing, r_center_y + button_size // 2),
-                (r_center_x - dpad_offset + dpad_spacing + button_size, r_center_y)
+                (r_center_x - dpad_offset + dpad_spacing, center_y - button_size // 2),
+                (r_center_x - dpad_offset + dpad_spacing, center_y + button_size // 2),
+                (r_center_x - dpad_offset + dpad_spacing + button_size, center_y)
             ]
             draw.polygon(points_right, fill=(self.__color if self.__key_state[self.INDEX_RIGHT] else self.__color_dark))
             bbox = self.__get_bbox(points_right)
@@ -129,9 +136,9 @@ class DebugApp(SelfUpdatingApp):
 
         if draw_up:
             points_up = [
-                (r_center_x - dpad_offset - button_size // 2, r_center_y - dpad_spacing),
-                (r_center_x - dpad_offset + button_size // 2, r_center_y - dpad_spacing),
-                (r_center_x - dpad_offset, r_center_y - dpad_spacing - button_size)
+                (r_center_x - dpad_offset - button_size // 2, center_y - dpad_spacing),
+                (r_center_x - dpad_offset + button_size // 2, center_y - dpad_spacing),
+                (r_center_x - dpad_offset, center_y - dpad_spacing - button_size)
             ]
             draw.polygon(points_up, fill=(self.__color if self.__key_state[self.INDEX_UP] else self.__color_dark))
             bbox = self.__get_bbox(points_up)
@@ -139,24 +146,24 @@ class DebugApp(SelfUpdatingApp):
 
         if draw_down:
             points_down = [
-                (r_center_x - dpad_offset - button_size // 2, r_center_y + dpad_spacing),
-                (r_center_x - dpad_offset + button_size // 2, r_center_y + dpad_spacing),
-                (r_center_x - dpad_offset, r_center_y + dpad_spacing + button_size)
+                (r_center_x - dpad_offset - button_size // 2, center_y + dpad_spacing),
+                (r_center_x - dpad_offset + button_size // 2, center_y + dpad_spacing),
+                (r_center_x - dpad_offset, center_y + dpad_spacing + button_size)
             ]
             draw.polygon(points_down, fill=(self.__color if self.__key_state[self.INDEX_DOWN] else self.__color_dark))
             bbox = self.__get_bbox(points_down)
             yield image.crop(bbox), bbox[0], bbox[1]
 
         if draw_a:
-            points_a = ((r_center_x + action_offset - button_size // 2, r_center_y - button_size - action_spacing // 2),
-                        (r_center_x + action_offset + button_size // 2, r_center_y - action_spacing // 2))
+            points_a = ((r_center_x + action_offset - button_size // 2, center_y - button_size - action_spacing // 2),
+                        (r_center_x + action_offset + button_size // 2, center_y - action_spacing // 2))
             draw.rectangle(points_a, fill=(self.__color if self.__key_state[self.INDEX_A] else self.__color_dark))
             bbox = self.__get_bbox(points_a)
             yield image.crop(bbox), bbox[0], bbox[1]
 
         if draw_b:
-            points_b = ((r_center_x + action_offset - button_size // 2, r_center_y + action_spacing // 2),
-                        (r_center_x + action_offset + button_size // 2, r_center_y + button_size + action_spacing // 2))
+            points_b = ((r_center_x + action_offset - button_size // 2, center_y + action_spacing // 2),
+                        (r_center_x + action_offset + button_size // 2, center_y + button_size + action_spacing // 2))
             draw.rectangle(points_b, fill=(self.__color if self.__key_state[self.INDEX_B] else self.__color_dark))
             bbox = self.__get_bbox(points_b)
             yield image.crop(bbox), bbox[0], bbox[1]
