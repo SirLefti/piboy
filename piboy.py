@@ -204,7 +204,6 @@ class AppModule(Module):
             return environment.load()
         except FileNotFoundError:
             e = Environment()
-            e.dev_mode = not is_raspberry_pi()
             environment.save(e)
             return e
 
@@ -225,22 +224,22 @@ class AppModule(Module):
     @singleton
     @provider
     def provide_environment_data_service(self, e: Environment) -> EnvironmentDataProvider:
-        if e.dev_mode:
-            from data.FakeEnvironmentDataProvider import FakeEnvironmentDataProvider
-            return FakeEnvironmentDataProvider()
-        else:
+        if e.is_raspberry_pi:
             from data.BME280EnvironmentDataProvider import BME280EnvironmentDataProvider
             return BME280EnvironmentDataProvider(e.env_sensor_config.port, e.env_sensor_config.address)
+        else:
+            from data.FakeEnvironmentDataProvider import FakeEnvironmentDataProvider
+            return FakeEnvironmentDataProvider()
 
     @singleton
     @provider
     def provide_location_service(self, e: Environment) -> LocationProvider:
-        if e.dev_mode:
-            from data.IPLocationProvider import IPLocationProvider
-            return IPLocationProvider(apply_inaccuracy=True)
-        else:
+        if e.is_raspberry_pi:
             from data.SerialGPSLocationProvider import SerialGPSLocationProvider
             return SerialGPSLocationProvider(e.gps_module_config.port, baudrate=e.gps_module_config.baudrate)
+        else:
+            from data.IPLocationProvider import IPLocationProvider
+            return IPLocationProvider(apply_inaccuracy=True)
 
     @singleton
     @provider
@@ -250,22 +249,22 @@ class AppModule(Module):
     @singleton
     @provider
     def provide_network_status_service(self, e: Environment) -> NetworkStatusProvider:
-        if e.dev_mode:
-            from data.FakeNetworkStatusProvider import FakeNetworkStatusProvider
-            return FakeNetworkStatusProvider()
-        else:
+        if e.is_raspberry_pi:
             from data.NetworkManagerStatusProvider import NetworkManagerStatusProvider
             return NetworkManagerStatusProvider()
+        else:
+            from data.FakeNetworkStatusProvider import FakeNetworkStatusProvider
+            return FakeNetworkStatusProvider()
 
     @singleton
     @provider
     def provide_battery_status_service(self, e: Environment) -> BatteryStatusProvider:
-        if e.dev_mode:
-            from data.FakeBatteryStatusProvider import FakeBatteryStatusProvider
-            return FakeBatteryStatusProvider()
-        else:
+        if e.is_raspberry_pi:
             from data.ADS1115BatteryStatusProvider import ADS1115BatteryStatusProvider
             return ADS1115BatteryStatusProvider(e.adc_config.port, e.adc_config.address)
+        else:
+            from data.FakeBatteryStatusProvider import FakeBatteryStatusProvider
+            return FakeBatteryStatusProvider()
 
     @singleton
     @provider
@@ -275,25 +274,21 @@ class AppModule(Module):
     @singleton
     @provider
     def provide_display(self, e: Environment, state: AppState) -> Display:
-        if e.dev_mode:
-            if self.__unified_instance is None:
-                self.__unified_instance = self.__create_tk_interaction(state, e.app_config)
-            return self.__unified_instance
-        else:
+        if e.is_raspberry_pi:
             from interaction.ILI9486Display import ILI9486Display
 
             spi_device_config = e.display_config.display_device
             return ILI9486Display((spi_device_config.bus, spi_device_config.device),
                                   e.display_config.dc_pin, e.display_config.rst_pin, e.display_config.flip_display)
+        else:
+            if self.__unified_instance is None:
+                self.__unified_instance = self.__create_tk_interaction(state, e.app_config)
+            return self.__unified_instance
 
     @singleton
     @provider
     def provide_input(self, e: Environment, state: AppState, display: Display) -> Input:
-        if e.dev_mode:
-            if self.__unified_instance is None:
-                self.__unified_instance = self.__create_tk_interaction(state, e.app_config)
-            return self.__unified_instance
-        else:
+        if e.is_raspberry_pi:
             from interaction.GPIOInput import GPIOInput
             from interaction.ILI9486Display import ILI9486Display
 
@@ -312,6 +307,10 @@ class AppModule(Module):
                              lambda: state.on_key_a(display), lambda: state.on_key_b(display),
                              lambda: state.on_rotary_increase(display), lambda: state.on_rotary_decrease(display),
                              reset_and_init)
+        else:
+            if self.__unified_instance is None:
+                self.__unified_instance = self.__create_tk_interaction(state, e.app_config)
+            return self.__unified_instance
 
 
 def draw_footer(image: Image.Image, state: AppState) -> tuple[Image.Image, int, int]:
@@ -422,14 +421,6 @@ def draw_header(image: Image.Image, state: AppState) -> tuple[Image.Image, int, 
 def draw_base(image: Image.Image, state: AppState) -> Generator[tuple[Image.Image, int, int], Any, None]:
     yield draw_header(image, state)
     yield draw_footer(image, state)
-
-
-def is_raspberry_pi() -> bool:
-    try:
-        with open('/sys/firmware/devicetree/base/model', 'r') as model_info:
-            return 'Raspberry Pi' in model_info.read()
-    except FileNotFoundError:
-        return False
 
 
 if __name__ == '__main__':
