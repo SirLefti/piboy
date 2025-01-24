@@ -59,17 +59,6 @@ class AppState:
         return self
 
     @property
-    def __app_anchor(self) -> tuple[int, int]:
-        return self.__environment.app_config.app_side_offset, self.__environment.app_config.app_top_offset
-
-    @property
-    def __app_bbox(self) -> tuple[int, int, int, int]:
-        return (self.__environment.app_config.app_side_offset,
-                self.__environment.app_config.app_top_offset,
-                self.__environment.app_config.width - self.__environment.app_config.app_side_offset,
-                self.__environment.app_config.height - self.__environment.app_config.app_bottom_offset)
-
-    @property
     def tick(self) -> int:
         return self.__bit
 
@@ -133,8 +122,11 @@ class AppState:
     def update_display(self, display: Display, partial=False):
         """Draw call that handles the complete cycle of drawing a new image to the display."""
         image = self.clear_buffer()
-        app_bbox = self.__app_bbox
-        x_offset, y_offset = self.__app_anchor
+        app_bbox = (self.__environment.app_config.app_side_offset,
+                    self.__environment.app_config.app_top_offset,
+                    self.__environment.app_config.width - self.__environment.app_config.app_side_offset,
+                    self.__environment.app_config.height - self.__environment.app_config.app_bottom_offset)
+        x_offset, y_offset = app_bbox[0:2]
         if partial:
             for patch, x0, y0 in self.active_app.draw(image.crop(app_bbox), partial):
                 display.show(patch, x0 + x_offset, y0 + y_offset)
