@@ -89,6 +89,7 @@ def main():
             for action in post_steps[app.title]:
                 image = action(image)
         image.save(os.path.join(target, f'{app.title.lower()}.png'))
+        print(f'drawn and saved {app.title} app')
         app.on_app_leave()
         app_state.next_app()
 
