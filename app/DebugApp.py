@@ -1,4 +1,4 @@
-from typing import Any, Generator, Iterable, Callable
+from typing import Any, Callable, Generator, Iterable
 
 from injector import inject
 from PIL import Image, ImageDraw

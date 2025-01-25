@@ -1,9 +1,9 @@
 import os.path
 from typing import Callable, Collection
 
+from injector import Injector, provider, singleton
 from PIL import Image
 from PIL.ImageFilter import GaussianBlur
-from injector import Injector, singleton, provider
 
 from app.App import App
 from app.ClockApp import ClockApp
@@ -13,10 +13,9 @@ from app.FileManagerApp import FileManagerApp
 from app.MapApp import MapApp
 from app.RadioApp import RadioApp
 from app.UpdateApp import UpdateApp
+from core.decorator import override
 from environment import Environment
 from piboy import AppModule, AppState, draw_base
-
-from core.decorator import override
 
 target = './docs/apps'
 
