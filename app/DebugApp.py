@@ -103,7 +103,7 @@ class DebugApp(SelfUpdatingApp):
 
                 bbox = (cursor[0], cursor[1], cursor[0]
                         + max(last_text_width, text_width), cursor[1] + max(last_text_height, text_height))
-                yield image.crop(bbox), *cursor
+                yield image.crop(bbox), *cursor  # noqa (unpacking type check fail)
             # always move the cursor, even if we did not perform a draw call, because it is already there
             cursor = (cursor[0], cursor[1] + device_spacing)
 
