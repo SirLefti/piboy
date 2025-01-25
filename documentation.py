@@ -19,6 +19,7 @@ from piboy import AppModule, AppState, draw_base
 
 target = './docs/apps'
 
+
 class DefaultEnvironmentAppModule(AppModule):
 
     @singleton
@@ -42,6 +43,7 @@ def blur(image: Image.Image, bbox: tuple[int, int, int, int]) -> Image.Image:
     patch = patch.filter(GaussianBlur(radius=4))
     image.paste(patch, bbox)
     return image
+
 
 def main():
     module = DefaultEnvironmentAppModule()
@@ -91,6 +93,7 @@ def main():
         print(f'drawn and saved {app.title} app')
         app.on_app_leave()
         app_state.next_app()
+
 
 if __name__ == '__main__':
     main()
