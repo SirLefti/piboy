@@ -24,7 +24,7 @@ class UDevService:
             print('created mount root')
         except FileExistsError:
             pass
-        self.loop_thread = threading.Thread(target=self._loop())
+        self.loop_thread = threading.Thread(target=self._loop, daemon=True)
         self.loop_thread.start()
 
     def _loop(self):
@@ -40,7 +40,6 @@ class UDevService:
         return path.abspath(path.join(self._mount_root, f'{model}_{partition_number}'))
 
     def mount(self, device: pyudev.Device):
-        print(f'mount: {device.properties["ID_MODEL"]} {device.device_node}')
         model = device.properties['ID_MODEL']
         device_node = device.device_node
         target_path = self._build_target_path(device_node, model)
