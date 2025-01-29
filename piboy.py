@@ -430,6 +430,12 @@ if __name__ == '__main__':
         .add_app(injector.get(ClockApp)) \
         .add_app(injector.get(MapApp))
 
+    # start the auto mount service on raspberry
+    if injector.get(Environment).is_raspberry_pi:
+        from core.udev_service import UDevService
+        udev_service = UDevService()
+        udev_service.start()
+
     # initially draw the empty buffer to initialize all pixels on the hardware module
     DISPLAY.show(app_state.image_buffer, 0, 0)
     # then continue with the initial draw call
