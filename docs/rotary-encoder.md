@@ -27,6 +27,8 @@ To register the rotary encoder as a device, add this to `/boot/firmware/config.t
 dtoverlay=rotary-encoder,pin_a=22,pin_b=23,relative_axis=1,steps-per-period=1
 ```
 
+Reboot the Pi.
+
 Install ``evtest`` if not already done:
 ```bash
 sudo apt install evtest

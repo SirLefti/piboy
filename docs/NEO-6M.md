@@ -18,25 +18,18 @@ The RX pin on the module can be skipped and is not needed for now.
 
 ## Configuration
 
-Add the following entry to `/boot/firmware/config.txt`:
-```
-enable_uart=1
-```
-
-Remove this from `/boot/firmware/cmdline.txt`:
-```
-console=serial0,115200 
-```
-
-Reboot the Pi.
-
 Check if the module is wired correctly and sends some data:
 ```bash
-sudo cat /dev/serial0
+cat /dev/serial0
 ```
 It might return lines like this:
 ```
 $GPTXT,01,01,01,NMEA unknown msg*58
+```
+
+If not, try this instead:
+```bash
+tail -f /dev/serial0
 ```
 
 If the blue LED on the module is blinking, it has already found its position and sends messages with the position. Go
@@ -48,8 +41,8 @@ Open a python console and test it out:
 >>> import io
 >>> import pynmea2
 >>> device = serial.Serial('/dev/serial0', baudrate=9600, timeout=0.5)
->>> io_wrapper = io.TextIOWrapper(io.BufferedRWPair(device, device))
->>> while 1:
+>>> io_wrapper = io.TextIOWrapper(io.BufferedReader(device))
+>>> while True:
 ...     data = io_wrapper.readline()
 ...     if data[0:6] == '$GPRMC':
 ...         message = pynmea2.parse(data)

@@ -173,4 +173,4 @@ Put all components inside and add some hot glue if needed. Remember to also add 
 extension.
 
 ![proto2_final](./proto2_final.jpg)
-Place the top part on top and secure it with screw.
+Place the top part on top and secure it with screws.

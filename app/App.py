@@ -1,8 +1,11 @@
-from abc import ABC, abstractmethod
-from typing import Optional, Callable
-from PIL import Image
 import threading
 import time
+from abc import ABC, abstractmethod
+from typing import Any, Callable, Generator, Optional
+
+from PIL import Image
+
+from core.decorator import override
 
 
 class App(ABC):
@@ -15,59 +18,52 @@ class App(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def draw(self, image: Image.Image, partial=False) -> tuple[Image.Image, int, int]:
+    def draw(self, image: Image.Image, partial=False) -> Generator[tuple[Image.Image, int, int], Any, None]:
         """
         Draws the app content and returns the full or partial frame.
 
         Parameter image is the previous frame to draw on.
-        Parameter partial indicates, if a full or partial frame was requested.
-        It is not required to return a partial frame when requested, but highly recommended to always return a full
-        when requested to make sure old frame parts are replaced.
 
-        Returns a tuple of (image, int, int), which is the new frame and the x and y anchor relative to the top left
-        corner. For a full frame, the coordinates have to be both 0. A partial frame has to be cropped accordingly.
+        Parameter partial indicates, if a full or partial frame was requested.
+        A full frame means, that every UI element has to be drawn, and a partial frame means, that only the subset of
+        UI elements, that have changed since the last draw call, have to be drawn.
+
+        Returns a generator of tuple of (image, int, int), which are the new frame patch and the x and y anchor relative
+        to the top left corner.
         """
         raise NotImplementedError
 
-    @abstractmethod
     def on_key_left(self):
         """Called when the 'left' key is pressed. Apps can change their state if they want for the next draw call."""
-        raise NotImplementedError
+        pass
 
-    @abstractmethod
     def on_key_right(self):
         """Called when the 'right' key is pressed. Apps can change their state if they want for the next draw call."""
-        raise NotImplementedError
+        pass
 
-    @abstractmethod
     def on_key_up(self):
         """Called when the 'up' key is pressed. Apps can change their state if they want for the next draw call."""
-        raise NotImplementedError
+        pass
 
-    @abstractmethod
     def on_key_down(self):
         """Called when the 'down' key is pressed. Apps can change their state if they want for the next draw call."""
-        raise NotImplementedError
+        pass
 
-    @abstractmethod
     def on_key_a(self):
         """Called when the 'a' key is pressed. Apps can change their state if they want for the next draw call."""
-        raise NotImplementedError
+        pass
 
-    @abstractmethod
     def on_key_b(self):
         """Called when the 'b' key is pressed. Apps can change their state if they want for the next draw call."""
-        raise NotImplementedError
+        pass
 
-    @abstractmethod
     def on_app_enter(self):
         """Called when entering the app. Apps can perform initial actions here."""
-        raise NotImplementedError
+        pass
 
-    @abstractmethod
     def on_app_leave(self):
         """Called when leaving the app. Apps can perform cleanup actions here."""
-        raise NotImplementedError
+        pass
 
 
 class SelfUpdatingApp(App, ABC):
@@ -110,9 +106,11 @@ class SelfUpdatingApp(App, ABC):
         """Time in seconds between self refreshed updates."""
         raise NotImplementedError
 
+    @override
     def on_app_enter(self):
         self.start_updating()
 
+    @override
     def on_app_leave(self):
         self.stop_updating()
 

@@ -1,11 +1,14 @@
-from data.TileProvider import TileProvider, TileInfo
+import math
+import os
+import time
 from typing import Iterable
+
+import requests
 from PIL import Image, ImageDraw, ImageFont, UnidentifiedImageError
 from requests.exceptions import ConnectionError
-import os
-import requests
-import math
-import time
+
+from core.decorator import override
+from data.TileProvider import TileInfo, TileProvider
 
 
 class OSMTileProvider(TileProvider):
@@ -19,9 +22,11 @@ class OSMTileProvider(TileProvider):
         self.__font = font
 
     @property
+    @override
     def zoom_range(self) -> Iterable[int]:
         return range(0, 20)
 
+    @override
     def get_tile(self, lat: float, lon: float, zoom: int, size: tuple[int, int] = (256, 256), x_offset: int = 0,
                  y_offset: int = 0) -> TileInfo:
         x_tile, y_tile = self._deg_to_num(lat, lon, zoom)
@@ -108,19 +113,6 @@ class OSMTileProvider(TileProvider):
                 return Image.open(tile_path)
             else:
                 raise ValueError(f'Fetching OSM tile ({zoom}-{x_tile}-{y_tile}) failed ({response.status_code})')
-
-    @classmethod
-    def _resize(cls, img: Image.Image, size: tuple[int, int]) -> Image.Image:
-        if img.size == size:
-            return img
-        old_x, old_y = img.size
-        new_x, new_y = size
-        scale = max(new_x / old_x, new_y / old_y)
-        resized = img.resize((int(old_x * scale), int(old_y * scale)), Image.LANCZOS)
-        res_x, res_y = resized.size
-        offset_x = int((res_x - new_x) / 2)
-        offset_y = int((res_y - new_y) / 2)
-        return resized.crop((offset_x, offset_y, offset_x + new_x, offset_y + new_y))
 
     @classmethod
     def _deg_to_num(cls, lat_deg: float, lon_deg: float, zoom: int) -> tuple[int, int]:

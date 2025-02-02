@@ -1,29 +1,35 @@
-from interface.Interface import Interface
-from interface.Input import Input
-from typing import Callable
-from PIL import Image, ImageTk
 import tkinter as tk
+from typing import Callable
+
+from PIL import Image, ImageTk
+
+from core.decorator import override
+from interaction.Display import Display
+from interaction.Input import Input
+from interaction.UnifiedInteraction import UnifiedInteraction
 
 
-class SelfManagedTkInterface(Interface, Input):
+class SelfManagedTkInteraction(UnifiedInteraction):
 
     BUTTON_W = 15
     BUTTON_H = 6
 
-    def __init__(self, on_key_left: Callable, on_key_right: Callable,
-                 on_key_up: Callable, on_key_down: Callable, on_key_a: Callable, on_key_b: Callable,
-                 on_rotary_increase: Callable, on_rotary_decrease: Callable, on_rotary_switch: Callable,
+    def __init__(self, on_key_left: Callable[[Display], None], on_key_right: Callable[[Display], None],
+                 on_key_up: Callable[[Display], None], on_key_down: Callable[[Display], None],
+                 on_key_a: Callable[[Display], None], on_key_b: Callable[[Display], None],
+                 on_rotary_increase: Callable[[Display], None], on_rotary_decrease: Callable[[Display], None],
+                 on_rotary_switch: Callable[[Display], None],
                  resolution: tuple[int, int], background: tuple[int, int, int], ui_background: tuple[int, int, int]):
         Input.__init__(self, on_key_left, on_key_right, on_key_up, on_key_down, on_key_a, on_key_b,
                        on_rotary_increase, on_rotary_decrease, on_rotary_switch)
-        self.__on_key_left = on_key_left
-        self.__on_key_right = on_key_right
-        self.__on_key_up = on_key_up
-        self.__on_key_down = on_key_down
-        self.__on_key_a = on_key_a
-        self.__on_key_b = on_key_b
-        self.__on_rotary_increase = on_rotary_increase
-        self.__on_rotary_decrease = on_rotary_decrease
+        self.__on_key_left = lambda: on_key_left(self)
+        self.__on_key_right = lambda: on_key_right(self)
+        self.__on_key_up = lambda: on_key_up(self)
+        self.__on_key_down = lambda: on_key_down(self)
+        self.__on_key_a = lambda: on_key_a(self)
+        self.__on_key_b = lambda: on_key_b(self)
+        self.__on_rotary_increase = lambda: on_rotary_increase(self)
+        self.__on_rotary_decrease = lambda: on_rotary_decrease(self)
         self.__resolution = resolution
         self.__background = background
         self.__image = Image.new('RGB', resolution, background)
@@ -60,11 +66,13 @@ class SelfManagedTkInterface(Interface, Input):
                                     command=self.__on_rotary_increase)
         button_increase.grid(row=0, column=5)
 
-    def show(self, image: Image.Image, x0, y0):
+    @override
+    def show(self, image: Image.Image, x0: int, y0: int):
         self.__image.paste(image, (x0, y0))
         self.__image_tk = ImageTk.PhotoImage(self.__image)
         self.__label.configure(image=self.__image_tk)
 
+    @override
     def close(self):
         pass
 

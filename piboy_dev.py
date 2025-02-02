@@ -1,98 +1,51 @@
-from app.ClockApp import ClockApp
-from app.DebugApp import DebugApp
-from app.FileManagerApp import FileManagerApp
-from app.RadioApp import RadioApp
-from app.UpdateApp import UpdateApp
-from app.MapApp import MapApp
-from app.EnvironmentApp import EnvironmentApp
-from data.FakeEnvironmentDataProvider import FakeEnvironmentDataProvider
-from data.IPLocationProvider import IPLocationProvider
-from data.OSMTileProvider import OSMTileProvider
-from interface.Interface import Interface
-from interface.Input import Input
-from interface.SelfManagedTkInterface import SelfManagedTkInterface
-from piboy import AppState, load_environment
 import threading
 
+from injector import Injector
+
+from app.ClockApp import ClockApp
+from app.DebugApp import DebugApp
+from app.EnvironmentApp import EnvironmentApp
+from app.FileManagerApp import FileManagerApp
+from app.MapApp import MapApp
+from app.RadioApp import RadioApp
+from app.UpdateApp import UpdateApp
+from environment import Environment
+from interaction.SelfManagedTkInteraction import SelfManagedTkInteraction
+from piboy import AppModule, AppState
+
 """
-This pi-boy script uses the SelfManagedTkInterface, which follows the usual mainloop approach. This makes it compatible
-with MacOS and maybe other desktop environments that require UI draw calls from a main thread only. Other systems may
-continue to use the other script, that is also made for the raspberry pi.
+This pi-boy script uses the SelfManagedTkInteraction, which follows the usual mainloop approach. This makes it
+compatible with MacOS and maybe other desktop environments that require UI draw calls from a main thread only. Other
+systems may continue to use the other script, that is also made for the raspberry pi.
 """
 if __name__ == '__main__':
-    INTERFACE: Interface
-    INPUT: Input
+    module = AppModule()
+    injector = Injector([module])
 
-    env = load_environment()
-    resolution = env.app_config.resolution
-    background = env.app_config.background
-    color = env.app_config.accent
-    color_dark = env.app_config.accent_dark
-    font_standard = env.app_config.font_standard
-    top_offset = env.app_config.app_top_offset
-    side_offset = env.app_config.app_side_offset
-    bottom_offset = env.app_config.app_bottom_offset
+    env = injector.get(Environment)
+    app_state = injector.get(AppState)
 
-    app_state = AppState(env)
+    __tk = SelfManagedTkInteraction(app_state.on_key_left, app_state.on_key_right,
+                                    app_state.on_key_up, app_state.on_key_down,
+                                    app_state.on_key_a, app_state.on_key_b,
+                                    app_state.on_rotary_increase, app_state.on_rotary_decrease, lambda _: None,
+                                    env.app_config.resolution, env.app_config.background, env.app_config.accent_dark)
 
-    # wrapping key functions with local interface instance
-    def on_key_left():
-        app_state.on_key_left(INTERFACE)
-
-    def on_key_right():
-        app_state.on_key_right(INTERFACE)
-
-    def on_key_up():
-        app_state.on_key_up(INTERFACE)
-
-    def on_key_down():
-        app_state.on_key_down(INTERFACE)
-
-    def on_key_a():
-        app_state.on_key_a(INTERFACE)
-
-    def on_key_b():
-        app_state.on_key_b(INTERFACE)
-
-    def on_rotary_increase():
-        app_state.on_rotary_increase(INTERFACE)
-
-    def on_rotary_decrease():
-        app_state.on_rotary_decrease(INTERFACE)
-
-    def update_display(partial=False):
-        app_state.update_display(INTERFACE, partial)
-
-    app_state.add_app(FileManagerApp(resolution, background, color, color_dark, top_offset, side_offset, bottom_offset,
-                                     font_standard)) \
-        .add_app(UpdateApp(resolution, background, color, color_dark, top_offset, side_offset, bottom_offset,
-                           font_standard)) \
-        .add_app(EnvironmentApp(update_display, FakeEnvironmentDataProvider(),
-                                resolution, background, color, color_dark, top_offset, side_offset, bottom_offset,
-                                font_standard)) \
-        .add_app(RadioApp(update_display, resolution, background, color, color_dark,
-                          top_offset, side_offset, bottom_offset, font_standard)) \
-        .add_app(DebugApp(resolution, color, color_dark)) \
-        .add_app(ClockApp(update_display, resolution, color)) \
-        .add_app(MapApp(update_display, IPLocationProvider(apply_inaccuracy=True),
-                        OSMTileProvider(background, color, env.app_config.font_standard),
-                        resolution, background, color, color_dark, top_offset, side_offset, bottom_offset,
-                        font_standard
-                        )
-                 )
-
-    __tk = SelfManagedTkInterface(on_key_left, on_key_right, on_key_up, on_key_down, on_key_a, on_key_b,
-                                  on_rotary_increase, on_rotary_decrease, lambda _: None,
-                                  resolution, background, color_dark)
-    INTERFACE = __tk
-    INPUT = __tk
+    module.register_external_tk_interaction(__tk)
+    app_state.add_app(injector.get(FileManagerApp)) \
+        .add_app(injector.get(UpdateApp)) \
+        .add_app(injector.get(EnvironmentApp)) \
+        .add_app(injector.get(RadioApp)) \
+        .add_app(injector.get(DebugApp)) \
+        .add_app(injector.get(ClockApp)) \
+        .add_app(injector.get(MapApp))
 
     # initial draw
-    app_state.update_display(INTERFACE)
+    app_state.update_display(__tk)
     app_state.active_app.on_app_enter()
 
     # watch function has to run in the background, because Tkinter mainloop must be in the main thread
-    threading.Thread(target=app_state.watch_function, args=(INTERFACE, ), daemon=True).start()
+    threading.Thread(target=app_state.watch_function, args=(__tk, ), daemon=True).start()
 
     try:
         # blocking run function

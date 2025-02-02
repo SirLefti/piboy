@@ -1,17 +1,22 @@
-from interface.Input import Input
-from typing import Callable
-import RPi.GPIO as GPIO
-import evdev
 import threading
+from typing import Callable
+
+import evdev
+import RPi.GPIO as GPIO
+
+from core.decorator import override
+from interaction.Input import Input
 
 
 class GPIOInput(Input):
 
-    def __init__(self, key_left: int, key_up: int, key_right: int, key_down: int, key_a: int, key_b: int,
+    def __init__(self, key_left: int, key_right: int, key_up: int, key_down: int, key_a: int, key_b: int,
                  rotary_device: str, rotary_switch: int,
-                 on_key_left: Callable, on_key_right: Callable, on_key_up: Callable, on_key_down: Callable,
-                 on_key_a: Callable, on_key_b: Callable, on_rotary_increase: Callable, on_rotary_decrease: Callable,
-                 on_rotary_switch: Callable, debounce: int = 50):
+                 on_key_left: Callable[[], None], on_key_right: Callable[[], None],
+                 on_key_up: Callable[[], None], on_key_down: Callable[[], None],
+                 on_key_a: Callable[[], None], on_key_b: Callable[[], None],
+                 on_rotary_increase: Callable[[], None], on_rotary_decrease: Callable[[], None],
+                 on_rotary_switch: Callable[[], None], debounce: int = 50):
         super().__init__(on_key_left, on_key_right, on_key_up, on_key_down, on_key_a, on_key_b, on_rotary_increase,
                          on_rotary_decrease, on_rotary_switch)
         self.__encoder = evdev.InputDevice(rotary_device)
@@ -51,32 +56,27 @@ class GPIOInput(Input):
                 elif event.value == 1:
                     self.on_rotary_decrease()
 
+    @override
     def close(self):
         GPIO.cleanup()
 
-    def __gpio_left(self, pin):
+    def __gpio_left(self, _):
         self.on_key_left()
 
-    def __gpio_right(self, pin):
+    def __gpio_right(self, _):
         self.on_key_right()
 
-    def __gpio_up(self, pin):
+    def __gpio_up(self, _):
         self.on_key_up()
 
-    def __gpio_down(self, pin):
+    def __gpio_down(self, _):
         self.on_key_down()
 
-    def __gpio_a(self, pin):
+    def __gpio_a(self, _):
         self.on_key_a()
 
-    def __gpio_b(self, pin):
+    def __gpio_b(self, _):
         self.on_key_b()
 
-    def __gpio_rotary_increase(self, pin):
-        self.on_rotary_increase()
-
-    def __gpio_rotary_decrease(self, pin):
-        self.on_rotary_decrease()
-
-    def __gpio_rotary_switch(self, pin):
+    def __gpio_rotary_switch(self, _):
         self.on_rotary_switch()

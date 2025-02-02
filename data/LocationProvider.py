@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
-from typing import Optional
 from dataclasses import dataclass
+from typing import Optional
+
+from core.data import DeviceStatus
 
 
 @dataclass
@@ -15,6 +17,11 @@ class LocationProvider(ABC):
     @abstractmethod
     def get_location(self) -> Location:
         """Returns a location."""
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_device_status(self) -> DeviceStatus:
+        """Returns the device status of the hardware module."""
         raise NotImplementedError
 
 

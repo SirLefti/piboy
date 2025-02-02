@@ -4,3 +4,4 @@ smbus2 >= 0.4.3
 numpy >= 2.0.0
 pyserial >= 3.5
 pynmea2 >= 1.19.0
+pyudev >= 0.24.3

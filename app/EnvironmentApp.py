@@ -1,26 +1,26 @@
+from typing import Any, Callable, Generator
+
+from injector import inject
+from PIL import Image, ImageDraw
+
 from app.App import SelfUpdatingApp
-from data.EnvironmentDataProvider import EnvironmentDataProvider, EnvironmentData
-from PIL import Image, ImageDraw, ImageFont
-from typing import Callable, Any
-import os
+from core import resources
+from core.decorator import override
+from data.EnvironmentDataProvider import EnvironmentData, EnvironmentDataProvider
+from environment import AppConfig
 
 
 class EnvironmentApp(SelfUpdatingApp):
 
-    def __init__(self, draw_callback: Callable[[Any], None],
-                 data_provider: EnvironmentDataProvider, resolution: tuple[int, int],
-                 background: tuple[int, int, int], color: tuple[int, int, int], color_dark: tuple[int, int, int],
-                 app_top_offset: int, app_side_offset: int, app_bottom_offset: int,
-                 font_standard: ImageFont.FreeTypeFont):
+    @inject
+    def __init__(self, draw_callback: Callable[[bool], None],
+                 data_provider: EnvironmentDataProvider, app_config: AppConfig):
         super().__init__(self.__update_data)
-        self.__resolution = resolution
-        self.__background = background
-        self.__color = color
-        self.__color_dark = color_dark
-        self.__app_top_offset = app_top_offset
-        self.__app_side_offset = app_side_offset
-        self.__app_bottom_offset = app_bottom_offset
-        self.__font = font_standard
+        self.__app_size = app_config.app_size
+        self.__background = app_config.background
+        self.__color = app_config.accent
+        self.__color_dark = app_config.accent_dark
+        self.__font = app_config.font_standard
 
         self.__draw_callback = draw_callback
         self.__draw_callback_kwargs = {'partial': True}
@@ -31,16 +31,17 @@ class EnvironmentApp(SelfUpdatingApp):
         except TimeoutError:
             pass
 
-        resources_path = 'resources'
-        self.__t_icon = Image.open(os.path.join(resources_path, 'temperature.png')).convert('1')
-        self.__p_icon = Image.open(os.path.join(resources_path, 'pressure.png')).convert('1')
-        self.__h_icon = Image.open(os.path.join(resources_path, 'humidity.png')).convert('1')
+        self.__t_icon = resources.temperature_icon
+        self.__p_icon = resources.pressure_icon
+        self.__h_icon = resources.humidity_icon
 
     @property
+    @override
     def refresh_time(self) -> float:
         return 1
 
     @property
+    @override
     def title(self) -> str:
         return 'ENV'
 
@@ -51,12 +52,12 @@ class EnvironmentApp(SelfUpdatingApp):
             self.__data = None
         self.__draw_callback(**self.__draw_callback_kwargs)
 
-    def draw(self, image: Image.Image, partial=False) -> tuple[Image.Image, int, int]:
+    @override
+    def draw(self, image: Image.Image, partial=False) -> Generator[tuple[Image.Image, int, int], Any, None]:
         draw = ImageDraw.Draw(image)
-        width, height = self.__resolution
+        width, height = self.__app_size
         icon_gap = 10
-        left_top = ((width - self.__t_icon.width - self.__p_icon.width - self.__h_icon.width - 2 * icon_gap) // 2,
-                    self.__app_top_offset + 50)
+        left_top = ((width - self.__t_icon.width - self.__p_icon.width - self.__h_icon.width - 2 * icon_gap) // 2, 50)
 
         temperature_xy = left_top
         pressure_xy = (temperature_xy[0] + self.__t_icon.width + icon_gap, temperature_xy[1])
@@ -93,24 +94,6 @@ class EnvironmentApp(SelfUpdatingApp):
         if partial:
             right_bottom = (humidity_xy[0] + (self.__h_icon.width - h_text_width) // 2 + h_text_width,
                             draw_area_left_top[1] + icon_gap + max(t_text_height, p_text_height, h_text_height))
-            return image.crop(draw_area_left_top + right_bottom), *draw_area_left_top  # noqa (unpacking type check fail)
+            yield image.crop(draw_area_left_top + right_bottom), *draw_area_left_top  # noqa (unpacking type check fail)
         else:
-            return image, 0, 0
-
-    def on_key_left(self):
-        pass
-
-    def on_key_right(self):
-        pass
-
-    def on_key_up(self):
-        pass
-
-    def on_key_down(self):
-        pass
-
-    def on_key_a(self):
-        pass
-
-    def on_key_b(self):
-        pass
+            yield image, 0, 0

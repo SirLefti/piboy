@@ -1,13 +1,21 @@
-from abc import ABC, abstractmethod
-from app.App import SelfUpdatingApp
-from PIL import Image, ImageDraw, ImageFont
-from typing import Callable, Optional, Any
-from subprocess import run, PIPE
-import pyaudio
-import wave
 import os
-import re
 import random
+import re
+import threading
+import time
+import wave
+from abc import ABC, abstractmethod
+from subprocess import PIPE, run
+from typing import Any, Callable, Generator, Optional
+
+import pyaudio
+from injector import inject
+from PIL import Image, ImageDraw
+
+from app.App import SelfUpdatingApp
+from core import resources
+from core.decorator import override
+from environment import AppConfig
 
 
 class RadioApp(SelfUpdatingApp):
@@ -47,8 +55,8 @@ class RadioApp(SelfUpdatingApp):
             a background color, and also values determining if it represents focused and selected.
             Initially, the state members are all none, replace them before usage or create new ones for a specific use.
             """
-            NONE: 'RadioApp.Control.SelectionState' = None
-            FOCUSED: 'RadioApp.Control.SelectionState' = None
+            NONE: 'RadioApp.Control.SelectionState'
+            FOCUSED: 'RadioApp.Control.SelectionState'
 
             def __init__(self, color: tuple[int, int, int], background_color: tuple[int, int, int],
                          is_focused: bool, is_selected: bool):
@@ -187,20 +195,28 @@ class RadioApp(SelfUpdatingApp):
 
     class AudioPlayer:
 
-        def __init__(self):
+        def __init__(self, callback_next: Callable[[], None]):
             self.__player = pyaudio.PyAudio()
             self.__total_frames = 0
             self.__played_frames = 0
             self.__wave_read: Optional[wave.Wave_read] = None
             self.__stream: Optional[pyaudio.Stream] = None
+            self.__callback_next = callback_next
+            self.__is_continuing = False
 
         def __stream_callback(self, _1, frame_count, _2, _3) -> tuple[bytes, int]:
             data = self.__wave_read.readframes(frame_count)
             self.__played_frames += frame_count
             if self.__played_frames >= self.__total_frames:
+                thread_call_next = threading.Thread(target=self.__delayed_call_next, args=(), daemon=True)
+                thread_call_next.start()
                 return bytes(), pyaudio.paComplete
             else:
                 return data, pyaudio.paContinue
+
+        def __delayed_call_next(self, delay: int = 1):
+            time.sleep(delay)
+            self.__callback_next()
 
         def load_file(self, file_path: str):
             self.__wave_read = wave.open(file_path, 'rb')
@@ -217,12 +233,14 @@ class RadioApp(SelfUpdatingApp):
         def start_stream(self) -> bool:
             if self.__stream:
                 self.__stream.start_stream()
+                self.__is_continuing = True
                 return True
             return False
 
         def pause_stream(self) -> bool:
             if self.__stream:
                 self.__stream.stop_stream()
+                self.__is_continuing = False
                 return True
             return False
 
@@ -231,6 +249,7 @@ class RadioApp(SelfUpdatingApp):
                 self.__stream.stop_stream()
                 self.__stream.close()
                 self.__stream = None
+                self.__is_continuing = False
                 self.__total_frames = 0
                 self.__played_frames = 0
                 return True
@@ -242,28 +261,33 @@ class RadioApp(SelfUpdatingApp):
 
         @property
         def is_active(self) -> bool:
-            return self.__stream and self.__stream.is_active()
+            return self.__stream is not None and self.__stream.is_active()
+
+        @property
+        def is_continuing(self) -> bool:
+            return self.__is_continuing
 
         @property
         def progress(self) -> Optional[float]:
-            return (self.__played_frames / self.__total_frames) if self.__total_frames != 0 else None
+            if self.__total_frames == 0:
+                return None
+            if self.__total_frames <= self.__played_frames:
+                return 1
+            return self.__played_frames / self.__total_frames
 
-    def __init__(self, draw_callback: Callable[[Any], None],
-                 resolution: tuple[int, int], background: tuple[int, int, int], color: tuple[int, int, int],
-                 color_dark: tuple[int, int, int], app_top_offset: int, app_side_offset: int, app_bottom_offset: int,
-                 font_standard: ImageFont.FreeTypeFont):
+    __playback_control_group = ControlGroup()
+
+    @inject
+    def __init__(self, draw_callback: Callable[[bool], None], app_config: AppConfig):
         super().__init__(self.__self_update)
         self.__draw_callback = draw_callback
         self.__draw_callback_kwargs = {'partial': True}
 
-        self.__resolution = resolution
-        self.__background = background
-        self.__color = color
-        self.__color_dark = color_dark
-        self.__app_top_offset = app_top_offset
-        self.__app_side_offset = app_side_offset
-        self.__app_bottom_offset = app_bottom_offset
-        self.__font = font_standard
+        self.__app_size = app_config.app_size
+        self.__background = app_config.background
+        self.__color = app_config.accent
+        self.__color_dark = app_config.accent_dark
+        self.__font = app_config.font_standard
 
         self.__directory = 'media'
         self.__supported_extensions = ['.wav']
@@ -273,166 +297,167 @@ class RadioApp(SelfUpdatingApp):
         self.__top_index = 0  # what is on top in case the list is greater than screen space
         self.__playlist: list[int] = list(range(0, len(self.__files)))  # order of the tracks to play
         self.__playing_index = 0  # what we are currently playing from the playlist
-        self.__player = self.AudioPlayer()
         self.__is_random = False
         self.__volume: Optional[int] = None
         try:
-            # will only work on raspberry pi for no
+            # will only work on raspberry pi for now
             self.__volume = self.__get_volume()
         except (FileNotFoundError, ValueError):
             pass
 
+        self.__player = self.AudioPlayer(self.__call_next)
+
         # init selection states
-        self.Control.SelectionState.NONE = self.Control.SelectionState(color_dark, background, False, False)
-        self.Control.SelectionState.FOCUSED = self.Control.SelectionState(color, background, True, False)
-
-        resources_path = 'resources'
-        stop_icon = Image.open(os.path.join(resources_path, 'stop.png')).convert('1')
-        previous_icon = Image.open(os.path.join(resources_path, 'previous.png')).convert('1')
-        play_icon = Image.open(os.path.join(resources_path, 'play.png')).convert('1')
-        pause_icon = Image.open(os.path.join(resources_path, 'pause.png')).convert('1')
-        skip_icon = Image.open(os.path.join(resources_path, 'skip.png')).convert('1')
-        order_icon = Image.open(os.path.join(resources_path, 'order.png')).convert('1')
-        random_icon = Image.open(os.path.join(resources_path, 'random.png')).convert('1')
-        volume_decrease_icon = Image.open(os.path.join(resources_path, 'volume_decrease.png')).convert('1')
-        volume_increase_icon = Image.open(os.path.join(resources_path, 'volume_increase.png')).convert('1')
-
-        def play_action() -> bool:
-            """
-            Loads current selected file if no stream is loaded.
-            Resumes playing a loaded stream.
-            :return: `True` if stream was started, else `False` (e.g. playlist is empty)
-            """
-            if len(self.__playlist) == 0:
-                return False
-            if self.__selected_index != self.__playlist[self.__playing_index]:
-                self.__playing_index = self.__playlist.index(self.__selected_index)
-                if self.__player.has_stream:
-                    self.__player.stop_stream()
-            if not self.__player.has_stream:
-                self.__player.load_file(os.path.join(self.__directory,
-                                                     self.__files[self.__playlist[self.__playing_index]]))
-            self.__player.start_stream()
-            return True
-
-        def pause_action() -> bool:
-            """
-            Pauses a currently loaded stream.
-            :return: `True` if stream was paused, else `False` (e.g. there was no active stream)
-            """
-            return self.__player.pause_stream()
-
-        def stop_action():
-            """
-            Stops and clears a currently loaded stream.
-            """
-            self.__player.stop_stream()
-
-        def prev_action():
-            """
-            Stops and clears a stream, selects a previous track and plays it if a stream is loaded.
-            Just selects a previous track otherwise.
-            """
-            self.__playing_index = (self.__playing_index - 1) % len(self.__files)
-            self.__selected_index = self.__playlist[self.__playing_index]
-
-            if self.__player.is_active:
-                stop_action()
-                play_action()
-
-        def skip_action():
-            """
-            Stops and clears a stream, selects a next track and plays it if a stream is loaded.
-            Just selects a next track otherwise.
-            """
-            self.__playing_index = (self.__playing_index + 1) % len(self.__files)
-            self.__selected_index = self.__playlist[self.__playing_index]
-
-            if self.__player.is_active:
-                stop_action()
-                play_action()
-
-        def random_action() -> bool:
-            """
-            Shuffles the playlist and places the current index at the track we are currently playing or looking at.
-            :return: always `True`
-            """
-            self.__is_random = True
-            random.shuffle(self.__playlist)
-            # set playlist index to the track we are currently playing or looking at
-            self.__playing_index = self.__playlist.index(self.__selected_index)
-            return True
-
-        def order_action() -> bool:
-            """
-            Creates an ordered playlist and places the current index at the track we are currently playing or looking
-            at.
-            :return: always `True`
-            """
-            self.__is_random = False
-            self.__playlist = list(range(0, len(self.__files)))
-            # set playlist index to the track we are currently playing or looking at
-            self.__playing_index = self.__selected_index
-            return True
-
-        def decrease_volume_action():
-            """
-            Decreases the volume by one volume step. Only works on Linux with `amixer`
-            """
-            current_value = self.__get_volume()
-            if current_value % self.__VOLUME_STEP == 0:
-                self.__set_volume(max(current_value - self.__VOLUME_STEP, 0))
-            else:
-                aligned_value = current_value // self.__VOLUME_STEP * self.__VOLUME_STEP
-                self.__set_volume(max(aligned_value - self.__VOLUME_STEP, 0))
-            self.__volume = self.__get_volume()
-
-        def increase_volume_action():
-            """
-            Increases the volume by one volume step. Only works on Linux with `amixer`
-            """
-            current_value = self.__get_volume()
-            if current_value % self.__VOLUME_STEP == 0:
-                self.__set_volume(min(current_value + self.__VOLUME_STEP, 100))
-            else:
-                aligned_value = (current_value + self.__VOLUME_STEP) // self.__VOLUME_STEP * self.__VOLUME_STEP
-                self.__set_volume(min(aligned_value + self.__VOLUME_STEP, 100))
-            self.__volume = self.__get_volume()
+        self.Control.SelectionState.NONE = self.Control.SelectionState(self.__color_dark, self.__background, False, False)
+        self.Control.SelectionState.FOCUSED = self.Control.SelectionState(self.__color, self.__background, True, False)
 
         control_group = self.ControlGroup()
         self.__controls = [
-            self.InstantControl(stop_icon, stop_action, control_group),
-            self.InstantControl(previous_icon, prev_action),
-            self.SwitchControl(play_icon, pause_icon, pause_action, play_action, control_group),
-            self.InstantControl(skip_icon, skip_action),
-            self.SwitchControl(order_icon, random_icon, order_action, random_action),
-            self.InstantControl(volume_decrease_icon, decrease_volume_action),
-            self.InstantControl(volume_increase_icon, increase_volume_action)
+            self.InstantControl(resources.stop_icon, self.stop_action, control_group),
+            self.InstantControl(resources.previous_icon, self.prev_action),
+            self.SwitchControl(resources.play_icon, resources.pause_icon, self.pause_action, self.play_action, control_group),
+            self.InstantControl(resources.skip_icon, self.skip_action),
+            self.SwitchControl(resources.order_icon, resources.random_icon, self.order_action, self.random_action),
+            self.InstantControl(resources.volume_decrease_icon, self.decrease_volume_action),
+            self.InstantControl(resources.volume_increase_icon, self.increase_volume_action)
         ]
         self.__selected_control_index = 2
+
+    def play_action(self) -> bool:
+        """
+        Loads current selected file if no stream is loaded.
+        Resumes playing a loaded stream.
+        :return: `True` if stream was started, else `False` (e.g. playlist is empty)
+        """
+        if len(self.__playlist) == 0:
+            return False
+        if self.__selected_index != self.__playlist[self.__playing_index]:
+            self.__playing_index = self.__playlist.index(self.__selected_index)
+            if self.__player.has_stream:
+                self.__player.stop_stream()
+        if not self.__player.has_stream:
+            self.__player.load_file(os.path.join(self.__directory,
+                                                 self.__files[self.__playlist[self.__playing_index]]))
+        self.__player.start_stream()
+        return True
+
+    def pause_action(self) -> bool:
+        """
+        Pauses a currently loaded stream.
+        :return: `True` if stream was paused, else `False` (e.g. there was no active stream)
+        """
+        return self.__player.pause_stream()
+
+    def stop_action(self):
+        """
+        Stops and clears a currently loaded stream.
+        """
+        self.__player.stop_stream()
+
+    def prev_action(self):
+        """
+        Stops and clears a stream, selects a previous track and plays it if a stream is loaded.
+        Just selects a previous track otherwise.
+        """
+        self.__playing_index = (self.__playing_index - 1) % len(self.__files)
+        self.__selected_index = self.__playlist[self.__playing_index]
+
+        if self.__player.is_active:
+            self.stop_action()
+            self.play_action()
+
+    def skip_action(self):
+        """
+        Stops and clears a stream, selects a next track and plays it if a stream is loaded.
+        Just selects a next track otherwise.
+        """
+        self.__playing_index = (self.__playing_index + 1) % len(self.__files)
+        self.__selected_index = self.__playlist[self.__playing_index]
+
+        if self.__player.is_active:
+            self.stop_action()
+            self.play_action()
+
+    def random_action(self) -> bool:
+        """
+        Shuffles the playlist and places the current index at the track we are currently playing or looking at.
+        :return: always `True`
+        """
+        self.__is_random = True
+        random.shuffle(self.__playlist)
+        # set playlist index to the track we are currently playing or looking at
+        self.__playing_index = self.__playlist.index(self.__selected_index)
+        return True
+
+    def order_action(self) -> bool:
+        """
+        Creates an ordered playlist and places the current index at the track we are currently playing or looking
+        at.
+        :return: always `True`
+        """
+        self.__is_random = False
+        self.__playlist = list(range(0, len(self.__files)))
+        # set playlist index to the track we are currently playing or looking at
+        self.__playing_index = self.__selected_index
+        return True
+
+    def decrease_volume_action(self):
+        """
+        Decreases the volume by one volume step. Only works on Linux with `amixer`
+        """
+        current_value = self.__get_volume()
+        if current_value % self.__VOLUME_STEP == 0:
+            self.__set_volume(max(current_value - self.__VOLUME_STEP, 0))
+        else:
+            aligned_value = current_value // self.__VOLUME_STEP * self.__VOLUME_STEP
+            self.__set_volume(max(aligned_value - self.__VOLUME_STEP, 0))
+        self.__volume = self.__get_volume()
+
+    def increase_volume_action(self):
+        """
+        Increases the volume by one volume step. Only works on Linux with `amixer`
+        """
+        current_value = self.__get_volume()
+        if current_value % self.__VOLUME_STEP == 0:
+            self.__set_volume(min(current_value + self.__VOLUME_STEP, 100))
+        else:
+            aligned_value = (current_value + self.__VOLUME_STEP) // self.__VOLUME_STEP * self.__VOLUME_STEP
+            self.__set_volume(min(aligned_value + self.__VOLUME_STEP, 100))
+        self.__volume = self.__get_volume()
+
+    def __call_next(self):
+        # go to next file if player was not paused or stopped between end of file and callback
+        if self.__player.is_continuing:
+            self.__playing_index = (self.__playing_index + 1) % len(self.__files)
+            self.__selected_index = self.__playlist[self.__playing_index]
+            self.__player.stop_stream()
+            self.__player.load_file(os.path.join(self.__directory, self.__files[self.__playlist[self.__playing_index]]))
+            self.__player.start_stream()
 
     def __self_update(self):
         self.__draw_callback(**self.__draw_callback_kwargs)
 
     @property
+    @override
     def title(self) -> str:
         return 'RAD'
 
     @property
+    @override
     def refresh_time(self) -> float:
         return 1.0
 
-    def draw(self, image: Image.Image, partial=False) -> tuple[Image.Image, int, int]:
+    @override
+    def draw(self, image: Image.Image, partial=False) -> Generator[tuple[Image.Image, int, int], Any, None]:
         draw = ImageDraw.Draw(image)
-        width, height = self.__resolution
+        width, height = self.__app_size
 
         # draw controls
         controls_total_width = sum([c.size[0] for c in self.__controls]) + self.__CONTROL_PADDING * (
                 len(self.__controls) - 1)
         max_control_height = max([c.size[1] for c in self.__controls])
         cursor: tuple[int, int] = (width // 2 - controls_total_width // 2,
-                                   height - self.__app_bottom_offset - max_control_height
-                                   - self.__CONTROL_BOTTOM_OFFSET)
+                                   height - max_control_height - self.__CONTROL_BOTTOM_OFFSET)
         for control in self.__controls:
             c_width, c_height = control.size
             control.draw(draw, (cursor[0], cursor[1] + (max_control_height - c_height) // 2))
@@ -447,10 +472,9 @@ class RadioApp(SelfUpdatingApp):
         vertical_limit = vertical_limit - self.__META_INFO_HEIGHT
 
         # draw currently playing track
-        max_width = width - 2 * self.__app_side_offset
         text = f'{self.__player.progress:.1%}: {self.__files[self.__playlist[self.__playing_index]]}' \
             if self.__player.has_stream else 'Empty'
-        while self.__font.getbbox(text)[2] > max_width:
+        while self.__font.getbbox(text)[2] > width:
             text = text[:-1]  # cut off last char until it fits
         _, _, t_width, t_height = self.__font.getbbox(text)
         draw.text((width // 2 - t_width // 2, vertical_limit - self.__META_INFO_HEIGHT // 2 - t_height // 2),
@@ -458,9 +482,9 @@ class RadioApp(SelfUpdatingApp):
         vertical_limit = vertical_limit - self.__META_INFO_HEIGHT
 
         # draw track list
-        left_top = (self.__app_side_offset, self.__app_top_offset)
+        left_top = (0, 0)
         left, top = left_top
-        right_bottom = (width - self.__app_side_offset, vertical_limit)
+        right_bottom = (width, vertical_limit)
         right, bottom = right_bottom
         max_entries = (bottom - top) // self.__LINE_HEIGHT
         if len(self.__files) > max_entries:
@@ -485,10 +509,10 @@ class RadioApp(SelfUpdatingApp):
             cursor = (cursor[0], cursor[1] + self.__LINE_HEIGHT)
 
         if partial:
-            right_bottom = width - self.__app_side_offset, height - self.__app_bottom_offset
-            return image.crop(left_top + right_bottom), *left_top  # noqa (unpacking type check fail)
+            right_bottom = width, height
+            yield image.crop(left_top + right_bottom), *left_top  # noqa (unpacking type check fail)
         else:
-            return image, 0, 0
+            yield image, 0, 0
 
     def __get_files(self) -> list[str]:
         return sorted([f for f in os.listdir(self.__directory) if os.path.splitext(f)[1] in
@@ -528,28 +552,31 @@ class RadioApp(SelfUpdatingApp):
         if result.returncode != 0:
             raise ValueError(f'Error setting volume value: {result.returncode}')
 
+    @override
     def on_key_left(self):
         self.__controls[self.__selected_control_index].on_blur()
         self.__selected_control_index = max(self.__selected_control_index - 1, 0)
         self.__controls[self.__selected_control_index].on_focus()
 
+    @override
     def on_key_right(self):
         self.__controls[self.__selected_control_index].on_blur()
         self.__selected_control_index = min(self.__selected_control_index + 1, len(self.__controls) - 1)
         self.__controls[self.__selected_control_index].on_focus()
 
+    @override
     def on_key_up(self):
         self.__selected_index = max(self.__selected_index - 1, 0)
 
+    @override
     def on_key_down(self):
         self.__selected_index = min(self.__selected_index + 1, len(self.__files) - 1)
 
+    @override
     def on_key_a(self):
         self.__controls[self.__selected_control_index].on_select()
 
-    def on_key_b(self):
-        pass
-
+    @override
     def on_app_enter(self):
         super().on_app_enter()
         self.__controls[self.__selected_control_index].on_focus()

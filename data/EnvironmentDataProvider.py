@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
+from core.data import DeviceStatus
+
 
 @dataclass
 class EnvironmentData:
@@ -15,4 +17,9 @@ class EnvironmentDataProvider(ABC):
     @abstractmethod
     def get_environment_data(self) -> EnvironmentData:
         """Returns an object containing temperature, pressure and humidity."""
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_device_status(self) -> DeviceStatus:
+        """Returns the device status of the hardware module."""
         raise NotImplementedError

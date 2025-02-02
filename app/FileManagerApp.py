@@ -1,8 +1,14 @@
-from app.App import App
-from PIL import Image, ImageDraw, ImageOps, ImageFont
-from typing import Callable, Optional
 import os
 import shutil
+from typing import Any, Callable, Generator, Optional
+
+from injector import inject
+from PIL import Image, ImageDraw, ImageOps
+
+from app.App import App
+from core import resources
+from core.decorator import override
+from environment import AppConfig
 
 
 class FileManagerApp(App):
@@ -114,18 +120,13 @@ class FileManagerApp(App):
         def files(self) -> list[str]:
             return sorted([f for f in os.listdir(self.__directory)], key=lambda f: f.lower())
 
-    def __init__(self, resolution: tuple[int, int],
-                 background: tuple[int, int, int], color: tuple[int, int, int], color_dark: tuple[int, int, int],
-                 app_top_offset: int, app_side_offset: int, app_bottom_offset: int,
-                 font_standard: ImageFont.FreeTypeFont):
-        self.__resolution = resolution
-        self.__background = background
-        self.__color = color
-        self.__color_dark = color_dark
-        self.__app_top_offset = app_top_offset
-        self.__app_side_offset = app_side_offset
-        self.__app_bottom_offset = app_bottom_offset
-        self.__font = font_standard
+    @inject
+    def __init__(self, app_config: AppConfig):
+        self.__app_size = app_config.app_size
+        self.__background = app_config.background
+        self.__color = app_config.accent
+        self.__color_dark = app_config.accent_dark
+        self.__font = app_config.font_standard
 
         self.__left_directory = self.DirectoryState()
         self.__right_directory = self.DirectoryState()
@@ -152,6 +153,7 @@ class FileManagerApp(App):
             return self.__right_directory
 
     @property
+    @override
     def title(self) -> str:
         return "INV"
 
@@ -173,9 +175,10 @@ class FileManagerApp(App):
         left, top = left_top
         right, bottom = right_bottom
 
-        sizes = [font.getbbox(text)[2:] for text in popup.options]
+        options_widths = [int(font.getbbox(text)[2]) for text in popup.options]
         popup_width = self.__next_even(
-            max(max(e[0] for e in sizes), popup_min_width))  # require at least popup_min_width
+            max(max(options_widths), popup_min_width)
+        )  # require at least popup_min_width
         popup_height = line_height * len(popup.options)
 
         center = left + int((right - left) / 2), top + int((bottom - top) / 2)
@@ -219,14 +222,10 @@ class FileManagerApp(App):
         line_height = self.LINE_HEIGHT  # height of a line entry in the directory
         side_padding = 3  # padding to the side of the directory background
         symbol_dimensions = 10  # size of symbol entry
-        symbol_padding = (line_height - symbol_dimensions) / 2  # space around symbol
+        symbol_padding = (line_height - symbol_dimensions) // 2  # space around symbol
         left, top = left_top  # unpacking top left anchor point
         right, bottom = right_bottom  # unpacking bottom right anchor point
         font = self.__font
-
-        resources_path = 'resources'
-        file_icon = 'file.png'
-        directory_icon = 'directory.png'
 
         # draw background if this directory is selected
         if is_selected:
@@ -263,11 +262,9 @@ class FileManagerApp(App):
                     break
 
                 if os.path.isfile(os.path.join(state.directory, file)):
-                    icon = Image.open(os.path.join(resources_path, file_icon)).convert('1')
-                    draw.bitmap(start, ImageOps.invert(icon), fill=self.__color)
+                    draw.bitmap(start, ImageOps.invert(resources.file_icon), fill=self.__color)
                 else:
-                    icon = Image.open(os.path.join(resources_path, directory_icon)).convert('1')
-                    draw.bitmap(start, ImageOps.invert(icon), fill=self.__color)
+                    draw.bitmap(start, ImageOps.invert(resources.directory_icon), fill=self.__color)
 
                 while font.getbbox(file)[2] > right - left - symbol_dimensions - 2 * symbol_padding:
                     file = file[:-1]  # cut off last char until it fits
@@ -282,8 +279,9 @@ class FileManagerApp(App):
         except PermissionError:
             self.__draw_error(draw, left_top, right_bottom, 'Permission denied')
 
-    def draw(self, image: Image.Image, partial=False) -> tuple[Image.Image, int, int]:
-        width, height = self.__resolution
+    @override
+    def draw(self, image: Image.Image, partial=False) -> Generator[tuple[Image.Image, int, int], Any, None]:
+        width, height = self.__app_size
         is_left_tab = self.__selected_tab == 0
         is_right_tab = self.__selected_tab == 1
         tab_changed = self.__tab_changed
@@ -292,26 +290,24 @@ class FileManagerApp(App):
         draw_right = not partial or is_right_tab or tab_changed
         draw = ImageDraw.Draw(image)
 
+        def draw_split_line():
+            start = (width / 2 - 1, 0)
+            end = (width / 2, height)
+            draw.rectangle(start + end, fill=self.__color)
+
         if draw_left:
-            left_top = (self.__app_side_offset, self.__app_top_offset)
-            right_bottom = (int(width / 2) - 1, height - self.__app_bottom_offset)
+            left_top = (0, 0)
+            right_bottom = (int(width / 2), height)
             self.__draw_directory(draw, left_top, right_bottom, self.__left_directory, is_selected=is_left_tab)
-            if partial and not tab_changed:
-                return image.crop(left_top + right_bottom), *left_top  # noqa (unpacking type check fail)
+            draw_split_line()
+            yield image.crop(left_top + right_bottom), *left_top  # noqa (unpacking type check fail)
 
         if draw_right:
-            left_top = (int(width / 2) + 1, self.__app_top_offset)
-            right_bottom = (width - self.__app_side_offset, height - self.__app_bottom_offset)
+            left_top = (int(width / 2), 0)
+            right_bottom = (width, height)
             self.__draw_directory(draw, left_top, right_bottom, self.__right_directory, is_selected=is_right_tab)
-            if partial and not tab_changed:
-                return image.crop(left_top + right_bottom), *left_top   # noqa (unpacking type check fail)
-
-        # split line
-        start = (width / 2 - 1, self.__app_top_offset)
-        end = (width / 2, height - self.__app_bottom_offset)
-        draw.rectangle(start + end, fill=self.__color)
-
-        return image, 0, 0
+            draw_split_line()
+            yield image.crop(left_top + right_bottom), *left_top   # noqa (unpacking type check fail)
 
     def _enter(self):
         path = os.path.join(self.__active_directory.directory, self.__active_directory.files[self.__active_directory
@@ -363,14 +359,17 @@ class FileManagerApp(App):
             self.__active_directory.error_message = self.DirectoryState.ErrorMessage('Permission denied')
         self.__active_directory.remove_popup()
 
+    @override
     def on_key_left(self):
         if self.__active_directory.popup is None and self.__active_directory.error_message is None:
             self.__change_tab()
 
+    @override
     def on_key_right(self):
         if self.__active_directory.popup is None and self.__active_directory.error_message is None:
             self.__change_tab()
 
+    @override
     def on_key_up(self):
         if self.__active_directory.error_message is not None:
             pass
@@ -379,6 +378,7 @@ class FileManagerApp(App):
         else:
             self.__active_directory.decrease_index()
 
+    @override
     def on_key_down(self):
         if self.__active_directory.error_message is not None:
             pass
@@ -387,6 +387,7 @@ class FileManagerApp(App):
         else:
             self.__active_directory.increase_index()
 
+    @override
     def on_key_a(self):
         path = os.path.join(self.__active_directory.directory, self.__active_directory.files[self.__active_directory
                             .selected_index])
@@ -403,6 +404,7 @@ class FileManagerApp(App):
                 self.__active_directory.popup = self.DirectoryState.Popup(['Copy', 'Move', 'Delete'],
                                                                           [self._copy, self._move, self._delete])
 
+    @override
     def on_key_b(self):
         if self.__active_directory.error_message is not None:
             self.__active_directory.remove_error_message()
@@ -419,9 +421,3 @@ class FileManagerApp(App):
                     self.__active_directory.selected_index = index
                 except StopIteration:
                     pass
-
-    def on_app_enter(self):
-        pass
-
-    def on_app_leave(self):
-        pass

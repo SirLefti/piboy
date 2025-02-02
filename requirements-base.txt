@@ -2,3 +2,5 @@ Pillow >= 10.3.0
 requests >= 2.32.0
 PyYAML >= 6.0
 pyaudio >= 0.2.14
+injector >= 0.22.0
+typing-extensions >= 4.12.0; python_version < '3.12'

@@ -18,11 +18,12 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-from enum import Enum
 import time
+from enum import Enum
+
 import numpy as np
-from PIL import Image, ImageDraw
 import RPi.GPIO as GPIO
+from PIL import Image, ImageDraw
 from spidev import SpiDev
 
 # constants
@@ -99,7 +100,7 @@ class ILI9486:
         """Returns the display dimensions in portrait mode, no matter what mode is used"""
         return LCD_WIDTH, LCD_HEIGHT
 
-    def __init__(self, spi: SpiDev, dc: int, rst: int = None, *, origin: Origin = Origin.UPPER_LEFT):
+    def __init__(self, spi: SpiDev, dc: int, rst: int | None = None, *, origin: Origin = Origin.UPPER_LEFT):
         """Creates an instance of the display using the given SPI connection. Must provide the SPI driver and the GPIO
         pin number for the DC pin. Can optionally provide the GPIO pin number for the reset pin. Optionally the origin
         can be set. The default is UPPER_LEFT, which is landscape mode this the bottom of the image located at the

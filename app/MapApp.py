@@ -1,10 +1,15 @@
-from app.App import SelfUpdatingApp
-from data.LocationProvider import LocationProvider, LocationException, Location
-from data.TileProvider import TileProvider
-from typing import Callable, Any, Optional, Union
-from PIL import Image, ImageDraw, ImageOps, ImageFont
-import os.path
 import math
+from typing import Any, Callable, Generator, Optional, Union
+
+from injector import inject
+from PIL import Image, ImageDraw, ImageOps
+
+from app.App import SelfUpdatingApp
+from core import resources
+from core.decorator import override
+from data.LocationProvider import Location, LocationException, LocationProvider
+from data.TileProvider import TileProvider
+from environment import AppConfig
 
 
 class MapApp(SelfUpdatingApp):
@@ -40,9 +45,9 @@ class MapApp(SelfUpdatingApp):
             def background_color(self) -> tuple[int, int, int]:
                 return self.__background_color
 
-        NONE: SelectionState = None
-        FOCUSED: SelectionState = None
-        SELECTED: SelectionState = None
+        NONE: SelectionState
+        FOCUSED: SelectionState
+        SELECTED: SelectionState
 
         def __init__(self, icon_bitmap: Image.Image, initial_state: SelectionState,
                      on_select: Optional[Callable[[], None]] = None, on_deselect: Optional[Callable[[], None]] = None,
@@ -108,25 +113,20 @@ class MapApp(SelfUpdatingApp):
         def is_selected(self) -> bool:
             return self.__selection_state == self.SELECTED
 
-    def __init__(self, draw_callback: Callable[[Any], None],
-                 location_provider: LocationProvider, tile_provider: TileProvider, resolution: tuple[int, int],
-                 background: tuple[int, int, int], color: tuple[int, int, int], color_dark: tuple[int, int, int],
-                 app_top_offset: int, app_side_offset: int, app_bottom_offset: int,
-                 font_standard: ImageFont.FreeTypeFont):
+    @inject
+    def __init__(self, draw_callback: Callable[[bool], None],
+                 location_provider: LocationProvider, tile_provider: TileProvider, app_config: AppConfig):
         super().__init__(self.__update_location)
-        self.__resolution = resolution
-        self.__background = background
-        self.__color = color
-        self.__color_dark = color_dark
-        self.__app_top_offset = app_top_offset
-        self.__app_side_offset = app_side_offset
-        self.__app_bottom_offset = app_bottom_offset
-        self.__font = font_standard
+        self.__app_size = app_config.app_size
+        self.__background = app_config.background
+        self.__color = app_config.accent
+        self.__color_dark = app_config.accent_dark
+        self.__font = app_config.font_standard
 
         # init selection states
-        self.Control.NONE = self.Control.SelectionState(color_dark, background)
-        self.Control.FOCUSED = self.Control.SelectionState(color, background)
-        self.Control.SELECTED = self.Control.SelectionState(background, color)
+        self.Control.NONE = self.Control.SelectionState(self.__color_dark, self.__background)
+        self.Control.FOCUSED = self.Control.SelectionState(self.__color, self.__background)
+        self.Control.SELECTED = self.Control.SelectionState(self.__background, self.__color)
 
         self.__draw_callback = draw_callback
         self.__draw_callback_kwargs = {'partial': True}
@@ -141,12 +141,6 @@ class MapApp(SelfUpdatingApp):
             self.__connection_lost = False
         except LocationException:
             self.__connection_lost = True
-
-        resources_path = 'resources'
-        minus_icon = Image.open(os.path.join(resources_path, 'minus.png')).convert('1')
-        plus_icon = Image.open(os.path.join(resources_path, 'plus.png')).convert('1')
-        move_icon = Image.open(os.path.join(resources_path, 'move.png')).convert('1')
-        focus_icon = Image.open(os.path.join(resources_path, 'focus.png')).convert('1')
 
         def zoom_in():
             if self.__zoom + 1 in self.__tile_provider.zoom_range:
@@ -173,15 +167,15 @@ class MapApp(SelfUpdatingApp):
             self.__y_offset += 1
 
         self.__controls: list[MapApp.Control] = [
-            self.Control(ImageOps.invert(minus_icon), initial_state=self.Control.NONE,
+            self.Control(ImageOps.invert(resources.minus_icon), initial_state=self.Control.NONE,
                          on_select=zoom_out, instant_action=True),
-            self.Control(ImageOps.invert(plus_icon), initial_state=self.Control.NONE,
+            self.Control(ImageOps.invert(resources.plus_icon), initial_state=self.Control.NONE,
                          on_select=zoom_in, instant_action=True),
-            self.Control(ImageOps.invert(move_icon), initial_state=self.Control.NONE,
+            self.Control(ImageOps.invert(resources.move_icon), initial_state=self.Control.NONE,
                          on_key_left=move_left, on_key_right=move_right,
                          on_key_up=move_up, on_key_down=move_down,
                          on_select=self.stop_updating, on_deselect=self.start_updating),
-            self.Control(ImageOps.invert(focus_icon), initial_state=self.Control.NONE,
+            self.Control(ImageOps.invert(resources.focus_icon), initial_state=self.Control.NONE,
                          on_select=reset_offset, instant_action=True)
         ]
         self.__focused_control_index = 0
@@ -189,10 +183,12 @@ class MapApp(SelfUpdatingApp):
         self.__controls[self.__focused_control_index].on_focus()
 
     @property
+    @override
     def title(self) -> str:
         return 'MAP'
 
     @property
+    @override
     def refresh_time(self) -> float:
         return 2.0
 
@@ -205,17 +201,17 @@ class MapApp(SelfUpdatingApp):
                 self.__connection_lost = True
             self.__draw_callback(**self.__draw_callback_kwargs)
 
-    def draw(self, image: Image.Image, partial=False) -> tuple[Image.Image, int, int]:
+    @override
+    def draw(self, image: Image.Image, partial=False) -> Generator[tuple[Image.Image, int, int], Any, None]:
         draw = ImageDraw.Draw(image)
-        width, height = self.__resolution
-        left_top = (self.__app_side_offset, self.__app_top_offset)
+        width, height = self.__app_size
+        left_top = (0, 0)
         side_tab_width = 120
         side_tab_padding = 5
         line_height = 20
         font = self.__font
 
-        size = (width - 2 * self.__app_side_offset - side_tab_width,
-                height - self.__app_top_offset - self.__app_bottom_offset)
+        size = (width - side_tab_width, height)
 
         lat: Union[float, None] = None
         lon: Union[float, None] = None
@@ -359,19 +355,22 @@ class MapApp(SelfUpdatingApp):
             cursor = (cursor[0], cursor[1] - self.__CONTROL_SIZE - 2 * self.__CONTROL_PADDING)
 
         if partial:
-            right_bottom = width - self.__app_side_offset, height - self.__app_bottom_offset
-            return image.crop(left_top + right_bottom), *left_top  # noqa (unpacking type check fail)
+            right_bottom = width, height
+            yield image.crop(left_top + right_bottom), *left_top  # noqa (unpacking type check fail)
         else:
-            return image, 0, 0
+            yield image, 0, 0
 
+    @override
     def on_key_left(self):
         if self.__controls[self.__focused_control_index].is_selected():
             self.__controls[self.__focused_control_index].on_key_left()
 
+    @override
     def on_key_right(self):
         if self.__controls[self.__focused_control_index].is_selected():
             self.__controls[self.__focused_control_index].on_key_right()
 
+    @override
     def on_key_up(self):
         if self.__controls[self.__focused_control_index].is_selected():
             self.__controls[self.__focused_control_index].on_key_up()
@@ -380,6 +379,7 @@ class MapApp(SelfUpdatingApp):
             self.__focused_control_index = min(self.__focused_control_index + 1, len(self.__controls) - 1)
             self.__controls[self.__focused_control_index].on_focus()
 
+    @override
     def on_key_down(self):
         if self.__controls[self.__focused_control_index].is_selected():
             self.__controls[self.__focused_control_index].on_key_down()
@@ -388,8 +388,10 @@ class MapApp(SelfUpdatingApp):
             self.__focused_control_index = max(self.__focused_control_index - 1, 0)
             self.__controls[self.__focused_control_index].on_focus()
 
+    @override
     def on_key_a(self):
         self.__controls[self.__focused_control_index].on_select()
 
+    @override
     def on_key_b(self):
         self.__controls[self.__focused_control_index].on_deselect()
