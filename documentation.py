@@ -1,4 +1,4 @@
-import os.path
+import os
 from typing import Callable, Collection
 
 from injector import Injector, provider, singleton

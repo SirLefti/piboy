@@ -25,7 +25,7 @@ class ADS1115BatteryStatusProvider(BatteryStatusProvider):
         self.__address = address
         self.__device_status = DeviceStatus.UNAVAILABLE
 
-    def __read_channel(self, channel=0):
+    def __read_channel(self, channel=0) -> float:
         config = [
             0b11000001 | (channel << 4), # GND as reference, select channel
             0b10000011                   # default settings
