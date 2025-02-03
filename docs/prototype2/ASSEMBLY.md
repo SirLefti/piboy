@@ -77,7 +77,7 @@ For the power circuit, you need the battery, charging controller, switch and pow
 show in the table and image below.
 
 **IMPORTANT:** Set up the power converter to output 5.0 V before soldering the Pi to it. The Pi has no fuses to protect
-itself from overvoltage via the pins. Charge the battery before configuring it.
+itself from over-voltage via the pins. Charge the battery before configuring it.
 
 **NOTE**: The switch is placed between the battery/charging controller and the power converter, because the power
 converter would drain the battery over time if it was permanently connected to it.
@@ -96,8 +96,8 @@ converter would drain the battery over time if it was permanently connected to i
 The complete circuit should look like this. Try to power it on like that to see if everything works. Also attach the
 display module, because it has a relatively high power draw compared to the other components.
 ![proto2_power](proto2_power.jpg)
-*Note: I am using here two separate cells instead of the single 18650 one. Both should have the same capacity when doing
-so.*
+*Note: I am using here two separate cells instead of the single 18650 one. If using two separate cells, make sure they
+are of the same type and have the same rated capacity.*
 
 ### 3. Assembly
 
