@@ -28,7 +28,7 @@ class EnvironmentApp(SelfUpdatingApp):
         self.__data: EnvironmentData | None = None
         try:
             self.__data = self.__data_provider.get_environment_data()
-        except TimeoutError:
+        except OSError:
             pass
 
         self.__t_icon = resources.temperature_icon
@@ -48,7 +48,7 @@ class EnvironmentApp(SelfUpdatingApp):
     def __update_data(self):
         try:
             self.__data = self.__data_provider.get_environment_data()
-        except TimeoutError:
+        except OSError:
             self.__data = None
         self.__draw_callback(**self.__draw_callback_kwargs)
 
