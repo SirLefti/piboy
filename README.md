@@ -53,7 +53,7 @@ Supports zooming and moving the map around. Don't get lost in the wasteland.
 Base:
 - Raspberry Pi (full size board with all 40 pins recommended)
 - Waveshare 3.5" SPI display (or [compatible](http://www.lcdwiki.com/3.5inch_RPi_Display))
-- [GPIO edge extension](https://wiki.52pi.com/index.php?title=EP-0121) (optional for prototype 2, required for prototype 3)
+- [GPIO edge extension](https://wiki.52pi.com/index.php?title=EP-0121)
 - rotary encoder module (KY-040)
 - 6x micro push buttons (6 mm x 6 mm)
 - proto board (14x9 holes required)
@@ -86,17 +86,21 @@ has one, but not all case provide an opening for it (but you can always make an 
 
 ### Component Support Matrix
 
-| Component          | Prototype 1 | Prototype 2      | Prototype 3 |
-|--------------------|-------------|------------------|-------------|
-| BME280             | &cross;     | &check;          | &check;     |
-| NEO-6M             | &cross;     | &check;          | &check;     |
-| DS3231             | &cross;     | &check;          | &check;     |
-| ADS1115            | &cross;     | *see note below* | &check;     |
-| Audio Components   | &cross;     | &cross;          | &check;     |
-| Battery Components | &cross;     | &check;          | &check;     |
+| Component           | Prototype 1 | Prototype 2      | Prototype 3 |
+|---------------------|-------------|------------------|-------------|
+| BME280              | &cross;     | &check;          | &check;     |
+| NEO-6M              | &cross;     | &check;          | &check;     |
+| DS3231              | &cross;     | &check;          | &check;     |
+| ADS1115             | &cross;     | *see note below* | &check;     |
+| Audio Components    | &cross;     | &cross;          | &check;     |
+| Battery Components  | &cross;     | &check;          | &check;     |
+| GPIO Edge Extension | &cross;     | *see note below* | &check;     |
 
 > **NOTE:**<br>
 > ADS1115 can be squeezed into prototype 2 as well, but there is no dedicated place for it, and it is not documented.
+
+> **NOTE:**<br>
+> The GPIO edge extension can be used in one of the two variants of prototype 2.
 
 ### Raspberry Pi Model Support
 
