@@ -70,37 +70,10 @@ to be shortened a bit. Going from both sides reduces the load on each screw and 
 25 mm is usually already the longest variant you can get for M2 screws, which would not be enough here if going from the
 top all the way to the bottom part.
 
-Solder the [keypad](../keypad.md) as described, and prepare the config for the [rotary encoder](../rotary-encoder.md).
+Solder the [keypad](../keypad.md) and [power circuit](../power-circuit.md) as described, and prepare the config for the
+[rotary encoder](../rotary-encoder.md).
 
-### 2. Solder power circuit
-
-For the power circuit, you need the battery, charging controller, switch and power converter. Solder them together as
-show in the table and image below.
-
-**IMPORTANT:** Set up the power converter to output 5.0 V before soldering the Pi to it. The Pi has no fuses to protect
-itself from over-voltage via the pins. Charge the battery before configuring it.
-
-**NOTE**: The switch is placed between the battery/charging controller and the power converter, because the power
-converter would drain the battery over time if it was permanently connected to it.
-
-| from          | to              |
-|---------------|-----------------|
-| battery+      | TP4056 B+       |
-| battery-      | TP4056 B-       |
-| TP4056 Out+   | Switch Center 1 |
-| TP4056 Out-   | Switch Center 2 |
-| Switch Left 1 | MT3608 VIn+     |
-| Switch Left 2 | MT3608 VIn-     |
-| MT3608 VOut+  | Pi Pin 2 (5V)   |
-| MT3608 VOut-  | Pi Pin 6 (GND)  |
-
-The complete circuit should look like this. Try to power it on like that to see if everything works. Also attach the
-display module, because it has a relatively high power draw compared to the other components.
-![proto2_power](proto2_power.jpg)
-*Note: I am using here two separate cells instead of the single 18650 one. If using two separate cells, make sure they
-are of the same type and have the same rated capacity.*
-
-### 3. Assembly
+### 2. Assembly
 
 The parts are held in place in different ways. If needed, add some (more) hot glue.
 
