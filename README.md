@@ -64,7 +64,8 @@ Base:
 Modules:
 - BME280 environment sensor
 - NEO-6M GPS module
-- DS3231 RTC clock (optional, but recommended)
+- DS3231 RTC clock (optional, but recommended, Raspberry Pi 5 features its own integrated RTC, that just requires to
+connect a battery)
 - ADS1115 analog-digital converter
 
 Audio:
