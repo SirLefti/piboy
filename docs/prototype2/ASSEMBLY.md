@@ -1,4 +1,4 @@
-Case Prototype 1
+Case Prototype 2
 ================
 
 ## Parts
