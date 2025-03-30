@@ -2,7 +2,8 @@ Rotary Encoder
 ==============
 
 A rotary encoder can be used in two different ways: By polling and by device overlay. Polling means checking the pins
-over and over again in a short period of time, the device overlay on the other hand is an event based system.
+over and over again in a short period of time, the device overlay on the other hand is an event based system. The device
+overlay way is used here, because it is much more reliable.
 
 ## Wiring
 
