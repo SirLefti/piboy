@@ -219,12 +219,13 @@ See [instructions for prototype 2](docs/prototype2/ASSEMBLY.md).
 
 ### Module specific instructions
 
-* [BME280 environmental sensor](./docs/BME280.md)
-* [DS3231 RTC clock](./docs/DS3231.md)
-* [NEO-6M GPS module](./docs/NEO-6M.md)
-* [ADS1115 analog-digital converter](./docs/ADS1115.md)
-* [KY-040 rotary encoder](./docs/rotary-encoder.md)
-* [Keypad](./docs/keypad.md)
+* [BME280 environmental sensor](docs/BME280.md)
+* [DS3231 RTC clock](docs/DS3231.md)
+* [NEO-6M GPS module](docs/NEO-6M.md)
+* [ADS1115 analog-digital converter](docs/ADS1115.md)
+* [KY-040 rotary encoder](docs/rotary-encoder.md)
+* [Keypad](docs/keypad.md)
+* [Power circuit](docs/power-circuit.md)
 
 ## Post-Install
 
