@@ -8,6 +8,8 @@ Case Prototype 1
 * [top part](parts/Proto1.1-top.stl)
 * 3x M2x25
 
+**This prototype does not support the GPIO edge extension.**
+
 **Made for Raspberry Pi 2 Model B. Other full size boards should fit as well with some adjustments to the I/O part.**
 
 ## Goal

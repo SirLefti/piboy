@@ -8,7 +8,6 @@ Case Prototype 2
 either for type A:
 * [spacer part](parts/Proto2.1-spacer.stl)
 * [top part](parts/Proto2.1-top.stl)
-* [GPIO edge extension](https://wiki.52pi.com/index.php?title=EP-0121)
 
 or for type B:
 * [top part no spacer](parts/Proto2.1-top-no-spacer.stl)
@@ -17,6 +16,8 @@ and also for both types:
 * 8x M2 (you can shorten screws if needed)
   * 4x at least 16 mm for the bottom
   * 4x at least 24 mm for the top for type A or 12 mm for type B
+
+**GPIO edge extension is required for type A.**
 
 **Made for Raspberry Pi 2 Model B. Other full size boards should fit as well with some adjustments to the I/O part.**
 

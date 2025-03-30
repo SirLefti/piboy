@@ -53,6 +53,7 @@ Supports zooming and moving the map around. Don't get lost in the wasteland.
 Base:
 - Raspberry Pi (full size board with all 40 pins recommended)
 - Waveshare 3.5" SPI display (or [compatible](http://www.lcdwiki.com/3.5inch_RPi_Display))
+- [GPIO edge extension](https://wiki.52pi.com/index.php?title=EP-0121) (optional for prototype 2, required for prototype 3)
 - rotary encoder module (KY-040)
 - 6x micro push buttons (6 mm x 6 mm)
 - proto board (14x9 holes required)
