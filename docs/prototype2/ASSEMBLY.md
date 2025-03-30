@@ -11,7 +11,7 @@ either for type A:
 * [GPIO edge extension](https://wiki.52pi.com/index.php?title=EP-0121)
 
 or for type B:
-* [top part no spacer](/prototype2/parts/Proto2.1-top-no-spacer.stl)
+* [top part no spacer](parts/Proto2.1-top-no-spacer.stl)
 
 and also for both types:
 * 8x M2 (you can shorten screws if needed)
