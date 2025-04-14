@@ -9,6 +9,7 @@ standard 18650 battery cell, but can fit any other smaller sizes as well.
 * 1x TP4056 battery charging controller
 * 1x 18650 Li-ion battery cell (others can fit as well)
 * 1x toggle switch
+* 1x capacitor ~1000 µF, 10-25 V (optional, but recommended, especially when using the PAM8403)
 * wires and soldering stuff
 
 ## Assembly
@@ -21,16 +22,18 @@ itself from over-voltage via the pins. Charge the battery before configuring it.
 **NOTE**: The switch is placed between the battery/charging controller and the power converter, because the power
 converter would drain the battery over time if it was permanently connected to it.
 
-| from          | to              |
-|---------------|-----------------|
-| battery+      | TP4056 B+       |
-| battery-      | TP4056 B-       |
-| TP4056 Out+   | Switch Center 1 |
-| TP4056 Out-   | Switch Center 2 |
-| Switch Left 1 | MT3608 VIn+     |
-| Switch Left 2 | MT3608 VIn-     |
-| MT3608 VOut+  | Pi Pin 2 (5V)   |
-| MT3608 VOut-  | Pi Pin 6 (GND)  |
+| from                    | to              |
+|-------------------------|-----------------|
+| battery+                | TP4056 B+       |
+| battery-                | TP4056 B-       |
+| TP4056 Out+             | Switch Center 1 |
+| TP4056 Out-             | Switch Center 2 |
+| Switch Left 1           | MT3608 VIn+     |
+| Switch Left 2           | MT3608 VIn-     |
+| MT3608 VOut+            | Pi Pin 2 (5V)   |
+| MT3608 VOut-            | Pi Pin 6 (GND)  |
+| Capacitor + (long leg)  | MT3608 VOut+    |
+| Capacitor - (short leg) | MT3608 VOut-    |
 
 The complete circuit should look like this. Try to power it on like that to see if everything works. Also attach the
 display module, because it has a relatively high power draw compared to the other components.
