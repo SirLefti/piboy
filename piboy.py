@@ -228,7 +228,7 @@ class AppModule(Module):
     def provide_location_service(self, e: Environment) -> LocationProvider:
         if e.is_raspberry_pi:
             from data.SerialGPSLocationProvider import SerialGPSLocationProvider
-            return SerialGPSLocationProvider(e.gps_module_config.port, baudrate=e.gps_module_config.baudrate)
+            return SerialGPSLocationProvider(e.gps_module_config.port, baudrate=e.gps_module_config.baud_rate)
         else:
             from data.IPLocationProvider import IPLocationProvider
             return IPLocationProvider(apply_inaccuracy=True)
