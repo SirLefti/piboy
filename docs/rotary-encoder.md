@@ -16,8 +16,8 @@ Connecting the rotary switch is optional. It can be used to call any function fo
 |--------------------|------------------|
 | GND                | GND              |
 | +                  | VCC (3.3 V)      |
-| CLK                | GPIO 22          |
-| DT                 | GPIO 23          |
+| CLK                | GPIO 23          |
+| DT                 | GPIO 22          |
 | SW                 | GPIO 27 / NC     |
 
 ## Configuration

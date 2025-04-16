@@ -127,8 +127,8 @@ Use this table for reference:
 | 9    | GND               | KY-040 GND, keypad GND, BME280 GND, DS3231 GND |
 | 10   | GPIO 15 / UART RX | NEO-6M TX                                      |
 | 13   | GPIO 27           | KY-040 SW / NC                                 |
-| 15   | GPIO 22           | KY-040 CLK                                     |
-| 16   | GPIO 23           | KY-040 DT                                      |
+| 15   | GPIO 23           | KY-040 CLK                                     |
+| 16   | GPIO 22           | KY-040 DT                                      |
 | 29   | GPIO 5            | keypad UP                                      |
 | 31   | GPIO 6            | keypad DOWN                                    |
 | 32   | GPIO 12           | keypad LEFT                                    |
