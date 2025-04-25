@@ -32,6 +32,9 @@ If not, try this instead:
 tail -f /dev/serial0
 ```
 
+If `/dev/serial0` does not exist, try it again with `/dev/ttyAMA0` instead. In that case, you have to change this value
+in the `config.yaml` as well.
+
 If the blue LED on the module is blinking, it has already found its position and sends messages with the position. Go
 outside or close to a window and wait a few minutes if it does not blink.
 
