@@ -13,8 +13,8 @@ from data.LocationProvider import Location, LocationException, LocationProvider
 
 class SerialGPSLocationProvider(LocationProvider):
 
-    def __init__(self, port: str, baudrate=9600):
-        self.__device = serial.Serial(port, baudrate=baudrate, timeout=0.5)
+    def __init__(self, port: str, baud_rate=9600):
+        self.__device = serial.Serial(port, baudrate=baud_rate, timeout=0.5)
         self.__io_wrapper = io.TextIOWrapper(io.BufferedReader(self.__device))
         self.__location: Union[Location, None] = None
         self.__device_status = DeviceStatus.UNAVAILABLE
