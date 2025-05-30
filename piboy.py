@@ -1,6 +1,6 @@
 import time
 from datetime import datetime
-from typing import Callable, Self
+from typing import Any, Callable, Generator, Self
 
 from injector import Injector, Module, provider, singleton
 from PIL import Image, ImageDraw
@@ -15,7 +15,7 @@ from app.MapApp import MapApp
 from app.RadioApp import RadioApp
 from app.UpdateApp import UpdateApp
 from core import resources
-from core.data import ConnectionStatus
+from core.data import ConnectionStatus, DeviceStatus
 from data.BatteryStatusProvider import BatteryStatusProvider
 from data.EnvironmentDataProvider import EnvironmentDataProvider
 from data.LocationProvider import LocationProvider
@@ -122,10 +122,20 @@ class AppState:
     def update_display(self, display: Display, partial=False):
         """Draw call that handles the complete cycle of drawing a new image to the display."""
         image = self.clear_buffer()
-        if not partial:
-            image = draw_base(image, self)
-        image, x0, y0 = self.active_app.draw(image, partial)
-        display.show(image, x0, y0)
+        app_bbox = (self.__environment.app_config.app_side_offset,
+                    self.__environment.app_config.app_top_offset,
+                    self.__environment.app_config.width - self.__environment.app_config.app_side_offset,
+                    self.__environment.app_config.height - self.__environment.app_config.app_bottom_offset)
+        x_offset, y_offset = app_bbox[0:2]
+        if partial:
+            for patch, x0, y0 in self.active_app.draw(image.crop(app_bbox), partial):
+                display.show(patch, x0 + x_offset, y0 + y_offset)
+        else:
+            for patch, x0, y0 in draw_base(image, self):
+                display.show(patch, x0, y0)
+            for patch, x0, y0 in self.active_app.draw(image.crop(app_bbox), partial):
+                image.paste(patch, (x0 + x_offset, y0 + y_offset))
+            display.show(image.crop(app_bbox), x_offset, y_offset)
 
     def on_key_left(self, display: Display):
         self.active_app.on_key_left()
@@ -186,7 +196,6 @@ class AppModule(Module):
             return environment.load()
         except FileNotFoundError:
             e = Environment()
-            e.dev_mode = not is_raspberry_pi()
             environment.save(e)
             return e
 
@@ -207,22 +216,22 @@ class AppModule(Module):
     @singleton
     @provider
     def provide_environment_data_service(self, e: Environment) -> EnvironmentDataProvider:
-        if e.dev_mode:
-            from data.FakeEnvironmentDataProvider import FakeEnvironmentDataProvider
-            return FakeEnvironmentDataProvider()
-        else:
+        if e.is_raspberry_pi:
             from data.BME280EnvironmentDataProvider import BME280EnvironmentDataProvider
             return BME280EnvironmentDataProvider(e.env_sensor_config.port, e.env_sensor_config.address)
+        else:
+            from data.FakeEnvironmentDataProvider import FakeEnvironmentDataProvider
+            return FakeEnvironmentDataProvider()
 
     @singleton
     @provider
     def provide_location_service(self, e: Environment) -> LocationProvider:
-        if e.dev_mode:
-            from data.IPLocationProvider import IPLocationProvider
-            return IPLocationProvider(apply_inaccuracy=True)
-        else:
+        if e.is_raspberry_pi:
             from data.SerialGPSLocationProvider import SerialGPSLocationProvider
             return SerialGPSLocationProvider(e.gps_module_config.port, baudrate=e.gps_module_config.baudrate)
+        else:
+            from data.IPLocationProvider import IPLocationProvider
+            return IPLocationProvider(apply_inaccuracy=True)
 
     @singleton
     @provider
@@ -232,22 +241,22 @@ class AppModule(Module):
     @singleton
     @provider
     def provide_network_status_service(self, e: Environment) -> NetworkStatusProvider:
-        if e.dev_mode:
-            from data.FakeNetworkStatusProvider import FakeNetworkStatusProvider
-            return FakeNetworkStatusProvider()
-        else:
+        if e.is_raspberry_pi:
             from data.NetworkManagerStatusProvider import NetworkManagerStatusProvider
             return NetworkManagerStatusProvider()
+        else:
+            from data.FakeNetworkStatusProvider import FakeNetworkStatusProvider
+            return FakeNetworkStatusProvider()
 
     @singleton
     @provider
     def provide_battery_status_service(self, e: Environment) -> BatteryStatusProvider:
-        if e.dev_mode:
-            from data.FakeBatteryStatusProvider import FakeBatteryStatusProvider
-            return FakeBatteryStatusProvider()
-        else:
+        if e.is_raspberry_pi:
             from data.ADS1115BatteryStatusProvider import ADS1115BatteryStatusProvider
             return ADS1115BatteryStatusProvider(e.adc_config.port, e.adc_config.address)
+        else:
+            from data.FakeBatteryStatusProvider import FakeBatteryStatusProvider
+            return FakeBatteryStatusProvider()
 
     @singleton
     @provider
@@ -257,30 +266,29 @@ class AppModule(Module):
     @singleton
     @provider
     def provide_display(self, e: Environment, state: AppState) -> Display:
-        if e.dev_mode:
-            if self.__unified_instance is None:
-                self.__unified_instance = self.__create_tk_interaction(state, e.app_config)
-            return self.__unified_instance
-        else:
+        if e.is_raspberry_pi:
             from interaction.ILI9486Display import ILI9486Display
 
             spi_device_config = e.display_config.display_device
             return ILI9486Display((spi_device_config.bus, spi_device_config.device),
                                   e.display_config.dc_pin, e.display_config.rst_pin, e.display_config.flip_display)
+        else:
+            if self.__unified_instance is None:
+                self.__unified_instance = self.__create_tk_interaction(state, e.app_config)
+            return self.__unified_instance
 
     @singleton
     @provider
     def provide_input(self, e: Environment, state: AppState, display: Display) -> Input:
-        if e.dev_mode:
-            if self.__unified_instance is None:
-                self.__unified_instance = self.__create_tk_interaction(state, e.app_config)
-            return self.__unified_instance
-        else:
+        if e.is_raspberry_pi:
             from interaction.GPIOInput import GPIOInput
             from interaction.ILI9486Display import ILI9486Display
 
-            # make sure that display is ILI9486Interface to call the reset function, should be always true
-            switch_function = display.reset if isinstance(display, ILI9486Display) else lambda: None
+            def reset_and_init():
+                # make sure that display is ILI9486Interface to call the reset function, should be always true
+                if isinstance(display, ILI9486Display):
+                    display.reset()
+                display.show(state.clear_buffer(), 0, 0)
 
             return GPIOInput(e.keypad_config.left_pin, e.keypad_config.right_pin,
                              e.keypad_config.up_pin, e.keypad_config.down_pin,
@@ -290,7 +298,11 @@ class AppModule(Module):
                              lambda: state.on_key_up(display), lambda: state.on_key_down(display),
                              lambda: state.on_key_a(display), lambda: state.on_key_b(display),
                              lambda: state.on_rotary_increase(display), lambda: state.on_rotary_decrease(display),
-                             switch_function)
+                             reset_and_init)
+        else:
+            if self.__unified_instance is None:
+                self.__unified_instance = self.__create_tk_interaction(state, e.app_config)
+            return self.__unified_instance
 
 
 def draw_footer(image: Image.Image, state: AppState) -> tuple[Image.Image, int, int]:
@@ -303,23 +315,30 @@ def draw_footer(image: Image.Image, state: AppState) -> tuple[Image.Image, int, 
     draw = ImageDraw.Draw(image)
 
     start = (footer_side_offset, height - footer_height - footer_bottom_offset)
-    end = (width - footer_side_offset, height - footer_bottom_offset)
+    end = (width - footer_side_offset - 1, height - footer_bottom_offset - 1)
     cursor_x, cursor_y = start
-    color_active = state.environment.app_config.accent
-    color_inactive = color_active if state.tick else state.environment.app_config.background
+    connection_status_color = {
+        ConnectionStatus.CONNECTED: state.environment.app_config.accent,
+        ConnectionStatus.DISCONNECTED: state.environment.app_config.accent if state.tick else state.environment.app_config.background
+    }
+    device_status_color = {
+        DeviceStatus.OPERATIONAL: state.environment.app_config.accent,
+        DeviceStatus.NO_DATA: state.environment.app_config.accent if state.tick else state.environment.app_config.background,
+        DeviceStatus.UNAVAILABLE: state.environment.app_config.background
+    }
 
     # reset area
     draw.rectangle(start + end, fill=state.environment.app_config.accent_dark)
 
     # draw network status
     nw_status_padding = (footer_height - resources.network_icon.height) // 2
-    nw_status_color = color_active if state.network_status_provider.get_status() == ConnectionStatus.CONNECTED else color_inactive
+    nw_status_color = connection_status_color[state.network_status_provider.get_connection_status()]
     draw.bitmap((cursor_x + icon_padding, cursor_y + nw_status_padding), resources.network_icon, fill=nw_status_color)
     cursor_x += resources.network_icon.width + icon_padding
 
     # draw gps status
     gps_status_padding = (footer_height - resources.gps_icon.height) // 2
-    gps_status_color = color_active if state.location_provider.get_status() == ConnectionStatus.CONNECTED else color_inactive
+    gps_status_color = device_status_color[state.location_provider.get_device_status()]
     draw.bitmap((cursor_x + icon_padding, cursor_y + gps_status_padding), resources.gps_icon, fill=gps_status_color)
     cursor_x += resources.gps_icon.width + icon_padding
 
@@ -339,6 +358,7 @@ def draw_footer(image: Image.Image, state: AppState) -> tuple[Image.Image, int, 
               state.environment.app_config.accent, font=font)
 
     x0, y0 = start
+    end = end[0] + 1, end[1] + 1
     return image.crop(start + end), x0, y0
 
 
@@ -358,10 +378,10 @@ def draw_header(image: Image.Image, state: AppState) -> tuple[Image.Image, int, 
     end = (header_side_offset, header_top_offset)
     draw.line(start + end, fill=color_accent)
     start = end
-    end = (width - header_side_offset, header_top_offset)
+    end = (width - header_side_offset - 1, header_top_offset)
     draw.line(start + end, fill=color_accent)
     start = end
-    end = (width - header_side_offset, header_top_offset + vertical_line)
+    end = (width - header_side_offset - 1, header_top_offset + vertical_line)
     draw.line(start + end, fill=color_accent)
 
     # draw app short name header
@@ -390,18 +410,9 @@ def draw_header(image: Image.Image, state: AppState) -> tuple[Image.Image, int, 
     return image.crop(partial_start + partial_end), x0, y0
 
 
-def draw_base(image: Image.Image, state: AppState) -> Image.Image:
-    draw_header(image, state)
-    draw_footer(image, state)
-    return image
-
-
-def is_raspberry_pi() -> bool:
-    try:
-        with open('/sys/firmware/devicetree/base/model', 'r') as model_info:
-            return 'Raspberry Pi' in model_info.read()
-    except FileNotFoundError:
-        return False
+def draw_base(image: Image.Image, state: AppState) -> Generator[tuple[Image.Image, int, int], Any, None]:
+    yield draw_header(image, state)
+    yield draw_footer(image, state)
 
 
 if __name__ == '__main__':
@@ -419,7 +430,15 @@ if __name__ == '__main__':
         .add_app(injector.get(ClockApp)) \
         .add_app(injector.get(MapApp))
 
-    # initial draw
+    # start the auto mount service on raspberry
+    if injector.get(Environment).is_raspberry_pi:
+        from core.udev_service import UDevService
+        udev_service = UDevService()
+        udev_service.start()
+
+    # initially draw the empty buffer to initialize all pixels on the hardware module
+    DISPLAY.show(app_state.image_buffer, 0, 0)
+    # then continue with the initial draw call
     app_state.update_display(DISPLAY)
     app_state.active_app.on_app_enter()
 

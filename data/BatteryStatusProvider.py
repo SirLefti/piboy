@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from core.data import ConnectionStatus
+from core.data import DeviceStatus
 
 
 class BatteryStatusProvider(ABC):
@@ -12,6 +12,6 @@ class BatteryStatusProvider(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_device_status(self) -> ConnectionStatus:
-        """Returns the connection status of the hardware module."""
+    def get_device_status(self) -> DeviceStatus:
+        """Returns the device status of the hardware module."""
         raise NotImplementedError

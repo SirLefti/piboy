@@ -1,6 +1,6 @@
 import random
 
-from core.data import ConnectionStatus
+from core.data import DeviceStatus
 from core.decorator import override
 from data.EnvironmentDataProvider import EnvironmentData, EnvironmentDataProvider
 
@@ -21,5 +21,5 @@ class FakeEnvironmentDataProvider(EnvironmentDataProvider):
         )
 
     @override
-    def get_device_status(self) -> ConnectionStatus:
-        return ConnectionStatus.CONNECTED
+    def get_device_status(self) -> DeviceStatus:
+        return DeviceStatus.OPERATIONAL

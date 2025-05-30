@@ -26,5 +26,5 @@ class NetworkManagerStatusProvider(NetworkStatusProvider):
             time.sleep(10)
 
     @override
-    def get_status(self) -> ConnectionStatus:
+    def get_connection_status(self) -> ConnectionStatus:
         return self.__status

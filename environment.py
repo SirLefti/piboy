@@ -66,6 +66,10 @@ class AppConfig:
         return self.width, self.height
 
     @property
+    def app_size(self) -> tuple[int, int]:
+        return self.width - 2 * self.app_side_offset, self.height - self.app_top_offset - self.app_bottom_offset
+
+    @property
     def font_header(self) -> ImageFont.FreeTypeFont:
         if self.__font_header is None:
             self.__font_header = ImageFont.truetype(self.font_name, self.font_header_size)
@@ -126,7 +130,7 @@ class DisplayConfig:
 
 @dataclass
 class Environment:
-    dev_mode: bool = True
+    dev_mode: bool = False
     env_sensor_config: I2CConfig = field(default_factory=lambda: I2CConfig(1, 0x76))
     adc_config: I2CConfig = field(default_factory=lambda: I2CConfig(1, 0x48))
     gps_module_config: SerialConfig = field(default_factory=lambda: SerialConfig('/dev/serial0', 9600))
@@ -135,6 +139,18 @@ class Environment:
     rotary_config: RotaryConfig = field(default_factory=lambda: RotaryConfig())
     display_config: DisplayConfig = field(default_factory=lambda: DisplayConfig())
 
+    # cached property
+    __is_raspberry_pi: bool | None = None
+
+    @property
+    def is_raspberry_pi(self):
+        if self.__is_raspberry_pi is None:
+            try:
+                with open('/sys/firmware/devicetree/base/model', 'r') as model_info:
+                    self.__is_raspberry_pi =  'Raspberry Pi' in model_info.read()
+            except FileNotFoundError:
+                self.__is_raspberry_pi = False
+        return self.__is_raspberry_pi
 
 def spi_config_constructor(loader: Loader | FullLoader | UnsafeLoader, node: Node) -> SPIConfig:
     if isinstance(node, MappingNode):
@@ -144,7 +160,7 @@ def spi_config_constructor(loader: Loader | FullLoader | UnsafeLoader, node: Nod
 
 
 def spi_config_representor(dumper: Dumper, data: SPIConfig) -> MappingNode:
-    return dumper.represent_mapping('!SPIConfig', vars(data))
+    return dumper.represent_mapping('!SPIConfig', {k: v for k,v in vars(data).items() if k[0] != '_'})
 
 
 def i2c_config_constructor(loader: Loader | FullLoader | UnsafeLoader, node: Node) -> I2CConfig:
@@ -155,7 +171,7 @@ def i2c_config_constructor(loader: Loader | FullLoader | UnsafeLoader, node: Nod
 
 
 def i2c_config_representor(dumper: Dumper, data: I2CConfig) -> MappingNode:
-    return dumper.represent_mapping('!I2CConfig', vars(data))
+    return dumper.represent_mapping('!I2CConfig', {k: v for k,v in vars(data).items() if k[0] != '_'})
 
 
 def serial_config_constructor(loader: Loader | FullLoader | UnsafeLoader, node: Node) -> SerialConfig:
@@ -166,7 +182,7 @@ def serial_config_constructor(loader: Loader | FullLoader | UnsafeLoader, node: 
 
 
 def serial_config_representor(dumper: Dumper, data: SerialConfig) -> MappingNode:
-    return dumper.represent_mapping('!SerialConfig', vars(data))
+    return dumper.represent_mapping('!SerialConfig', {k: v for k,v in vars(data).items() if k[0] != '_'})
 
 
 def color_config_constructor(loader: Loader | FullLoader | UnsafeLoader, node: Node) -> ColorConfig:
@@ -177,7 +193,7 @@ def color_config_constructor(loader: Loader | FullLoader | UnsafeLoader, node: N
 
 
 def color_config_representor(dumper: Dumper, data: ColorConfig) -> MappingNode:
-    return dumper.represent_mapping('!ColorConfig', vars(data))
+    return dumper.represent_mapping('!ColorConfig', {k: v for k,v in vars(data).items() if k[0] != '_'})
 
 
 def app_config_constructor(loader: Loader | FullLoader | UnsafeLoader, node: Node) -> AppConfig:
@@ -188,7 +204,7 @@ def app_config_constructor(loader: Loader | FullLoader | UnsafeLoader, node: Nod
 
 
 def app_config_representor(dumper: Dumper, data: AppConfig) -> MappingNode:
-    return dumper.represent_mapping('!AppConfig', vars(data))
+    return dumper.represent_mapping('!AppConfig', {k: v for k,v in vars(data).items() if k[0] != '_'})
 
 
 def keypad_config_constructor(loader: Loader | FullLoader | UnsafeLoader, node: Node) -> KeypadConfig:
@@ -199,7 +215,7 @@ def keypad_config_constructor(loader: Loader | FullLoader | UnsafeLoader, node: 
 
 
 def keypad_config_representor(dumper: Dumper, data: KeypadConfig) -> MappingNode:
-    return dumper.represent_mapping('!KeypadConfig', vars(data))
+    return dumper.represent_mapping('!KeypadConfig', {k: v for k,v in vars(data).items() if k[0] != '_'})
 
 
 def rotary_config_constructor(loader: Loader | FullLoader | UnsafeLoader, node: Node) -> RotaryConfig:
@@ -210,7 +226,7 @@ def rotary_config_constructor(loader: Loader | FullLoader | UnsafeLoader, node: 
 
 
 def rotary_config_representor(dumper: Dumper, data: RotaryConfig) -> MappingNode:
-    return dumper.represent_mapping('!RotaryConfig', vars(data))
+    return dumper.represent_mapping('!RotaryConfig', {k: v for k,v in vars(data).items() if k[0] != '_'})
 
 
 def display_config_constructor(loader: Loader | FullLoader | UnsafeLoader, node: Node) -> DisplayConfig:
@@ -221,7 +237,7 @@ def display_config_constructor(loader: Loader | FullLoader | UnsafeLoader, node:
 
 
 def display_config_representor(dumper: Dumper, data: DisplayConfig) -> MappingNode:
-    return dumper.represent_mapping('!DisplayConfig', vars(data))
+    return dumper.represent_mapping('!DisplayConfig', {k: v for k,v in vars(data).items() if k[0] != '_'})
 
 
 def environment_constructor(loader: Loader | FullLoader | UnsafeLoader, node: Node) -> Environment:
@@ -232,7 +248,7 @@ def environment_constructor(loader: Loader | FullLoader | UnsafeLoader, node: No
 
 
 def environment_representor(dumper: Dumper, data: Environment) -> MappingNode:
-    return dumper.represent_mapping('!Environment', vars(data))
+    return dumper.represent_mapping('!Environment', {k: v for k,v in vars(data).items() if k[0] != '_'})
 
 
 def configure():

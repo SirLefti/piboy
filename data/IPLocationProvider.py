@@ -3,7 +3,7 @@ import random
 
 import requests
 
-from core.data import ConnectionStatus
+from core.data import DeviceStatus
 from core.decorator import RetryException, override, retry
 from data.LocationProvider import Location, LocationException, LocationProvider
 
@@ -14,7 +14,7 @@ class IPLocationProvider(LocationProvider):
         """Creates a location provider using the public IP. Set 'apply_inaccuracy' to 'True' to add a random variation
         to the returned values to emulate a real GPS device."""
         self.__apply_inaccuracy = apply_inaccuracy
-        self.__status = ConnectionStatus.DISCONNECTED
+        self.__status = DeviceStatus.NO_DATA
 
     @retry(exceptions=(requests.exceptions.ConnectionError,), delay=2, tries=5)
     def __fetch_location(self) -> Location:
@@ -43,16 +43,12 @@ class IPLocationProvider(LocationProvider):
     def get_location(self) -> Location:
         try:
             location = self.__fetch_location()
-            self.__status = ConnectionStatus.CONNECTED
+            self.__status = DeviceStatus.OPERATIONAL
             return location
         except RetryException:
-            self.__status = ConnectionStatus.DISCONNECTED
+            self.__status = DeviceStatus.NO_DATA
             raise LocationException('Fetching location failed')
 
     @override
-    def get_status(self) -> ConnectionStatus:
+    def get_device_status(self) -> DeviceStatus:
         return self.__status
-
-    @override
-    def get_device_status(self) -> ConnectionStatus:
-        return ConnectionStatus.CONNECTED

@@ -3,7 +3,7 @@ import random
 import re
 from abc import ABC, abstractmethod
 from subprocess import PIPE, run
-from typing import Callable, Optional
+from typing import Any, Callable, Generator, Optional
 
 from injector import inject
 from PIL import Image, ImageDraw
@@ -198,13 +198,10 @@ class RadioApp(SelfUpdatingApp):
         self.__draw_callback = draw_callback
         self.__draw_callback_kwargs = {'partial': True}
 
-        self.__resolution = app_config.resolution
+        self.__app_size = app_config.app_size
         self.__background = app_config.background
         self.__color = app_config.accent
         self.__color_dark = app_config.accent_dark
-        self.__app_top_offset = app_config.app_top_offset
-        self.__app_side_offset = app_config.app_side_offset
-        self.__app_bottom_offset = app_config.app_bottom_offset
         self.__font = app_config.font_standard
 
         self.__directory = 'media'
@@ -364,17 +361,16 @@ class RadioApp(SelfUpdatingApp):
         return 1.0
 
     @override
-    def draw(self, image: Image.Image, partial=False) -> tuple[Image.Image, int, int]:
+    def draw(self, image: Image.Image, partial=False) -> Generator[tuple[Image.Image, int, int], Any, None]:
         draw = ImageDraw.Draw(image)
-        width, height = self.__resolution
+        width, height = self.__app_size
 
         # draw controls
         controls_total_width = sum([c.size[0] for c in self.__controls]) + self.__CONTROL_PADDING * (
                 len(self.__controls) - 1)
         max_control_height = max([c.size[1] for c in self.__controls])
         cursor: tuple[int, int] = (width // 2 - controls_total_width // 2,
-                                   height - self.__app_bottom_offset - max_control_height
-                                   - self.__CONTROL_BOTTOM_OFFSET)
+                                   height - max_control_height - self.__CONTROL_BOTTOM_OFFSET)
         for control in self.__controls:
             c_width, c_height = control.size
             control.draw(draw, (cursor[0], cursor[1] + (max_control_height - c_height) // 2))
@@ -389,10 +385,9 @@ class RadioApp(SelfUpdatingApp):
         vertical_limit = vertical_limit - self.__META_INFO_HEIGHT
 
         # draw currently playing track
-        max_width = width - 2 * self.__app_side_offset
         text = f'{self.__player.progress:.1%}: {self.__files[self.__playlist[self.__playing_index]]}' \
             if self.__player.has_stream else 'Empty'
-        while self.__font.getbbox(text)[2] > max_width:
+        while self.__font.getbbox(text)[2] > width:
             text = text[:-1]  # cut off last char until it fits
         _, _, t_width, t_height = self.__font.getbbox(text)
         draw.text((width // 2 - t_width // 2, vertical_limit - self.__META_INFO_HEIGHT // 2 - t_height // 2),
@@ -400,9 +395,9 @@ class RadioApp(SelfUpdatingApp):
         vertical_limit = vertical_limit - self.__META_INFO_HEIGHT
 
         # draw track list
-        left_top = (self.__app_side_offset, self.__app_top_offset)
+        left_top = (0, 0)
         left, top = left_top
-        right_bottom = (width - self.__app_side_offset, vertical_limit)
+        right_bottom = (width, vertical_limit)
         right, bottom = right_bottom
         max_entries = (bottom - top) // self.__LINE_HEIGHT
         if len(self.__files) > max_entries:
@@ -427,10 +422,10 @@ class RadioApp(SelfUpdatingApp):
             cursor = (cursor[0], cursor[1] + self.__LINE_HEIGHT)
 
         if partial:
-            right_bottom = width - self.__app_side_offset, height - self.__app_bottom_offset
-            return image.crop(left_top + right_bottom), *left_top  # noqa (unpacking type check fail)
+            right_bottom = width, height
+            yield image.crop(left_top + right_bottom), *left_top  # noqa (unpacking type check fail)
         else:
-            return image, 0, 0
+            yield image, 0, 0
 
     def __get_files(self) -> list[str]:
         return sorted([f for f in os.listdir(self.__directory) if os.path.splitext(f)[1] in

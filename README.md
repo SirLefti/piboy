@@ -221,9 +221,8 @@ further details.
 * [x] battery power
 * [x] speaker for radio app
 * [x] battery status
-* [ ] auto-mount usb drives (previous solution does not work any more)
+* [x] auto-mount usb drives
 * [ ] improved case
-* [ ] utilities
 
 ## Issues
 

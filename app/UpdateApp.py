@@ -2,7 +2,7 @@ import re
 import sys
 import threading
 from subprocess import CompletedProcess, run
-from typing import Callable, Collection, Optional
+from typing import Any, Callable, Collection, Generator, Optional
 
 from injector import inject
 from PIL import Image, ImageDraw
@@ -63,7 +63,7 @@ class UpdateApp(App):
     @inject
     def __init__(self, draw_callback: Callable[[bool], None], app_config: AppConfig):
         self.__draw_callback = draw_callback
-        self.__resolution = app_config.resolution
+        self.__app_size = app_config.app_size
         self.__background = app_config.background
         self.__color = app_config.accent
         self.__color_dark = app_config.accent_dark
@@ -249,12 +249,12 @@ class UpdateApp(App):
         return 'SYS'
 
     @override
-    def draw(self, image: Image.Image, partial=False) -> tuple[Image.Image, int, int]:
-        width, height = self.__resolution
+    def draw(self, image: Image.Image, partial=False) -> Generator[tuple[Image.Image, int, int], Any, None]:
+        width, height = self.__app_size
         font = self.__font
 
-        left_top = (self.__app_side_offset, self.__app_top_offset)
-        right_bottom = (width // 2, self.__app_top_offset)
+        left_top = (0, 0)
+        right_bottom = (width // 2, 0)
         draw = ImageDraw.Draw(image)
 
         # part: result history
@@ -263,18 +263,16 @@ class UpdateApp(App):
 
             # clear existing logs
             history_cursor: tuple[int, int] = (width // 2 + self.CENTER_OFFSET, left_top[1])
-            rect_right_bottom = (width - self.__app_side_offset,
-                                 history_cursor[1] +
-                                 min(len(self.__results) * self.LINE_HEIGHT, height - self.__app_bottom_offset))
+            rect_right_bottom = (width, history_cursor[1] + min(len(self.__results) * self.LINE_HEIGHT, height))
             draw.rectangle(history_cursor + rect_right_bottom, fill=self.__background)
             # and draw history in reverse order
             for text in reversed(self.__results):
                 _, _, _, text_height = font.getbbox(text)
-                if history_cursor[1] + text_height > height - self.__app_bottom_offset:
+                if history_cursor[1] + text_height > height:
                     break
                 draw.text(history_cursor, text, fill=self.__color, font=font)
                 history_cursor = (history_cursor[0], history_cursor[1] + self.LINE_HEIGHT)
-            right_bottom = (width - self.__app_side_offset, history_cursor[1])
+            right_bottom = (width, history_cursor[1])
 
         # part: options
         cursor: tuple[int, int] = left_top
@@ -287,23 +285,21 @@ class UpdateApp(App):
             draw.text(cursor, text, fill=self.__color, font=font)
             cursor = (cursor[0], cursor[1] + self.LINE_HEIGHT)
             right_bottom = (max(right_bottom[0], width // 2), max(right_bottom[1], cursor[1]))
-        draw.line((width // 2, left_top[1]) + (width // 2, cursor[1]), fill=self.__color, width=1)
+        draw.line((width // 2, left_top[1]) + (width // 2, height), fill=self.__color, width=1)
 
         # part: repository and branch information
-        if not partial:
-            # information does not change, so just draw it initially
-            unknown = 'unknown'
-            _, _, _, text_height_branch = font.getbbox(self.__branch_name or unknown)
-            _, _, _, text_height_remote = font.getbbox(self.__remote_name or unknown)
-            draw.text((self.__app_side_offset, height - self.__app_bottom_offset - text_height_branch -
-                       text_height_remote), f'branch: {self.__branch_name or unknown}', fill=self.__color, font=font)
-            draw.text((self.__app_side_offset, height - self.__app_bottom_offset - text_height_remote),
-                      f'remote: {self.__remote_name or unknown}', fill=self.__color, font=font)
+        unknown = 'unknown'
+        _, _, _, text_height_branch = font.getbbox(self.__branch_name or unknown)
+        _, _, _, text_height_remote = font.getbbox(self.__remote_name or unknown)
+        draw.text((0, height - text_height_branch -
+                   text_height_remote), f'branch: {self.__branch_name or unknown}', fill=self.__color, font=font)
+        draw.text((0, height - text_height_remote),
+                  f'remote: {self.__remote_name or unknown}', fill=self.__color, font=font)
 
         if partial:
-            return image.crop(left_top + right_bottom), *left_top  # noqa (unpacking type check fail)
+            yield image.crop(left_top + right_bottom), *left_top  # noqa (unpacking type check fail)
         else:
-            return image, 0, 0
+            yield image, 0, 0
 
     @override
     def on_key_up(self):

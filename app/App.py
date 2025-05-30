@@ -1,7 +1,7 @@
 import threading
 import time
 from abc import ABC, abstractmethod
-from typing import Callable, Optional
+from typing import Any, Callable, Generator, Optional
 
 from PIL import Image
 
@@ -18,17 +18,18 @@ class App(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def draw(self, image: Image.Image, partial=False) -> tuple[Image.Image, int, int]:
+    def draw(self, image: Image.Image, partial=False) -> Generator[tuple[Image.Image, int, int], Any, None]:
         """
         Draws the app content and returns the full or partial frame.
 
         Parameter image is the previous frame to draw on.
-        Parameter partial indicates, if a full or partial frame was requested.
-        It is not required to return a partial frame when requested, but highly recommended to always return a full
-        when requested to make sure old frame parts are replaced.
 
-        Returns a tuple of (image, int, int), which is the new frame and the x and y anchor relative to the top left
-        corner. For a full frame, the coordinates have to be both 0. A partial frame has to be cropped accordingly.
+        Parameter partial indicates, if a full or partial frame was requested.
+        A full frame means, that every UI element has to be drawn, and a partial frame means, that only the subset of
+        UI elements, that have changed since the last draw call, have to be drawn.
+
+        Returns a generator of tuple of (image, int, int), which are the new frame patch and the x and y anchor relative
+        to the top left corner.
         """
         raise NotImplementedError
 
