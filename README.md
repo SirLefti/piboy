@@ -8,7 +8,7 @@ PiBoy
 [![commit activity](https://img.shields.io/github/commit-activity/m/SirLefti/piboy/develop)](https://github.com/SirLefti/piboy/tree/develop)
 [![last commit](https://img.shields.io/github/last-commit/SirLefti/piboy/develop)](https://github.com/SirLefti/piboy/tree/develop)
 
-![image](docs/prototype2/proto2_final.jpg)
+![image](docs/prototype3/proto3_final.jpg)
 Build your own Pip-Boy with some useful features for real-life using your Raspberry Pi.
 
 ## Features
@@ -217,6 +217,8 @@ to install it, place the ``FreeSansBold.ttf`` in the root directory as a workaro
 See [instructions for prototype 1](docs/prototype1/ASSEMBLY.md).
 
 See [instructions for prototype 2](docs/prototype2/ASSEMBLY.md).
+
+See [instructions for prototype 3](docs/prototype3/ASSEMBLY.md).
 
 ### Module specific instructions
 
