@@ -129,3 +129,14 @@ shield, use the last long screw in the bottom right corner, and the shorter ones
 shield.
 
 ![proto3_final](proto3_final.jpg)
+
+### 3. Bonus
+
+![proto3_straps](proto3_straps.jpg)
+
+You can now also add straps if you want, to mount the device on your forearm. The straps should not be thicker than 1 mm
+and not wider than 30 mm. 
+
+![proto3_outside](proto3_outside.jpg)
+
+It is not perfect yet, but it gets the job done for a demonstration.
