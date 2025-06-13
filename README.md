@@ -252,6 +252,8 @@ further details.
 
 ## Roadmap
 
+We are feature complete. But there is still room for software and case improvements.
+
 * [x] display driver
 * [x] project base
 * [x] build documentation / guide
@@ -265,7 +267,7 @@ further details.
 * [x] speaker for radio app
 * [x] battery status
 * [x] auto-mount usb drives
-* [ ] improved case
+* [x] improved case
 
 ## Issues
 
