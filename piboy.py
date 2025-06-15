@@ -1,5 +1,7 @@
+import logging
 import time
 from datetime import datetime
+from logging.config import fileConfig
 from typing import Any, Callable, Generator, Self
 
 from injector import Injector, Module, provider, singleton
@@ -27,6 +29,8 @@ from interaction.Display import Display
 from interaction.Input import Input
 from interaction.UnifiedInteraction import UnifiedInteraction
 
+fileConfig(fname='config.ini')
+logger = logging.getLogger(__name__)
 
 class AppState:
 

@@ -1,4 +1,5 @@
 import io
+import logging
 import threading
 import time
 from typing import Union
@@ -10,6 +11,7 @@ from core.data import DeviceStatus
 from core.decorator import override
 from data.LocationProvider import Location, LocationException, LocationProvider
 
+logger = logging.getLogger('location_data')
 
 class SerialGPSLocationProvider(LocationProvider):
 
@@ -28,7 +30,8 @@ class SerialGPSLocationProvider(LocationProvider):
                 if len(dataset) == 0:
                     self.__device_status = DeviceStatus.UNAVAILABLE
                 for data in dataset:
-                    if data[0:6] == '$GPRMC':
+                    logger.debug(data)
+                    if data[0:6] == '$GPGLL':
                         message = pynmea2.parse(data)
                         # lat and lon are strings that are empty if the connection is lost
                         if message.lat != '' and message.lon != '':
@@ -37,14 +40,15 @@ class SerialGPSLocationProvider(LocationProvider):
                         else:
                             self.__device_status = DeviceStatus.NO_DATA
                             self.__location = None
-            except serial.SerialException:
+            except serial.SerialException as e:
                 # connection issues: wait before trying again to avoid cpu load if the problem persists
+                logger.warning(e)
                 self.__device_status = DeviceStatus.UNAVAILABLE
                 time.sleep(5)
-            except pynmea2.ParseError:
-                pass
-            except UnicodeDecodeError:
-                pass
+            except pynmea2.ParseError as e:
+                logger.warning(e)
+            except UnicodeDecodeError as e:
+                logger.warning(e)
 
     @override
     def get_location(self) -> Location:

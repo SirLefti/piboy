@@ -1,3 +1,4 @@
+import logging
 import re
 import sys
 import threading
@@ -17,6 +18,7 @@ ResultTextCallable = Callable[[CompletedProcess[str]], str]
 ContinueCallable = Callable[[CompletedProcess[str]], bool]
 ActionDefinition = tuple[ActionCallable, ResultTextCallable] | tuple[ActionCallable, ResultTextCallable, ContinueCallable]
 
+logger = logging.getLogger('app')
 
 class UpdateApp(App):
     LINE_HEIGHT = 20
@@ -324,9 +326,9 @@ class UpdateApp(App):
                     result = action_callable()
                     # Log complete output
                     if result.stdout:
-                        print(result.stdout.rstrip('\n'))
+                        logger.info(result.stdout.rstrip('\n'))
                     if result.stderr:
-                        print(result.stderr.rstrip('\n'), file=sys.stderr)
+                        logger.error(result.stderr.rstrip('\n'))
                     self.__results.append(result_text_callable(result))
                     self.__update_counts()
                     self.__draw_callback(True)

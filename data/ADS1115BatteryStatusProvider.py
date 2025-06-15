@@ -1,3 +1,4 @@
+import logging
 import time
 from collections import deque
 
@@ -7,6 +8,7 @@ from core.data import DeviceStatus
 from core.decorator import override
 from data.BatteryStatusProvider import BatteryStatusProvider
 
+logger = logging.getLogger('battery_data')
 
 class ADS1115BatteryStatusProvider(BatteryStatusProvider):
 
@@ -36,6 +38,7 @@ class ADS1115BatteryStatusProvider(BatteryStatusProvider):
         self.__device_status = DeviceStatus.OPERATIONAL
         # swap bytes in word
         raw_data = ((word_data & 0xFF) << 8) | (word_data >> 8)
+        logger.debug(f'{raw_data=}')
         # 0x000 - 0x7FFF -> 0 ... +FSR | 0x8000 - 0xFFFF -> -FSR ... 0
         return (raw_data if raw_data < 0x8000 else raw_data - 0x10000) * self.__FSR / 0x8000
 
@@ -43,6 +46,7 @@ class ADS1115BatteryStatusProvider(BatteryStatusProvider):
     def get_state_of_charge(self) -> float:
         try:
             voltage = self.__read_channel()
+            logger.debug(f'{voltage=}')
             if voltage < 1.5:
                 self.__device_status = DeviceStatus.NO_DATA
                 return 0.0
@@ -55,7 +59,8 @@ class ADS1115BatteryStatusProvider(BatteryStatusProvider):
                     return 1
                 else:
                     return (smoothed_voltage - self.__V_DISCHARGED) / (self.__V_CHARGED - self.__V_DISCHARGED)
-        except OSError:
+        except OSError as e:
+            logger.warning(e)
             self.__device_status = DeviceStatus.UNAVAILABLE
             return 0.0
 

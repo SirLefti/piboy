@@ -26,10 +26,8 @@ class EnvironmentApp(SelfUpdatingApp):
         self.__draw_callback_kwargs = {'partial': True}
         self.__data_provider = data_provider
         self.__data: EnvironmentData | None = None
-        try:
-            self.__data = self.__data_provider.get_environment_data()
-        except OSError:
-            pass
+
+        self.__data = self.__data_provider.get_environment_data()
 
         self.__t_icon = resources.temperature_icon
         self.__p_icon = resources.pressure_icon
@@ -46,10 +44,7 @@ class EnvironmentApp(SelfUpdatingApp):
         return 'ENV'
 
     def __update_data(self):
-        try:
-            self.__data = self.__data_provider.get_environment_data()
-        except OSError:
-            self.__data = None
+        self.__data = self.__data_provider.get_environment_data()
         self.__draw_callback(**self.__draw_callback_kwargs)
 
     @override

@@ -47,7 +47,7 @@ Open a python console and test it out:
 >>> io_wrapper = io.TextIOWrapper(io.BufferedReader(device))
 >>> while True:
 ...     data = io_wrapper.readline()
-...     if data[0:6] == '$GPRMC':
+...     if data[0:6] == '$GPGLL':
 ...         message = pynmea2.parse(data)
 ...         print('lat:', message.latitude, 'lon:', message.longitude)
 ```

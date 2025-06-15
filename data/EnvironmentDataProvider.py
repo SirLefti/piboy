@@ -15,7 +15,7 @@ class EnvironmentDataProvider(ABC):
     """Data provider for environmental data."""
 
     @abstractmethod
-    def get_environment_data(self) -> EnvironmentData:
+    def get_environment_data(self) -> EnvironmentData | None:
         """Returns an object containing temperature, pressure and humidity."""
         raise NotImplementedError
 

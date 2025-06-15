@@ -1,3 +1,4 @@
+import logging
 import subprocess
 import threading
 import time
@@ -6,6 +7,7 @@ from core.data import ConnectionStatus
 from core.decorator import override
 from data.NetworkStatusProvider import NetworkStatusProvider
 
+logger = logging.getLogger('network_data')
 
 class NetworkManagerStatusProvider(NetworkStatusProvider):
     """Data provider for the network status using debians network-manager."""
@@ -23,6 +25,7 @@ class NetworkManagerStatusProvider(NetworkStatusProvider):
                 self.__status = ConnectionStatus.CONNECTED
             else:
                 self.__status = ConnectionStatus.DISCONNECTED
+            logger.debug(result.stdout)
             time.sleep(10)
 
     @override
