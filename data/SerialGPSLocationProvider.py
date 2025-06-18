@@ -26,20 +26,20 @@ class SerialGPSLocationProvider(LocationProvider):
     def __update_location(self):
         while True:
             try:
-                dataset = self.__io_wrapper.readlines()
-                if len(dataset) == 0:
+                data = self.__io_wrapper.readline()
+                if len(data) == 0:
                     self.__device_status = DeviceStatus.UNAVAILABLE
-                for data in dataset:
-                    logger.debug(data)
-                    if data[0:6] == '$GPGLL':
-                        message = pynmea2.parse(data)
-                        # lat and lon are strings that are empty if the connection is lost
-                        if message.lat != '' and message.lon != '':
-                            self.__device_status = DeviceStatus.OPERATIONAL
-                            self.__location = Location(message.latitude, message.longitude)
-                        else:
-                            self.__device_status = DeviceStatus.NO_DATA
-                            self.__location = None
+                    continue
+                logger.debug(data.strip())
+                if data[0:6] == '$GPGLL':
+                    message = pynmea2.parse(data)
+                    # lat and lon are strings that are empty if the connection is lost
+                    if message.lat != '' and message.lon != '':
+                        self.__device_status = DeviceStatus.OPERATIONAL
+                        self.__location = Location(message.latitude, message.longitude)
+                    else:
+                        self.__device_status = DeviceStatus.NO_DATA
+                        self.__location = None
             except serial.SerialException as e:
                 # connection issues: wait before trying again to avoid cpu load if the problem persists
                 logger.warning(e)
