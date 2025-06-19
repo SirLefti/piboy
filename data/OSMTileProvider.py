@@ -1,3 +1,4 @@
+import logging
 import math
 import os
 import time
@@ -10,6 +11,7 @@ from requests.exceptions import ConnectionError
 from core.decorator import override
 from data.TileProvider import TileInfo, TileProvider
 
+logger = logging.getLogger('tile_data')
 
 class OSMTileProvider(TileProvider):
 
@@ -33,7 +35,8 @@ class OSMTileProvider(TileProvider):
         tile: Image.Image
         try:
             tile = self._fetch_tile(zoom, x_tile, y_tile)
-        except (ValueError, FileNotFoundError, ConnectionError, UnidentifiedImageError):
+        except (ValueError, FileNotFoundError, ConnectionError, UnidentifiedImageError) as e:
+            logger.warning(e)
             tile = self._get_placeholder_tile()
         tile_width, tile_height = tile.size
         target_width, target_height = size
@@ -59,7 +62,8 @@ class OSMTileProvider(TileProvider):
                 try:
                     return self._fetch_tile(zoom, (x_tile - left_tiles + x) % int(math.pow(2, zoom)),
                                                   (y_tile - top_tiles + y) % int(math.pow(2, zoom)))
-                except (ValueError, FileNotFoundError, ConnectionError, UnidentifiedImageError):
+                except (ValueError, FileNotFoundError, ConnectionError, UnidentifiedImageError) as ex:
+                    logger.warning(ex)
                     return self._get_placeholder_tile()
 
         grid = [[generate_tile(x, y) for y in range(top_tiles + 1 + bottom_tiles)]

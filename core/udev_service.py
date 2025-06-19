@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 import threading
@@ -6,6 +7,7 @@ from subprocess import PIPE, run
 
 import pyudev
 
+logger = logging.getLogger(__name__)
 
 class UDevService:
 
@@ -21,7 +23,7 @@ class UDevService:
         # make sure that the mount root exists
         try:
             os.mkdir(self._mount_root)
-            print('created mount root')
+            logger.info('created mount root')
         except FileExistsError:
             pass
         self.loop_thread = threading.Thread(target=self._loop, daemon=True)
@@ -46,20 +48,20 @@ class UDevService:
 
         try:
             os.mkdir(target_path)
-            print(f'created directory {target_path}')
+            logger.info(f'created directory {target_path}')
         except FileExistsError:
             # this means the directory already exists, check if it is empty
             files = os.listdir(target_path)
             if files:
-                print('target mount is not empty!')
+                logger.warning('target mount is not empty!')
                 return
 
         result = run(['sudo', 'mount', device_node, target_path], stdout=PIPE)
 
         if result.returncode == 0:
-            print(f'mounted {device_node} at {target_path}')
+            logger.info(f'mounted {device_node} at {target_path}')
         else:
-            print(f'unable to mount {device_node} at {target_path}: {result.returncode}')
+            logger.error(f'unable to mount {device_node} at {target_path}: {result.returncode}')
             os.rmdir(target_path)
 
     def unmount(self, device):
@@ -70,15 +72,15 @@ class UDevService:
         result = run(['sudo', 'umount', target_path], stdout=PIPE)
 
         if result.returncode == 0:
-            print(f'unmounted {device_node} at {target_path}')
+            logger.info(f'unmounted {device_node} at {target_path}')
         else:
-            print(f'unable to unmount {device_node} at {target_path}: {result.returncode}')
+            logger.error(f'unable to unmount {device_node} at {target_path}: {result.returncode}')
 
         try:
             os.rmdir(target_path)
-            print(f'removed directory {target_path}')
+            logger.info(f'removed directory {target_path}')
         except FileNotFoundError:
-            print(f'did not remove directory {target_path} because it did not exist')
+            logger.warning(f'did not remove directory {target_path} because it did not exist')
 
 if __name__ == '__main__':
     service = UDevService()

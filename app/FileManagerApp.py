@@ -28,17 +28,13 @@ class FileManagerApp(App):
 
         class Popup:
 
-            def __init__(self, options: list[str], actions: list[Callable]):
-                if len(options) != len(actions):
-                    raise ValueError(
-                        'There must be as many options as actions ({0}, {1})'.format(len(options), len(actions)))
+            def __init__(self, options: list[tuple[str, Callable]]):
                 self.__options = options
                 self.__selected_index = 0
-                self.__actions = actions
 
             @property
             def options(self) -> list[str]:
-                return self.__options
+                return [option[0] for option in self.__options]
 
             @property
             def selected_index(self) -> int:
@@ -51,7 +47,7 @@ class FileManagerApp(App):
                 self.__selected_index = max(self.__selected_index - 1, 0)
 
             def action(self):
-                self.__actions[self.__selected_index]()
+                self.__options[self.__selected_index][1]()
 
         def __init__(self):
             self.__directory = os.path.expanduser('~')
@@ -397,12 +393,11 @@ class FileManagerApp(App):
             self.__active_directory.popup.action()
         else:
             if os.path.isdir(path):
-                self.__active_directory.popup = self.DirectoryState.Popup(['Enter', 'Copy', 'Move', 'Delete'],
-                                                                          [self._enter, self._copy, self._move,
-                                                                           self._delete])
+                self.__active_directory.popup = self.DirectoryState.Popup([('Enter', self._enter), ('Copy', self._copy),
+                                                                           ('Move', self._move), ('Delete', self._delete)])
             else:
-                self.__active_directory.popup = self.DirectoryState.Popup(['Copy', 'Move', 'Delete'],
-                                                                          [self._copy, self._move, self._delete])
+                self.__active_directory.popup = self.DirectoryState.Popup([('Copy', self._copy), ('Move', self._move),
+                                                                           ('Delete', self._delete)])
 
     @override
     def on_key_b(self):

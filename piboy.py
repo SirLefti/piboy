@@ -1,5 +1,7 @@
+import logging
 import time
 from datetime import datetime
+from logging.config import fileConfig
 from typing import Any, Callable, Generator, Self
 
 from injector import Injector, Module, provider, singleton
@@ -27,6 +29,8 @@ from interaction.Display import Display
 from interaction.Input import Input
 from interaction.UnifiedInteraction import UnifiedInteraction
 
+fileConfig(fname='config.ini')
+logger = logging.getLogger(__name__)
 
 class AppState:
 
@@ -228,7 +232,7 @@ class AppModule(Module):
     def provide_location_service(self, e: Environment) -> LocationProvider:
         if e.is_raspberry_pi:
             from data.SerialGPSLocationProvider import SerialGPSLocationProvider
-            return SerialGPSLocationProvider(e.gps_module_config.port, baudrate=e.gps_module_config.baudrate)
+            return SerialGPSLocationProvider(e.gps_module_config.port, baud_rate=e.gps_module_config.baud_rate)
         else:
             from data.IPLocationProvider import IPLocationProvider
             return IPLocationProvider(apply_inaccuracy=True)

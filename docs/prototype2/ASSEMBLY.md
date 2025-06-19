@@ -1,4 +1,4 @@
-Case Prototype 1
+Case Prototype 2
 ================
 
 ## Parts
@@ -8,15 +8,16 @@ Case Prototype 1
 either for type A:
 * [spacer part](parts/Proto2.1-spacer.stl)
 * [top part](parts/Proto2.1-top.stl)
-* [GPIO edge extension](https://wiki.52pi.com/index.php?title=EP-0121)
 
 or for type B:
-* [top part no spacer](/prototype2/parts/Proto2.1-top-no-spacer.stl)
+* [top part no spacer](parts/Proto2.1-top-no-spacer.stl)
 
 and also for both types:
 * 8x M2 (you can shorten screws if needed)
   * 4x at least 16 mm for the bottom
   * 4x at least 24 mm for the top for type A or 12 mm for type B
+
+**GPIO edge extension is required for type A.**
 
 **Made for Raspberry Pi 2 Model B. Other full size boards should fit as well with some adjustments to the I/O part.**
 
@@ -69,37 +70,10 @@ to be shortened a bit. Going from both sides reduces the load on each screw and 
 25 mm is usually already the longest variant you can get for M2 screws, which would not be enough here if going from the
 top all the way to the bottom part.
 
-Solder the [keypad](../keypad.md) as described, and prepare the config for the [rotary encoder](../rotary-encoder.md).
+Solder the [keypad](../keypad.md) and [power circuit](../power-circuit.md) as described, and prepare the config for the
+[rotary encoder](../rotary-encoder.md).
 
-### 2. Solder power circuit
-
-For the power circuit, you need the battery, charging controller, switch and power converter. Solder them together as
-show in the table and image below.
-
-**IMPORTANT:** Set up the power converter to output 5.0 V before soldering the Pi to it. The Pi has no fuses to protect
-itself from overvoltage via the pins. Charge the battery before configuring it.
-
-**NOTE**: The switch is placed between the battery/charging controller and the power converter, because the power
-converter would drain the battery over time if it was permanently connected to it.
-
-| from          | to              |
-|---------------|-----------------|
-| battery+      | TP4056 B+       |
-| battery-      | TP4056 B-       |
-| TP4056 Out+   | Switch Center 1 |
-| TP4056 Out-   | Switch Center 2 |
-| Switch Left 1 | MT3608 VIn+     |
-| Switch Left 2 | MT3608 VIn-     |
-| MT3608 VOut+  | Pi Pin 2 (5V)   |
-| MT3608 VOut-  | Pi Pin 6 (GND)  |
-
-The complete circuit should look like this. Try to power it on like that to see if everything works. Also attach the
-display module, because it has a relatively high power draw compared to the other components.
-![proto2_power](proto2_power.jpg)
-*Note: I am using here two separate cells instead of the single 18650 one. Both should have the same capacity when doing
-so.*
-
-### 3. Assembly
+### 2. Assembly
 
 The parts are held in place in different ways. If needed, add some (more) hot glue.
 
@@ -153,8 +127,8 @@ Use this table for reference:
 | 9    | GND               | KY-040 GND, keypad GND, BME280 GND, DS3231 GND |
 | 10   | GPIO 15 / UART RX | NEO-6M TX                                      |
 | 13   | GPIO 27           | KY-040 SW / NC                                 |
-| 15   | GPIO 22           | KY-040 CLK                                     |
-| 16   | GPIO 23           | KY-040 DT                                      |
+| 15   | GPIO 23           | KY-040 CLK                                     |
+| 16   | GPIO 22           | KY-040 DT                                      |
 | 29   | GPIO 5            | keypad UP                                      |
 | 31   | GPIO 6            | keypad DOWN                                    |
 | 32   | GPIO 12           | keypad LEFT                                    |
