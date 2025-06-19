@@ -6,6 +6,7 @@ from typing import Union
 
 import pynmea2
 import serial
+from pynmea2 import GLL
 
 from core.data import DeviceStatus
 from core.decorator import override
@@ -32,7 +33,7 @@ class SerialGPSLocationProvider(LocationProvider):
                     continue
                 logger.debug(data.strip())
                 if data[0:6] == '$GPGLL':
-                    message = pynmea2.parse(data)
+                    message: GLL = pynmea2.parse(data)
                     # lat and lon are strings that are empty if the connection is lost
                     if message.lat != '' and message.lon != '':
                         self.__device_status = DeviceStatus.OPERATIONAL
