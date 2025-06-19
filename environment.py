@@ -20,7 +20,7 @@ class I2CConfig:
 @dataclass
 class SerialConfig:
     port: str
-    baudrate: int
+    baud_rate: int
 
 
 @dataclass

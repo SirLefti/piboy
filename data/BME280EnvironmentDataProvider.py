@@ -1,3 +1,5 @@
+import logging
+
 import bme280
 import smbus2
 
@@ -5,6 +7,7 @@ from core.data import DeviceStatus
 from core.decorator import override
 from data.EnvironmentDataProvider import EnvironmentData, EnvironmentDataProvider
 
+logger = logging.getLogger('environment_data')
 
 class BME280EnvironmentDataProvider(EnvironmentDataProvider):
 
@@ -14,7 +17,7 @@ class BME280EnvironmentDataProvider(EnvironmentDataProvider):
         self.__device_status = DeviceStatus.UNAVAILABLE
 
     @override
-    def get_environment_data(self) -> EnvironmentData:
+    def get_environment_data(self) -> EnvironmentData | None:
         try:
             data = bme280.sample(self.__bus, self.__address)
             self.__device_status = DeviceStatus.OPERATIONAL
@@ -24,8 +27,9 @@ class BME280EnvironmentDataProvider(EnvironmentDataProvider):
                 data.humidity / 100
             )
         except OSError as e:
+            logger.warning(e)
             self.__device_status = DeviceStatus.UNAVAILABLE
-            raise e
+            return None
 
     @override
     def get_device_status(self) -> DeviceStatus:
