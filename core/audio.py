@@ -49,7 +49,7 @@ class AudioProcess(Process):
         :return:
         """
         time.sleep(delay)
-        # only call next if the playback was stopped in the meantime, which is marked by __is_continuing
+        # only call next if the playback was not stopped in the meantime, which is marked by __is_continuing
         if self.__is_continuing:
             self.__cb_connection.send(Command.CALLBACK_NEXT)
 
