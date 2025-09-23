@@ -172,8 +172,8 @@ class MultiprocessingAudioPlayer:
         self.__callback_next = callback_next
         p_cmd_connection, c_cmd_connection = Pipe(duplex=True)
         p_cb_connection, c_cb_connection = Pipe(duplex=True)
-        self.__cmd_connection = p_cmd_connection
-        self.__cb_connection = p_cb_connection
+        self.__cmd_connection: Connection = p_cmd_connection
+        self.__cb_connection: Connection = p_cb_connection
         self.__process = AudioProcess(c_cmd_connection, c_cb_connection)
         self.__process.start()
         self.__thread = Thread(target=self.__callback_listener, args=(), daemon=True)
