@@ -1,11 +1,11 @@
 import threading
 
-import RPi.GPIO as GPIO
 from PIL import Image
+from pyili9486 import ILI9486, Origin
+from pyili9486.gpio.rpilgpio_facade import RPiLGPIOFacade
 from spidev import SpiDev
 
 from core.decorator import override
-from driver.ILI9486 import ILI9486, Origin
 from interaction.Display import Display
 
 
@@ -15,13 +15,13 @@ class ILI9486Display(Display):
     __render_thread: threading.Thread | None = None
 
     def __init__(self, spi_config: tuple[int, int], dc_pin: int, rst_pin: int, flip_display: bool = False):
-        GPIO.setmode(GPIO.BCM)
         bus, device = spi_config
         spi = SpiDev(bus, device)
         spi.mode = 0b10  # [CPOL|CPHA] -> polarity 1, phase 0
         spi.max_speed_hz = 64000000
         origin = Origin.LOWER_RIGHT if flip_display else Origin.UPPER_LEFT
-        lcd = ILI9486(dc=dc_pin, rst=rst_pin, spi=spi, origin=origin).begin()
+        gpio = RPiLGPIOFacade(dc_pin, rst_pin)
+        lcd = ILI9486(spi=spi, gpio_facade=gpio, origin=origin).begin()
         self.__spi = spi
         self.__display = lcd
 
@@ -34,7 +34,6 @@ class ILI9486Display(Display):
     def close(self):
         self.__display.reset()
         self.__spi.close()
-        GPIO.cleanup()
 
     @override
     def show(self, image: Image.Image, x0: int, y0: int):
