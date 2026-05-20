@@ -1,4 +1,4 @@
--r requirements-dev.txt
+-r requirements.txt
 # The following requirements are only used by the hardware modules for Raspberry Pi.
 spidev >= 3.5
 rpi-lgpio >= 0.6.0
