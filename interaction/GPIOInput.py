@@ -20,7 +20,6 @@ class GPIOInput(Input):
         super().__init__(on_key_left, on_key_right, on_key_up, on_key_down, on_key_a, on_key_b, on_rotary_increase,
                          on_rotary_decrease, on_rotary_switch)
         self.__encoder = evdev.InputDevice(rotary_device)
-        GPIO.setmode(GPIO.BCM)
 
         # keys setup
         GPIO.setup(key_left, GPIO.IN, pull_up_down=GPIO.PUD_UP)
