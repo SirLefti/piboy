@@ -1,3 +1,4 @@
+import logging
 import os
 import random
 import re
@@ -17,6 +18,7 @@ from core import resources
 from core.decorator import override
 from environment import AppConfig
 
+logger = logging.getLogger('app')
 
 class RadioApp(SelfUpdatingApp):
     __CONTROL_PADDING = 4
@@ -204,7 +206,9 @@ class RadioApp(SelfUpdatingApp):
             self.__callback_next = callback_next
             self.__is_continuing = False
 
-        def __stream_callback(self, _1, frame_count, _2, _3) -> tuple[bytes, int]:
+        def __stream_callback(self, _in_data, frame_count, _time_info, status) -> tuple[bytes, int]:
+            if status & pyaudio.paOutputUnderflow:
+                logger.warning('PyAudio output underflow')
             data = self.__wave_read.readframes(frame_count)
             self.__played_frames += frame_count
             if self.__played_frames >= self.__total_frames:
