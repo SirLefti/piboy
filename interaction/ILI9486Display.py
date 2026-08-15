@@ -17,10 +17,6 @@ logger = logging.getLogger('display')
 
 class ILI9486Display(Display):
 
-    __queue: deque[Patch] = deque()
-    __render_thread: threading.Thread | None = None
-    __condition = threading.Condition()
-
     def __init__(self, spi_config: tuple[int, int], dc_pin: int, rst_pin: int, flip_display: bool = False):
         bus, device = spi_config
         spi = SpiDev(bus, device)
@@ -32,9 +28,10 @@ class ILI9486Display(Display):
         self.__spi = spi
         self.__display = lcd
 
-        t = threading.Thread(target=self.__process_queue, args=(), daemon=True)
-        t.start()
-        self.__render_thread = t
+        self.__queue: deque[Patch] = deque()
+        self.__condition = threading.Condition()
+        self.__render_thread = threading.Thread(target=self.__process_queue, daemon=True)
+        self.__render_thread.start()
 
     @staticmethod
     def __bounds(patch: Patch) -> Bounds:
