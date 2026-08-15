@@ -4,9 +4,11 @@ from typing import Callable
 
 class Input(ABC):
 
-    def __init__(self, on_key_left: Callable, on_key_right: Callable, on_key_up: Callable, on_key_down: Callable,
-                 on_key_a: Callable, on_key_b: Callable, on_rotary_increase: Callable, on_rotary_decrease: Callable,
-                 on_rotary_switch: Callable):
+    def __init__(self, on_key_left: Callable[[], None], on_key_right: Callable[[], None],
+                 on_key_up: Callable[[], None], on_key_down: Callable[[], None],
+                 on_key_a: Callable[[], None], on_key_b: Callable[[], None],
+                 on_rotary_increase: Callable[[], None], on_rotary_decrease: Callable[[], None],
+                 on_rotary_switch: Callable[[], None]):
         self.__on_key_left = on_key_left
         self.__on_key_right = on_key_right
         self.__on_key_up = on_key_up

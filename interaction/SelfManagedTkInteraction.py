@@ -20,16 +20,11 @@ class SelfManagedTkInteraction(UnifiedInteraction):
                  on_rotary_increase: Callable[[Display], None], on_rotary_decrease: Callable[[Display], None],
                  on_rotary_switch: Callable[[Display], None],
                  resolution: tuple[int, int], background: tuple[int, int, int], ui_background: tuple[int, int, int]):
-        Input.__init__(self, on_key_left, on_key_right, on_key_up, on_key_down, on_key_a, on_key_b,
-                       on_rotary_increase, on_rotary_decrease, on_rotary_switch)
-        self.__on_key_left = lambda: on_key_left(self)
-        self.__on_key_right = lambda: on_key_right(self)
-        self.__on_key_up = lambda: on_key_up(self)
-        self.__on_key_down = lambda: on_key_down(self)
-        self.__on_key_a = lambda: on_key_a(self)
-        self.__on_key_b = lambda: on_key_b(self)
-        self.__on_rotary_increase = lambda: on_rotary_increase(self)
-        self.__on_rotary_decrease = lambda: on_rotary_decrease(self)
+        Input.__init__(self, lambda: on_key_left(self), lambda: on_key_right(self),
+                       lambda: on_key_up(self), lambda: on_key_down(self),
+                       lambda: on_key_a(self), lambda: on_key_b(self),
+                       lambda: on_rotary_increase(self), lambda: on_rotary_decrease(self),
+                       lambda: on_rotary_switch(self))
         self.__resolution = resolution
         self.__background = background
         self.__image = Image.new('RGB', resolution, background)
@@ -42,28 +37,28 @@ class SelfManagedTkInteraction(UnifiedInteraction):
         self.__label.grid(row=0, column=0, rowspan=4)
 
         button_left = tk.Button(self.__root, width=self.BUTTON_W, height=self.BUTTON_H, text='left',
-                                command=self.__on_key_left)
+                                command=self.on_key_left)
         button_left.grid(row=1, column=1)
         button_up = tk.Button(self.__root, width=self.BUTTON_W, height=self.BUTTON_H, text='up',
-                              command=self.__on_key_up)
+                              command=self.on_key_up)
         button_up.grid(row=0, column=2)
         button_right = tk.Button(self.__root, width=self.BUTTON_W, height=self.BUTTON_H, text='right',
-                                 command=self.__on_key_right)
+                                 command=self.on_key_right)
         button_right.grid(row=1, column=3)
         button_down = tk.Button(self.__root, width=self.BUTTON_W, height=self.BUTTON_H, text='down',
-                                command=self.__on_key_down)
+                                command=self.on_key_down)
         button_down.grid(row=2, column=2)
         button_a = tk.Button(self.__root, width=self.BUTTON_W, height=self.BUTTON_H, text='button a',
-                             command=self.__on_key_a)
+                             command=self.on_key_a)
         button_a.grid(row=2, column=4)
         button_b = tk.Button(self.__root, width=self.BUTTON_W, height=self.BUTTON_H, text='button b',
-                             command=self.__on_key_b)
+                             command=self.on_key_b)
         button_b.grid(row=2, column=5)
         button_decrease = tk.Button(self.__root, width=self.BUTTON_W, height=self.BUTTON_H, text='-',
-                                    command=self.__on_rotary_decrease)
+                                    command=self.on_rotary_decrease)
         button_decrease.grid(row=0, column=4)
         button_increase = tk.Button(self.__root, width=self.BUTTON_W, height=self.BUTTON_H, text='+',
-                                    command=self.__on_rotary_increase)
+                                    command=self.on_rotary_increase)
         button_increase.grid(row=0, column=5)
 
     @override

@@ -28,7 +28,7 @@ class FileManagerApp(App):
 
         class Popup:
 
-            def __init__(self, options: list[tuple[str, Callable]]):
+            def __init__(self, options: list[tuple[str, Callable[[], None]]]):
                 self.__options = options
                 self.__selected_index = 0
 
