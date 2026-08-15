@@ -1,3 +1,4 @@
+import logging
 import time
 import wave
 from enum import Enum
@@ -10,6 +11,7 @@ import pyaudio
 
 from core.decorator import override
 
+logger = logging.getLogger('audio')
 
 class Command(Enum):
     START = 1
@@ -53,7 +55,9 @@ class AudioProcess(Process):
         if self.__is_continuing:
             self.__cb_connection.send(Command.CALLBACK_NEXT)
 
-    def __stream_callback(self, _1, frame_count, _2, _3) -> tuple[bytes, int]:
+    def __stream_callback(self, _data_in, frame_count, _time_info, status) -> tuple[bytes, int]:
+        if status & pyaudio.paOutputUnderflow:
+            logger.warning('PyAudio output underflow')
         data = self.__wave_read.readframes(frame_count)
         self.__played_frames += frame_count
         if self.__played_frames >= self.__total_frames:
