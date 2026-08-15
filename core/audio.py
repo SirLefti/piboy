@@ -79,7 +79,7 @@ class AudioProcess(Process):
             channels=self.__wave_read.getnchannels(),
             rate=self.__wave_read.getframerate(),
             output=True,
-            frames_per_buffer=8196,
+            frames_per_buffer=8192,
             stream_callback=self.__stream_callback)
 
     def __start_stream(self) -> bool:
