@@ -1,7 +1,9 @@
+import io
 import logging
 import math
 import os
 import time
+from functools import lru_cache
 from typing import Iterable
 
 import requests
@@ -17,6 +19,7 @@ class OSMTileProvider(TileProvider):
 
     __CACHE_DURATION = 1000 * 60 * 60 * 24 * 365  # one year in ms
     __OSM_TILE_SIZE = (256, 256)  # size of a tile image from OSM
+    __LRU_CACHE_SIZE = 16
 
     def __init__(self, background: tuple[int, int, int], color: tuple[int, int, int], font: ImageFont.FreeTypeFont):
         self.__background = background
@@ -97,6 +100,7 @@ class OSMTileProvider(TileProvider):
         return tile
 
     @classmethod
+    @lru_cache(__LRU_CACHE_SIZE)
     def _fetch_tile(cls, zoom: int, x_tile: int, y_tile: int) -> Image.Image:
         """Fetches the requested tile either from cache or from OSM tile API"""
         tile_cache = '.tiles'
@@ -105,7 +109,9 @@ class OSMTileProvider(TileProvider):
             os.mkdir(tile_cache)
         tile_path = os.path.join(tile_cache, cache_template.format(zoom=zoom, x=x_tile, y=y_tile))
         if os.path.isfile(tile_path) and time.time() - os.path.getmtime(tile_path) < cls.__CACHE_DURATION:
-            return Image.open(tile_path)
+            with open(tile_path, 'rb') as f:
+                logger.debug(f'loaded {zoom}-{x_tile}-{y_tile} from file cache')
+                return Image.open(io.BytesIO(f.read()))
         else:
             headers = {
                 'User-Agent': 'piboy'
@@ -113,8 +119,9 @@ class OSMTileProvider(TileProvider):
             response = requests.get(f'https://tile.openstreetmap.org/{zoom}/{x_tile}/{y_tile}.png', headers=headers)
             if response.status_code == 200:
                 with open(tile_path, 'wb') as f:
+                    logger.debug(f'fetched {zoom}-{x_tile}-{y_tile} from openstreetmaps')
                     f.write(response.content)
-                return Image.open(tile_path)
+                return Image.open(io.BytesIO(response.content))
             else:
                 raise ValueError(f'Fetching OSM tile ({zoom}-{x_tile}-{y_tile}) failed ({response.status_code})')
 
