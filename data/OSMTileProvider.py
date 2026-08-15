@@ -2,24 +2,33 @@ import io
 import logging
 import math
 import os
+import threading
 import time
 from functools import lru_cache
 from typing import Iterable
 
 import requests
 from PIL import Image, ImageDraw, ImageFont, UnidentifiedImageError
-from requests.exceptions import ConnectionError
+from requests.exceptions import ConnectionError, RequestException
 
 from core.decorator import override
 from data.TileProvider import TileInfo, TileProvider
 
 logger = logging.getLogger('tile_data')
 
+class TileNotReadyError(Exception):
+    """Raised when a file has not been fetched yet, which runs in the background, and will be available soon"""
+
+
 class OSMTileProvider(TileProvider):
 
     __CACHE_DURATION = 1000 * 60 * 60 * 24 * 365  # one year in ms
     __OSM_TILE_SIZE = (256, 256)  # size of a tile image from OSM
     __LRU_CACHE_SIZE = 16
+    __TILE_CACHE_PATH = '.tiles'
+    __TILE_CACHE_TEMPLATE = '{zoom}-{x}-{y}.png'
+    __PENDING_TILES: set[tuple[int, int, int]] = set()
+    __PENDING_LOCK = threading.Lock()
 
     def __init__(self, background: tuple[int, int, int], color: tuple[int, int, int], font: ImageFont.FreeTypeFont):
         self.__background = background
@@ -40,6 +49,8 @@ class OSMTileProvider(TileProvider):
             tile = self._fetch_tile(zoom, x_tile, y_tile)
         except (ValueError, FileNotFoundError, ConnectionError, UnidentifiedImageError) as e:
             logger.warning(e)
+            tile = self._get_placeholder_tile()
+        except TileNotReadyError:
             tile = self._get_placeholder_tile()
         tile_width, tile_height = tile.size
         target_width, target_height = size
@@ -67,6 +78,8 @@ class OSMTileProvider(TileProvider):
                                                   (y_tile - top_tiles + y) % int(math.pow(2, zoom)))
                 except (ValueError, FileNotFoundError, ConnectionError, UnidentifiedImageError) as ex:
                     logger.warning(ex)
+                    return self._get_placeholder_tile()
+                except TileNotReadyError:
                     return self._get_placeholder_tile()
 
         grid = [[generate_tile(x, y) for y in range(top_tiles + 1 + bottom_tiles)]
@@ -103,27 +116,41 @@ class OSMTileProvider(TileProvider):
     @lru_cache(__LRU_CACHE_SIZE)
     def _fetch_tile(cls, zoom: int, x_tile: int, y_tile: int) -> Image.Image:
         """Fetches the requested tile either from cache or from OSM tile API"""
-        tile_cache = '.tiles'
-        cache_template = '{zoom}-{x}-{y}.png'
-        if not os.path.isdir(tile_cache):
-            os.mkdir(tile_cache)
-        tile_path = os.path.join(tile_cache, cache_template.format(zoom=zoom, x=x_tile, y=y_tile))
+        if not os.path.isdir(cls.__TILE_CACHE_PATH):
+            os.mkdir(cls.__TILE_CACHE_PATH)
+        tile_path = os.path.join(cls.__TILE_CACHE_PATH, cls.__TILE_CACHE_TEMPLATE.format(zoom=zoom, x=x_tile, y=y_tile))
         if os.path.isfile(tile_path) and time.time() - os.path.getmtime(tile_path) < cls.__CACHE_DURATION:
             with open(tile_path, 'rb') as f:
                 logger.debug(f'loaded {zoom}-{x_tile}-{y_tile} from file cache')
                 return Image.open(io.BytesIO(f.read()))
-        else:
-            headers = {
-                'User-Agent': 'piboy'
-            }
+        key = (zoom, x_tile, y_tile)
+        with cls.__PENDING_LOCK:
+            already_fetching = key in cls.__PENDING_TILES
+            cls.__PENDING_TILES.add(key)
+        if not already_fetching:
+            logger.debug(f'started fetch {zoom}-{x_tile}-{y_tile} from openstreetmaps')
+            threading.Thread(target=cls._fetch_and_store_tile_background_task, args=key, daemon=True).start()
+        raise TileNotReadyError(f'tile {zoom}-{x_tile}-{y_tile} is fetched in the background')
+
+    @classmethod
+    def _fetch_and_store_tile_background_task(cls, zoom: int, x_tile: int, y_tile: int):
+        headers = {
+            'User-Agent': 'piboy'
+        }
+        tile_path = os.path.join(cls.__TILE_CACHE_PATH, cls.__TILE_CACHE_TEMPLATE.format(zoom=zoom, x=x_tile, y=y_tile))
+        try:
             response = requests.get(f'https://tile.openstreetmap.org/{zoom}/{x_tile}/{y_tile}.png', headers=headers)
             if response.status_code == 200:
                 with open(tile_path, 'wb') as f:
                     logger.debug(f'fetched {zoom}-{x_tile}-{y_tile} from openstreetmaps')
                     f.write(response.content)
-                return Image.open(io.BytesIO(response.content))
             else:
-                raise ValueError(f'Fetching OSM tile ({zoom}-{x_tile}-{y_tile}) failed ({response.status_code})')
+                logger.warning(f'Fetching OSM tile ({zoom}-{x_tile}-{y_tile}) failed ({response.status_code})')
+        except RequestException as e:
+            logger.warning(e)
+        finally:
+            with cls.__PENDING_LOCK:
+                cls.__PENDING_TILES.discard((zoom, x_tile, y_tile))
 
     @classmethod
     def _deg_to_num(cls, lat_deg: float, lon_deg: float, zoom: int) -> tuple[int, int]:
