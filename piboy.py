@@ -343,6 +343,7 @@ def draw_footer(image: Image.Image, state: AppState) -> tuple[Image.Image, int, 
     # draw battery status
     state_of_charge_str = f'{state.battery_status_provider.get_state_of_charge():.0%}'
     _, _, text_width, text_height = font.getbbox(state_of_charge_str)
+    text_width, text_height = round(text_width), round(text_height)
     text_padding = (footer_height - text_height) // 2
     draw.text((cursor_x + icon_padding, cursor_y + text_padding), state_of_charge_str,
               state.environment.app_config.accent, font=font)
@@ -351,6 +352,7 @@ def draw_footer(image: Image.Image, state: AppState) -> tuple[Image.Image, int, 
     # draw time
     date_str = datetime.now().strftime('%d-%m-%Y %H:%M:%S')
     _, _, text_width, text_height = font.getbbox(date_str)
+    text_width, text_height = round(text_width), round(text_height)
     text_padding = (footer_height - text_height) // 2
     draw.text((width - footer_side_offset - text_padding - text_width, cursor_y + text_padding), date_str,
               state.environment.app_config.accent, font=font)
