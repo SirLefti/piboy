@@ -1,8 +1,10 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 from typing import Callable
 
+from core.closeable import Closeable
 
-class Input(ABC):
+
+class Input(Closeable, ABC):
 
     def __init__(self, on_key_left: Callable[[], None], on_key_right: Callable[[], None],
                  on_key_up: Callable[[], None], on_key_down: Callable[[], None],
@@ -16,10 +18,6 @@ class Input(ABC):
         self.__on_key_b = on_key_b
         self.__on_rotary_change = on_rotary_change
         self.__on_rotary_switch = on_rotary_switch
-
-    @abstractmethod
-    def close(self):
-        raise NotImplementedError
 
     def on_key_left(self):
         self.__on_key_left()

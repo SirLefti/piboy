@@ -40,6 +40,10 @@ class IPLocationProvider(LocationProvider):
             return Location(float(values[0]), float(values[1]))
 
     @override
+    def close(self):
+        pass
+
+    @override
     def get_location(self) -> Location:
         try:
             location = self.__fetch_location()

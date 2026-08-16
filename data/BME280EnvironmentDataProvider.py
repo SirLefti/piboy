@@ -17,6 +17,10 @@ class BME280EnvironmentDataProvider(EnvironmentDataProvider):
         self.__device_status = DeviceStatus.UNAVAILABLE
 
     @override
+    def close(self):
+        self.__bus.close()
+
+    @override
     def get_environment_data(self) -> EnvironmentData | None:
         try:
             data = bme280.sample(self.__bus, self.__address)

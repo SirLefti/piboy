@@ -43,6 +43,10 @@ class ADS1115BatteryStatusProvider(BatteryStatusProvider):
         return (raw_data if raw_data < 0x8000 else raw_data - 0x10000) * self.__FSR / 0x8000
 
     @override
+    def close(self):
+        self.__bus.close()
+
+    @override
     def get_state_of_charge(self) -> float:
         try:
             voltage = self.__read_channel()

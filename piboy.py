@@ -1,5 +1,6 @@
 import logging
 import time
+from contextlib import ExitStack
 from datetime import datetime
 from logging.config import fileConfig
 from typing import Any, Callable, Generator, Self
@@ -448,11 +449,14 @@ if __name__ == '__main__':
     app_state.update_display(DISPLAY)
     app_state.active_app.on_app_enter()
 
-    try:
-        # blocking function that updates the clock
-        app_state.watch_function(DISPLAY)
-    except KeyboardInterrupt:
-        pass
-    finally:
-        DISPLAY.close()
-        INPUT.close()
+    with ExitStack() as stack:
+        stack.enter_context(DISPLAY)
+        stack.enter_context(INPUT)
+        stack.enter_context(injector.get(LocationProvider))
+        stack.enter_context(injector.get(BatteryStatusProvider))
+        stack.enter_context(injector.get(EnvironmentDataProvider))
+        try:
+            # blocking function that updates the clock
+            app_state.watch_function(DISPLAY)
+        except KeyboardInterrupt:
+            pass
