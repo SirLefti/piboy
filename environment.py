@@ -41,25 +41,21 @@ class AppConfig:
     color_mode: int = 0
     width: int = 480
     height: int = 320
-    modes: list[ColorConfig] = None
+    modes: list[ColorConfig] = field(default_factory=lambda: [
+        ColorConfig(
+            background=(0, 0, 0),
+            accent=(27, 251, 30),
+            accent_dark=(9, 64, 9)
+        ),
+        ColorConfig(
+            background=(0, 0, 0),
+            accent=(255, 245, 101),
+            accent_dark=(59, 45, 25)
+        )
+    ])
     # cached properties
     __font_header: ImageFont.FreeTypeFont | None = None
     __font_standard: ImageFont.FreeTypeFont | None = None
-
-    def __post_init__(self):
-        if self.modes is None:
-            self.modes = [
-                ColorConfig(
-                    background=(0, 0, 0),
-                    accent=(27, 251, 30),
-                    accent_dark=(9, 64, 9)
-                ),
-                ColorConfig(
-                    background=(0, 0, 0),
-                    accent=(255, 245, 101),
-                    accent_dark=(59, 45, 25)
-                )
-            ]
 
     @property
     def resolution(self) -> tuple[int, int]:
