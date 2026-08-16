@@ -20,7 +20,7 @@ class ADS1115BatteryStatusProvider(BatteryStatusProvider):
     __V_CHARGED = 4.2
     __V_DISCHARGED = 2.9
 
-    __last_levels = deque(maxlen=10)
+    __last_levels: deque[float] = deque(maxlen=10)
 
     def __init__(self, port: int, address: int):
         self.__bus = smbus2.SMBus(port)
