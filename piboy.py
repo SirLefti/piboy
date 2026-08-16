@@ -273,9 +273,11 @@ class AppModule(Module):
             return ILI9486Display((spi_device_config.bus, spi_device_config.device),
                                   e.display_config.dc_pin, e.display_config.rst_pin, e.display_config.flip_display)
         else:
-            if self.__unified_instance is None:
-                self.__unified_instance = self.__create_tk_interaction(state, e.app_config)
-            return self.__unified_instance
+            instance = self.__unified_instance
+            if instance is None:
+                instance = self.__create_tk_interaction(state, e.app_config)
+                self.__unified_instance = instance
+            return instance
 
     @singleton
     @provider
@@ -300,9 +302,11 @@ class AppModule(Module):
                              lambda steps: state.on_rotary_change(display, steps),
                              reset_and_init)
         else:
-            if self.__unified_instance is None:
-                self.__unified_instance = self.__create_tk_interaction(state, e.app_config)
-            return self.__unified_instance
+            instance = self.__unified_instance
+            if instance is None:
+                instance = self.__create_tk_interaction(state, e.app_config)
+                self.__unified_instance = instance
+            return instance
 
 
 def draw_footer(image: Image.Image, state: AppState) -> tuple[Image.Image, int, int]:
