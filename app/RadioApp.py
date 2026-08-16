@@ -201,15 +201,14 @@ class RadioApp(SelfUpdatingApp):
             self.__player = pyaudio.PyAudio()
             self.__total_frames = 0
             self.__played_frames = 0
-            self.__wave_read: Optional[wave.Wave_read] = None
             self.__stream: Optional[pyaudio.Stream] = None
             self.__callback_next = callback_next
             self.__is_continuing = False
 
-        def __stream_callback(self, _in_data, frame_count, _time_info, status) -> tuple[bytes, int]:
+        def __stream_callback(self, wave_read: wave.Wave_read, _in_data, frame_count, _time_info, status) -> tuple[bytes, int]:
             if status & pyaudio.paOutputUnderflow:
                 logger.warning('PyAudio output underflow')
-            data = self.__wave_read.readframes(frame_count)
+            data = wave_read.readframes(frame_count)
             self.__played_frames += frame_count
             if self.__played_frames >= self.__total_frames:
                 thread_call_next = threading.Thread(target=self.__delayed_call_next, args=(), daemon=True)
@@ -223,17 +222,20 @@ class RadioApp(SelfUpdatingApp):
             self.__callback_next()
 
         def load_file(self, file_path: str):
-            self.__wave_read = wave.open(file_path, 'rb')
-            self.__total_frames = self.__wave_read.getnframes()
+            wave_read = wave.open(file_path, 'rb')
+            self.__total_frames = wave_read.getnframes()
             self.__played_frames = 0
 
+            stream_callback = lambda in_data, frame_count, time_info, status: (
+                self.__stream_callback(wave_read, in_data, frame_count, time_info, status))
+
             self.__stream = self.__player.open(format=self.__player.get_format_from_width(
-                self.__wave_read.getsampwidth()),
-                channels=self.__wave_read.getnchannels(),
-                rate=self.__wave_read.getframerate(),
+                wave_read.getsampwidth()),
+                channels=wave_read.getnchannels(),
+                rate=wave_read.getframerate(),
                 output=True,
                 frames_per_buffer=8192,
-                stream_callback=self.__stream_callback)
+                stream_callback=stream_callback)
 
         def start_stream(self) -> bool:
             if self.__stream:
