@@ -174,7 +174,9 @@ class AppState:
 
 class AppModule(Module):
 
-    __unified_instance: UnifiedInteraction | None = None
+    def __init__(self):
+        super().__init__()
+        self.__unified_instance: UnifiedInteraction | None = None
 
     def register_external_tk_interaction(self, tk_instance: UnifiedInteraction):
         self.__unified_instance = tk_instance

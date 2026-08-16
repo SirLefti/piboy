@@ -11,13 +11,12 @@ logger = logging.getLogger(__name__)
 
 class UDevService:
 
-    loop_thread = None
-
     def __init__(self, mount_root: str = path.join(path.expanduser('~'), 'media')):
         self._mount_root = mount_root
         self._context = pyudev.Context()
         self._monitor = pyudev.Monitor.from_netlink(self._context)
         self._monitor.filter_by('block', 'partition')
+        self._loop_thread = threading.Thread(target=self._loop, daemon=True)
 
     def start(self):
         # make sure that the mount root exists
@@ -26,8 +25,7 @@ class UDevService:
             logger.info('created mount root')
         except FileExistsError:
             pass
-        self.loop_thread = threading.Thread(target=self._loop, daemon=True)
-        self.loop_thread.start()
+        self._loop_thread.start()
 
     def _loop(self):
         while True:
