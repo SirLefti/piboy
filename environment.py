@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field, fields
 from functools import cached_property
+from typing import Any, cast
 
 import yaml
 from PIL import ImageFont
@@ -144,7 +145,7 @@ class Environment:
 
 def spi_config_constructor(loader: Loader | FullLoader | UnsafeLoader, node: Node) -> SPIConfig:
     if isinstance(node, MappingNode):
-        values = loader.construct_mapping(node)
+        values = cast(dict[str, Any], loader.construct_mapping(node))
         return SPIConfig(**values)
     raise TypeError("node is not of type MappingNode")
 
@@ -155,7 +156,7 @@ def spi_config_representor(dumper: Dumper, data: SPIConfig) -> MappingNode:
 
 def i2c_config_constructor(loader: Loader | FullLoader | UnsafeLoader, node: Node) -> I2CConfig:
     if isinstance(node, MappingNode):
-        values = loader.construct_mapping(node)
+        values = cast(dict[str, Any], loader.construct_mapping(node))
         return I2CConfig(**values)
     raise TypeError("node is not of type MappingNode")
 
@@ -166,7 +167,7 @@ def i2c_config_representor(dumper: Dumper, data: I2CConfig) -> MappingNode:
 
 def serial_config_constructor(loader: Loader | FullLoader | UnsafeLoader, node: Node) -> SerialConfig:
     if isinstance(node, MappingNode):
-        values = loader.construct_mapping(node)
+        values = cast(dict[str, Any], loader.construct_mapping(node))
         return SerialConfig(**values)
     raise TypeError("node if not of type MappingNode")
 
@@ -177,7 +178,7 @@ def serial_config_representor(dumper: Dumper, data: SerialConfig) -> MappingNode
 
 def color_config_constructor(loader: Loader | FullLoader | UnsafeLoader, node: Node) -> ColorConfig:
     if isinstance(node, MappingNode):
-        values = loader.construct_mapping(node)
+        values = cast(dict[str, Any], loader.construct_mapping(node))
         return ColorConfig(**values)
     raise TypeError("node is not of type MappingNode")
 
@@ -188,7 +189,7 @@ def color_config_representor(dumper: Dumper, data: ColorConfig) -> MappingNode:
 
 def app_config_constructor(loader: Loader | FullLoader | UnsafeLoader, node: Node) -> AppConfig:
     if isinstance(node, MappingNode):
-        values = loader.construct_mapping(node)
+        values = cast(dict[str, Any], loader.construct_mapping(node))
         return AppConfig(**values)
     raise TypeError("node is not of type MappingNode")
 
@@ -199,7 +200,7 @@ def app_config_representor(dumper: Dumper, data: AppConfig) -> MappingNode:
 
 def keypad_config_constructor(loader: Loader | FullLoader | UnsafeLoader, node: Node) -> KeypadConfig:
     if isinstance(node, MappingNode):
-        values = loader.construct_mapping(node)
+        values = cast(dict[str, Any], loader.construct_mapping(node))
         return KeypadConfig(**values)
     raise TypeError("node is not of type MappingNode")
 
@@ -210,7 +211,7 @@ def keypad_config_representor(dumper: Dumper, data: KeypadConfig) -> MappingNode
 
 def rotary_config_constructor(loader: Loader | FullLoader | UnsafeLoader, node: Node) -> RotaryConfig:
     if isinstance(node, MappingNode):
-        values = loader.construct_mapping(node)
+        values = cast(dict[str, Any], loader.construct_mapping(node))
         return RotaryConfig(**values)
     raise TypeError("node is not of type MappingNode")
 
@@ -221,7 +222,7 @@ def rotary_config_representor(dumper: Dumper, data: RotaryConfig) -> MappingNode
 
 def display_config_constructor(loader: Loader | FullLoader | UnsafeLoader, node: Node) -> DisplayConfig:
     if isinstance(node, MappingNode):
-        values = loader.construct_mapping(node)
+        values = cast(dict[str, Any], loader.construct_mapping(node))
         return DisplayConfig(**values)
     raise TypeError("node is not of type MappingNode")
 
@@ -232,7 +233,7 @@ def display_config_representor(dumper: Dumper, data: DisplayConfig) -> MappingNo
 
 def environment_constructor(loader: Loader | FullLoader | UnsafeLoader, node: Node) -> Environment:
     if isinstance(node, MappingNode):
-        values = loader.construct_mapping(node)
+        values = cast(dict[str, Any], loader.construct_mapping(node))
         return Environment(**values)
     raise TypeError("node is not of type MappingNode")
 
