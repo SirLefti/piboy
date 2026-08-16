@@ -1,4 +1,5 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
+from functools import cached_property
 
 import yaml
 from PIL import ImageFont
@@ -53,9 +54,6 @@ class AppConfig:
             accent_dark=(59, 45, 25)
         )
     ])
-    # cached properties
-    __font_header: ImageFont.FreeTypeFont | None = None
-    __font_standard: ImageFont.FreeTypeFont | None = None
 
     @property
     def resolution(self) -> tuple[int, int]:
@@ -65,17 +63,13 @@ class AppConfig:
     def app_size(self) -> tuple[int, int]:
         return self.width - 2 * self.app_side_offset, self.height - self.app_top_offset - self.app_bottom_offset
 
-    @property
+    @cached_property
     def font_header(self) -> ImageFont.FreeTypeFont:
-        if self.__font_header is None:
-            self.__font_header = ImageFont.truetype(self.font_name, self.font_header_size)
-        return self.__font_header
+        return ImageFont.truetype(self.font_name, self.font_header_size)
 
-    @property
+    @cached_property
     def font_standard(self) -> ImageFont.FreeTypeFont:
-        if self.__font_standard is None:
-            self.__font_standard = ImageFont.truetype(self.font_name, self.font_standard_size)
-        return self.__font_standard
+        return ImageFont.truetype(self.font_name, self.font_standard_size)
 
     @property
     def background(self) -> tuple[int, int, int]:
@@ -156,7 +150,7 @@ def spi_config_constructor(loader: Loader | FullLoader | UnsafeLoader, node: Nod
 
 
 def spi_config_representor(dumper: Dumper, data: SPIConfig) -> MappingNode:
-    return dumper.represent_mapping('!SPIConfig', {k: v for k,v in vars(data).items() if k[0] != '_'})
+    return dumper.represent_mapping('!SPIConfig', {f.name: getattr(data, f.name) for f in fields(data) if not f.name.startswith('_')})
 
 
 def i2c_config_constructor(loader: Loader | FullLoader | UnsafeLoader, node: Node) -> I2CConfig:
@@ -167,7 +161,7 @@ def i2c_config_constructor(loader: Loader | FullLoader | UnsafeLoader, node: Nod
 
 
 def i2c_config_representor(dumper: Dumper, data: I2CConfig) -> MappingNode:
-    return dumper.represent_mapping('!I2CConfig', {k: v for k,v in vars(data).items() if k[0] != '_'})
+    return dumper.represent_mapping('!I2CConfig', {f.name: getattr(data, f.name) for f in fields(data) if not f.name.startswith('_')})
 
 
 def serial_config_constructor(loader: Loader | FullLoader | UnsafeLoader, node: Node) -> SerialConfig:
@@ -178,7 +172,7 @@ def serial_config_constructor(loader: Loader | FullLoader | UnsafeLoader, node: 
 
 
 def serial_config_representor(dumper: Dumper, data: SerialConfig) -> MappingNode:
-    return dumper.represent_mapping('!SerialConfig', {k: v for k,v in vars(data).items() if k[0] != '_'})
+    return dumper.represent_mapping('!SerialConfig', {f.name: getattr(data, f.name) for f in fields(data) if not f.name.startswith('_')})
 
 
 def color_config_constructor(loader: Loader | FullLoader | UnsafeLoader, node: Node) -> ColorConfig:
@@ -189,7 +183,7 @@ def color_config_constructor(loader: Loader | FullLoader | UnsafeLoader, node: N
 
 
 def color_config_representor(dumper: Dumper, data: ColorConfig) -> MappingNode:
-    return dumper.represent_mapping('!ColorConfig', {k: v for k,v in vars(data).items() if k[0] != '_'})
+    return dumper.represent_mapping('!ColorConfig', {f.name: getattr(data, f.name) for f in fields(data) if not f.name.startswith('_')})
 
 
 def app_config_constructor(loader: Loader | FullLoader | UnsafeLoader, node: Node) -> AppConfig:
@@ -200,7 +194,7 @@ def app_config_constructor(loader: Loader | FullLoader | UnsafeLoader, node: Nod
 
 
 def app_config_representor(dumper: Dumper, data: AppConfig) -> MappingNode:
-    return dumper.represent_mapping('!AppConfig', {k: v for k,v in vars(data).items() if k[0] != '_'})
+    return dumper.represent_mapping('!AppConfig', {f.name: getattr(data, f.name) for f in fields(data) if not f.name.startswith('_')})
 
 
 def keypad_config_constructor(loader: Loader | FullLoader | UnsafeLoader, node: Node) -> KeypadConfig:
@@ -211,7 +205,7 @@ def keypad_config_constructor(loader: Loader | FullLoader | UnsafeLoader, node: 
 
 
 def keypad_config_representor(dumper: Dumper, data: KeypadConfig) -> MappingNode:
-    return dumper.represent_mapping('!KeypadConfig', {k: v for k,v in vars(data).items() if k[0] != '_'})
+    return dumper.represent_mapping('!KeypadConfig', {f.name: getattr(data, f.name) for f in fields(data) if not f.name.startswith('_')})
 
 
 def rotary_config_constructor(loader: Loader | FullLoader | UnsafeLoader, node: Node) -> RotaryConfig:
@@ -222,7 +216,7 @@ def rotary_config_constructor(loader: Loader | FullLoader | UnsafeLoader, node: 
 
 
 def rotary_config_representor(dumper: Dumper, data: RotaryConfig) -> MappingNode:
-    return dumper.represent_mapping('!RotaryConfig', {k: v for k,v in vars(data).items() if k[0] != '_'})
+    return dumper.represent_mapping('!RotaryConfig', {f.name: getattr(data, f.name) for f in fields(data) if not f.name.startswith('_')})
 
 
 def display_config_constructor(loader: Loader | FullLoader | UnsafeLoader, node: Node) -> DisplayConfig:
@@ -233,7 +227,7 @@ def display_config_constructor(loader: Loader | FullLoader | UnsafeLoader, node:
 
 
 def display_config_representor(dumper: Dumper, data: DisplayConfig) -> MappingNode:
-    return dumper.represent_mapping('!DisplayConfig', {k: v for k,v in vars(data).items() if k[0] != '_'})
+    return dumper.represent_mapping('!DisplayConfig', {f.name: getattr(data, f.name) for f in fields(data) if not f.name.startswith('_')})
 
 
 def environment_constructor(loader: Loader | FullLoader | UnsafeLoader, node: Node) -> Environment:
@@ -244,7 +238,7 @@ def environment_constructor(loader: Loader | FullLoader | UnsafeLoader, node: No
 
 
 def environment_representor(dumper: Dumper, data: Environment) -> MappingNode:
-    return dumper.represent_mapping('!Environment', {k: v for k,v in vars(data).items() if k[0] != '_'})
+    return dumper.represent_mapping('!Environment', {f.name: getattr(data, f.name) for f in fields(data) if not f.name.startswith('_')})
 
 
 def configure():
