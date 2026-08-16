@@ -17,13 +17,13 @@ class SelfManagedTkInteraction(UnifiedInteraction):
     def __init__(self, on_key_left: Callable[[Display], None], on_key_right: Callable[[Display], None],
                  on_key_up: Callable[[Display], None], on_key_down: Callable[[Display], None],
                  on_key_a: Callable[[Display], None], on_key_b: Callable[[Display], None],
-                 on_rotary_increase: Callable[[Display], None], on_rotary_decrease: Callable[[Display], None],
+                 on_rotary_change: Callable[[Display, int], None],
                  on_rotary_switch: Callable[[Display], None],
                  resolution: tuple[int, int], background: tuple[int, int, int], ui_background: tuple[int, int, int]):
         Input.__init__(self, lambda: on_key_left(self), lambda: on_key_right(self),
                        lambda: on_key_up(self), lambda: on_key_down(self),
                        lambda: on_key_a(self), lambda: on_key_b(self),
-                       lambda: on_rotary_increase(self), lambda: on_rotary_decrease(self),
+                       lambda steps: on_rotary_change(self, steps),
                        lambda: on_rotary_switch(self))
         self.__resolution = resolution
         self.__background = background
@@ -55,10 +55,10 @@ class SelfManagedTkInteraction(UnifiedInteraction):
                              command=self.on_key_b)
         button_b.grid(row=2, column=5)
         button_decrease = tk.Button(self.__root, width=self.BUTTON_W, height=self.BUTTON_H, text='-',
-                                    command=self.on_rotary_decrease)
+                                    command=lambda: self.on_rotary_change(-1))
         button_decrease.grid(row=0, column=4)
         button_increase = tk.Button(self.__root, width=self.BUTTON_W, height=self.BUTTON_H, text='+',
-                                    command=self.on_rotary_increase)
+                                    command=lambda: self.on_rotary_change(1))
         button_increase.grid(row=0, column=5)
 
     @override

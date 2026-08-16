@@ -1,3 +1,4 @@
+import logging
 import threading
 from typing import Callable
 
@@ -7,6 +8,7 @@ import RPi.GPIO as GPIO
 from core.decorator import override
 from interaction.Input import Input
 
+logger = logging.getLogger('gpio')
 
 class GPIOInput(Input):
 
@@ -15,10 +17,10 @@ class GPIOInput(Input):
                  on_key_left: Callable[[], None], on_key_right: Callable[[], None],
                  on_key_up: Callable[[], None], on_key_down: Callable[[], None],
                  on_key_a: Callable[[], None], on_key_b: Callable[[], None],
-                 on_rotary_increase: Callable[[], None], on_rotary_decrease: Callable[[], None],
+                 on_rotary_change: Callable[[int], None],
                  on_rotary_switch: Callable[[], None], debounce: int = 50):
-        super().__init__(on_key_left, on_key_right, on_key_up, on_key_down, on_key_a, on_key_b, on_rotary_increase,
-                         on_rotary_decrease, on_rotary_switch)
+        super().__init__(on_key_left, on_key_right, on_key_up, on_key_down, on_key_a, on_key_b, on_rotary_change,
+                         on_rotary_switch)
         self.__encoder = evdev.InputDevice(rotary_device)
 
         # keys setup
@@ -49,11 +51,21 @@ class GPIOInput(Input):
     def __encoder_loop(self):
         # ref: https://github.com/raphaelyancey/pyKY040 (cannot use this lib directly, because it uses the old GPIO lib)
         for event in self.__encoder.read_loop():
-            if event.type == 2:
-                if event.value == -1:
-                    self.on_rotary_increase()
-                elif event.value == 1:
-                    self.on_rotary_decrease()
+            steps = self.__event_to_steps(event)
+            while (next_event := self.__encoder.read_one()) is not None:
+                logger.debug('skipping step in rotary encoder')
+                steps += self.__event_to_steps(next_event)
+            if steps != 0:
+                self.on_rotary_change(steps)
+
+    @staticmethod
+    def __event_to_steps(event) -> int:
+        if event.type == 2:
+            if event.value == -1:
+                return 1
+            elif event.value == 1:
+                return -1
+        return 0
 
     @override
     def close(self):

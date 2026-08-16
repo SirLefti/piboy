@@ -165,15 +165,9 @@ class AppState:
         self.active_app.on_key_b()
         self.update_display(display, partial=True)
 
-    def on_rotary_increase(self, display: Display):
+    def on_rotary_change(self, display: Display, steps: int):
         self.active_app.on_app_leave()
-        self.next_app()
-        self.active_app.on_app_enter()
-        self.update_display(display, partial=False)
-
-    def on_rotary_decrease(self, display: Display):
-        self.active_app.on_app_leave()
-        self.previous_app()
+        self.__active_app = (self.__active_app + steps) % len(self.__apps)
         self.active_app.on_app_enter()
         self.update_display(display, partial=False)
 
@@ -189,7 +183,7 @@ class AppModule(Module):
     def __create_tk_interaction(state: AppState, app_config: AppConfig) -> UnifiedInteraction:
         from interaction.TkInteraction import TkInteraction
         return TkInteraction(state.on_key_left, state.on_key_right, state.on_key_up, state.on_key_down,
-                             state.on_key_a, state.on_key_b, state.on_rotary_increase, state.on_rotary_decrease,
+                             state.on_key_a, state.on_key_b, state.on_rotary_change,
                              lambda _: None, app_config.resolution, app_config.background, app_config.accent_dark)
 
     @singleton
@@ -301,7 +295,7 @@ class AppModule(Module):
                              lambda: state.on_key_left(display), lambda: state.on_key_right(display),
                              lambda: state.on_key_up(display), lambda: state.on_key_down(display),
                              lambda: state.on_key_a(display), lambda: state.on_key_b(display),
-                             lambda: state.on_rotary_increase(display), lambda: state.on_rotary_decrease(display),
+                             lambda steps: state.on_rotary_change(display, steps),
                              reset_and_init)
         else:
             if self.__unified_instance is None:
