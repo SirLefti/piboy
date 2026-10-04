@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod
 
+from core.closeable import Closeable
 from core.data import DeviceStatus
 
 
-class BatteryStatusProvider(ABC):
+class BatteryStatusProvider(Closeable, ABC):
     """Data provider for the state of charge of the battery."""
 
     @abstractmethod

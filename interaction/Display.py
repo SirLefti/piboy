@@ -2,12 +2,10 @@ from abc import ABC, abstractmethod
 
 from PIL import Image
 
+from core.closeable import Closeable
 
-class Display(ABC):
 
-    @abstractmethod
-    def close(self):
-        raise NotImplementedError
+class Display(Closeable, ABC):
 
     @abstractmethod
     def show(self, image: Image.Image, x0: int, y0: int):

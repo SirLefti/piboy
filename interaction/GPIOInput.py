@@ -1,3 +1,4 @@
+import logging
 import threading
 from typing import Callable
 
@@ -7,6 +8,7 @@ import RPi.GPIO as GPIO
 from core.decorator import override
 from interaction.Input import Input
 
+logger = logging.getLogger('gpio')
 
 class GPIOInput(Input):
 
@@ -15,12 +17,13 @@ class GPIOInput(Input):
                  on_key_left: Callable[[], None], on_key_right: Callable[[], None],
                  on_key_up: Callable[[], None], on_key_down: Callable[[], None],
                  on_key_a: Callable[[], None], on_key_b: Callable[[], None],
-                 on_rotary_increase: Callable[[], None], on_rotary_decrease: Callable[[], None],
+                 on_rotary_change: Callable[[int], None],
                  on_rotary_switch: Callable[[], None], debounce: int = 50):
-        super().__init__(on_key_left, on_key_right, on_key_up, on_key_down, on_key_a, on_key_b, on_rotary_increase,
-                         on_rotary_decrease, on_rotary_switch)
+        super().__init__(on_key_left, on_key_right, on_key_up, on_key_down, on_key_a, on_key_b, on_rotary_change,
+                         on_rotary_switch)
         self.__encoder = evdev.InputDevice(rotary_device)
-        GPIO.setmode(GPIO.BCM)
+        self.__pending_steps = 0
+        self.__steps_condition = threading.Condition()
 
         # keys setup
         GPIO.setup(key_left, GPIO.IN, pull_up_down=GPIO.PUD_UP)
@@ -44,17 +47,37 @@ class GPIOInput(Input):
         # rotary event callbacks
         GPIO.add_event_detect(rotary_switch, GPIO.RISING, callback=self.__gpio_rotary_switch, bouncetime=debounce)
 
-        loop_thread = threading.Thread(target=self.__encoder_loop)
-        loop_thread.start()
+        threading.Thread(target=self.__encoder_listener, daemon=True).start()
+        threading.Thread(target=self.__encoder_dispatcher, daemon=True).start()
 
-    def __encoder_loop(self):
+    def __encoder_listener(self):
         # ref: https://github.com/raphaelyancey/pyKY040 (cannot use this lib directly, because it uses the old GPIO lib)
         for event in self.__encoder.read_loop():
-            if event.type == 2:
-                if event.value == -1:
-                    self.on_rotary_increase()
-                elif event.value == 1:
-                    self.on_rotary_decrease()
+            steps = self.__event_to_steps(event)
+            if steps != 0:
+                with self.__steps_condition:
+                    self.__pending_steps += steps
+                    self.__steps_condition.notify()
+
+    def __encoder_dispatcher(self):
+        while True:
+            with self.__steps_condition:
+                while self.__pending_steps == 0:
+                    self.__steps_condition.wait()
+                steps = self.__pending_steps
+                self.__pending_steps = 0
+            if abs(steps) > 1:
+                logger.debug(f'coalesced {abs(steps)} rotary steps into one dispatch')
+            self.on_rotary_change(steps)
+
+    @staticmethod
+    def __event_to_steps(event) -> int:
+        if event.type == 2:
+            if event.value == -1:
+                return 1
+            elif event.value == 1:
+                return -1
+        return 0
 
     @override
     def close(self):

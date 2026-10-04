@@ -28,7 +28,7 @@ if __name__ == '__main__':
     __tk = SelfManagedTkInteraction(app_state.on_key_left, app_state.on_key_right,
                                     app_state.on_key_up, app_state.on_key_down,
                                     app_state.on_key_a, app_state.on_key_b,
-                                    app_state.on_rotary_increase, app_state.on_rotary_decrease, lambda _: None,
+                                    app_state.on_rotary_change, lambda _: None,
                                     env.app_config.resolution, env.app_config.background, env.app_config.accent_dark)
 
     module.register_external_tk_interaction(__tk)

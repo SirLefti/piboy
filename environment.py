@@ -1,4 +1,6 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
+from functools import cached_property
+from typing import Any, cast
 
 import yaml
 from PIL import ImageFont
@@ -41,25 +43,18 @@ class AppConfig:
     color_mode: int = 0
     width: int = 480
     height: int = 320
-    modes: list[ColorConfig] = None
-    # cached properties
-    __font_header: ImageFont.FreeTypeFont | None = None
-    __font_standard: ImageFont.FreeTypeFont | None = None
-
-    def __post_init__(self):
-        if self.modes is None:
-            self.modes = [
-                ColorConfig(
-                    background=(0, 0, 0),
-                    accent=(27, 251, 30),
-                    accent_dark=(9, 64, 9)
-                ),
-                ColorConfig(
-                    background=(0, 0, 0),
-                    accent=(255, 245, 101),
-                    accent_dark=(59, 45, 25)
-                )
-            ]
+    modes: list[ColorConfig] = field(default_factory=lambda: [
+        ColorConfig(
+            background=(0, 0, 0),
+            accent=(27, 251, 30),
+            accent_dark=(9, 64, 9)
+        ),
+        ColorConfig(
+            background=(0, 0, 0),
+            accent=(255, 245, 101),
+            accent_dark=(59, 45, 25)
+        )
+    ])
 
     @property
     def resolution(self) -> tuple[int, int]:
@@ -69,17 +64,13 @@ class AppConfig:
     def app_size(self) -> tuple[int, int]:
         return self.width - 2 * self.app_side_offset, self.height - self.app_top_offset - self.app_bottom_offset
 
-    @property
+    @cached_property
     def font_header(self) -> ImageFont.FreeTypeFont:
-        if self.__font_header is None:
-            self.__font_header = ImageFont.truetype(self.font_name, self.font_header_size)
-        return self.__font_header
+        return ImageFont.truetype(self.font_name, self.font_header_size)
 
-    @property
+    @cached_property
     def font_standard(self) -> ImageFont.FreeTypeFont:
-        if self.__font_standard is None:
-            self.__font_standard = ImageFont.truetype(self.font_name, self.font_standard_size)
-        return self.__font_standard
+        return ImageFont.truetype(self.font_name, self.font_standard_size)
 
     @property
     def background(self) -> tuple[int, int, int]:
@@ -154,101 +145,101 @@ class Environment:
 
 def spi_config_constructor(loader: Loader | FullLoader | UnsafeLoader, node: Node) -> SPIConfig:
     if isinstance(node, MappingNode):
-        values = loader.construct_mapping(node)
+        values = cast(dict[str, Any], loader.construct_mapping(node))
         return SPIConfig(**values)
     raise TypeError("node is not of type MappingNode")
 
 
 def spi_config_representor(dumper: Dumper, data: SPIConfig) -> MappingNode:
-    return dumper.represent_mapping('!SPIConfig', {k: v for k,v in vars(data).items() if k[0] != '_'})
+    return dumper.represent_mapping('!SPIConfig', {f.name: getattr(data, f.name) for f in fields(data) if not f.name.startswith('_')})
 
 
 def i2c_config_constructor(loader: Loader | FullLoader | UnsafeLoader, node: Node) -> I2CConfig:
     if isinstance(node, MappingNode):
-        values = loader.construct_mapping(node)
+        values = cast(dict[str, Any], loader.construct_mapping(node))
         return I2CConfig(**values)
     raise TypeError("node is not of type MappingNode")
 
 
 def i2c_config_representor(dumper: Dumper, data: I2CConfig) -> MappingNode:
-    return dumper.represent_mapping('!I2CConfig', {k: v for k,v in vars(data).items() if k[0] != '_'})
+    return dumper.represent_mapping('!I2CConfig', {f.name: getattr(data, f.name) for f in fields(data) if not f.name.startswith('_')})
 
 
 def serial_config_constructor(loader: Loader | FullLoader | UnsafeLoader, node: Node) -> SerialConfig:
     if isinstance(node, MappingNode):
-        values = loader.construct_mapping(node)
+        values = cast(dict[str, Any], loader.construct_mapping(node))
         return SerialConfig(**values)
     raise TypeError("node if not of type MappingNode")
 
 
 def serial_config_representor(dumper: Dumper, data: SerialConfig) -> MappingNode:
-    return dumper.represent_mapping('!SerialConfig', {k: v for k,v in vars(data).items() if k[0] != '_'})
+    return dumper.represent_mapping('!SerialConfig', {f.name: getattr(data, f.name) for f in fields(data) if not f.name.startswith('_')})
 
 
 def color_config_constructor(loader: Loader | FullLoader | UnsafeLoader, node: Node) -> ColorConfig:
     if isinstance(node, MappingNode):
-        values = loader.construct_mapping(node)
+        values = cast(dict[str, Any], loader.construct_mapping(node))
         return ColorConfig(**values)
     raise TypeError("node is not of type MappingNode")
 
 
 def color_config_representor(dumper: Dumper, data: ColorConfig) -> MappingNode:
-    return dumper.represent_mapping('!ColorConfig', {k: v for k,v in vars(data).items() if k[0] != '_'})
+    return dumper.represent_mapping('!ColorConfig', {f.name: getattr(data, f.name) for f in fields(data) if not f.name.startswith('_')})
 
 
 def app_config_constructor(loader: Loader | FullLoader | UnsafeLoader, node: Node) -> AppConfig:
     if isinstance(node, MappingNode):
-        values = loader.construct_mapping(node)
+        values = cast(dict[str, Any], loader.construct_mapping(node))
         return AppConfig(**values)
     raise TypeError("node is not of type MappingNode")
 
 
 def app_config_representor(dumper: Dumper, data: AppConfig) -> MappingNode:
-    return dumper.represent_mapping('!AppConfig', {k: v for k,v in vars(data).items() if k[0] != '_'})
+    return dumper.represent_mapping('!AppConfig', {f.name: getattr(data, f.name) for f in fields(data) if not f.name.startswith('_')})
 
 
 def keypad_config_constructor(loader: Loader | FullLoader | UnsafeLoader, node: Node) -> KeypadConfig:
     if isinstance(node, MappingNode):
-        values = loader.construct_mapping(node)
+        values = cast(dict[str, Any], loader.construct_mapping(node))
         return KeypadConfig(**values)
     raise TypeError("node is not of type MappingNode")
 
 
 def keypad_config_representor(dumper: Dumper, data: KeypadConfig) -> MappingNode:
-    return dumper.represent_mapping('!KeypadConfig', {k: v for k,v in vars(data).items() if k[0] != '_'})
+    return dumper.represent_mapping('!KeypadConfig', {f.name: getattr(data, f.name) for f in fields(data) if not f.name.startswith('_')})
 
 
 def rotary_config_constructor(loader: Loader | FullLoader | UnsafeLoader, node: Node) -> RotaryConfig:
     if isinstance(node, MappingNode):
-        values = loader.construct_mapping(node)
+        values = cast(dict[str, Any], loader.construct_mapping(node))
         return RotaryConfig(**values)
     raise TypeError("node is not of type MappingNode")
 
 
 def rotary_config_representor(dumper: Dumper, data: RotaryConfig) -> MappingNode:
-    return dumper.represent_mapping('!RotaryConfig', {k: v for k,v in vars(data).items() if k[0] != '_'})
+    return dumper.represent_mapping('!RotaryConfig', {f.name: getattr(data, f.name) for f in fields(data) if not f.name.startswith('_')})
 
 
 def display_config_constructor(loader: Loader | FullLoader | UnsafeLoader, node: Node) -> DisplayConfig:
     if isinstance(node, MappingNode):
-        values = loader.construct_mapping(node)
+        values = cast(dict[str, Any], loader.construct_mapping(node))
         return DisplayConfig(**values)
     raise TypeError("node is not of type MappingNode")
 
 
 def display_config_representor(dumper: Dumper, data: DisplayConfig) -> MappingNode:
-    return dumper.represent_mapping('!DisplayConfig', {k: v for k,v in vars(data).items() if k[0] != '_'})
+    return dumper.represent_mapping('!DisplayConfig', {f.name: getattr(data, f.name) for f in fields(data) if not f.name.startswith('_')})
 
 
 def environment_constructor(loader: Loader | FullLoader | UnsafeLoader, node: Node) -> Environment:
     if isinstance(node, MappingNode):
-        values = loader.construct_mapping(node)
+        values = cast(dict[str, Any], loader.construct_mapping(node))
         return Environment(**values)
     raise TypeError("node is not of type MappingNode")
 
 
 def environment_representor(dumper: Dumper, data: Environment) -> MappingNode:
-    return dumper.represent_mapping('!Environment', {k: v for k,v in vars(data).items() if k[0] != '_'})
+    return dumper.represent_mapping('!Environment', {f.name: getattr(data, f.name) for f in fields(data) if not f.name.startswith('_')})
 
 
 def configure():

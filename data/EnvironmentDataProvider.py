@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
+from core.closeable import Closeable
 from core.data import DeviceStatus
 
 
@@ -11,7 +12,7 @@ class EnvironmentData:
     humidity: float
 
 
-class EnvironmentDataProvider(ABC):
+class EnvironmentDataProvider(Closeable, ABC):
     """Data provider for environmental data."""
 
     @abstractmethod

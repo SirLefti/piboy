@@ -72,7 +72,7 @@ def main():
     }
 
     # actions to perform on the image after it was drawn
-    post_steps: dict[str, Collection[Callable[[Image.Image], Image]]] = {
+    post_steps: dict[str, Collection[Callable[[Image.Image], Image.Image]]] = {
         'MAP': [lambda i: blur(i, (340, 30, 460, 90))]
     }
 

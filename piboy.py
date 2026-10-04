@@ -1,5 +1,6 @@
 import logging
 import time
+from contextlib import ExitStack
 from datetime import datetime
 from logging.config import fileConfig
 from typing import Any, Callable, Generator, Self
@@ -165,22 +166,18 @@ class AppState:
         self.active_app.on_key_b()
         self.update_display(display, partial=True)
 
-    def on_rotary_increase(self, display: Display):
+    def on_rotary_change(self, display: Display, steps: int):
         self.active_app.on_app_leave()
-        self.next_app()
-        self.active_app.on_app_enter()
-        self.update_display(display, partial=False)
-
-    def on_rotary_decrease(self, display: Display):
-        self.active_app.on_app_leave()
-        self.previous_app()
+        self.__active_app = (self.__active_app + steps) % len(self.__apps)
         self.active_app.on_app_enter()
         self.update_display(display, partial=False)
 
 
 class AppModule(Module):
 
-    __unified_instance: UnifiedInteraction | None = None
+    def __init__(self):
+        super().__init__()
+        self.__unified_instance: UnifiedInteraction | None = None
 
     def register_external_tk_interaction(self, tk_instance: UnifiedInteraction):
         self.__unified_instance = tk_instance
@@ -189,7 +186,7 @@ class AppModule(Module):
     def __create_tk_interaction(state: AppState, app_config: AppConfig) -> UnifiedInteraction:
         from interaction.TkInteraction import TkInteraction
         return TkInteraction(state.on_key_left, state.on_key_right, state.on_key_up, state.on_key_down,
-                             state.on_key_a, state.on_key_b, state.on_rotary_increase, state.on_rotary_decrease,
+                             state.on_key_a, state.on_key_b, state.on_rotary_change,
                              lambda _: None, app_config.resolution, app_config.background, app_config.accent_dark)
 
     @singleton
@@ -277,9 +274,11 @@ class AppModule(Module):
             return ILI9486Display((spi_device_config.bus, spi_device_config.device),
                                   e.display_config.dc_pin, e.display_config.rst_pin, e.display_config.flip_display)
         else:
-            if self.__unified_instance is None:
-                self.__unified_instance = self.__create_tk_interaction(state, e.app_config)
-            return self.__unified_instance
+            instance = self.__unified_instance
+            if instance is None:
+                instance = self.__create_tk_interaction(state, e.app_config)
+                self.__unified_instance = instance
+            return instance
 
     @singleton
     @provider
@@ -301,12 +300,14 @@ class AppModule(Module):
                              lambda: state.on_key_left(display), lambda: state.on_key_right(display),
                              lambda: state.on_key_up(display), lambda: state.on_key_down(display),
                              lambda: state.on_key_a(display), lambda: state.on_key_b(display),
-                             lambda: state.on_rotary_increase(display), lambda: state.on_rotary_decrease(display),
+                             lambda steps: state.on_rotary_change(display, steps),
                              reset_and_init)
         else:
-            if self.__unified_instance is None:
-                self.__unified_instance = self.__create_tk_interaction(state, e.app_config)
-            return self.__unified_instance
+            instance = self.__unified_instance
+            if instance is None:
+                instance = self.__create_tk_interaction(state, e.app_config)
+                self.__unified_instance = instance
+            return instance
 
 
 def draw_footer(image: Image.Image, state: AppState) -> tuple[Image.Image, int, int]:
@@ -349,6 +350,7 @@ def draw_footer(image: Image.Image, state: AppState) -> tuple[Image.Image, int, 
     # draw battery status
     state_of_charge_str = f'{state.battery_status_provider.get_state_of_charge():.0%}'
     _, _, text_width, text_height = font.getbbox(state_of_charge_str)
+    text_width, text_height = round(text_width), round(text_height)
     text_padding = (footer_height - text_height) // 2
     draw.text((cursor_x + icon_padding, cursor_y + text_padding), state_of_charge_str,
               state.environment.app_config.accent, font=font)
@@ -357,6 +359,7 @@ def draw_footer(image: Image.Image, state: AppState) -> tuple[Image.Image, int, 
     # draw time
     date_str = datetime.now().strftime('%d-%m-%Y %H:%M:%S')
     _, _, text_width, text_height = font.getbbox(date_str)
+    text_width, text_height = round(text_width), round(text_height)
     text_padding = (footer_height - text_height) // 2
     draw.text((width - footer_side_offset - text_padding - text_width, cursor_y + text_padding), date_str,
               state.environment.app_config.accent, font=font)
@@ -446,11 +449,14 @@ if __name__ == '__main__':
     app_state.update_display(DISPLAY)
     app_state.active_app.on_app_enter()
 
-    try:
-        # blocking function that updates the clock
-        app_state.watch_function(DISPLAY)
-    except KeyboardInterrupt:
-        pass
-    finally:
-        DISPLAY.close()
-        INPUT.close()
+    with ExitStack() as stack:
+        stack.enter_context(DISPLAY)
+        stack.enter_context(INPUT)
+        stack.enter_context(injector.get(LocationProvider))
+        stack.enter_context(injector.get(BatteryStatusProvider))
+        stack.enter_context(injector.get(EnvironmentDataProvider))
+        try:
+            # blocking function that updates the clock
+            app_state.watch_function(DISPLAY)
+        except KeyboardInterrupt:
+            pass

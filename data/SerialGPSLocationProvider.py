@@ -52,6 +52,10 @@ class SerialGPSLocationProvider(LocationProvider):
                 logger.warning(e)
 
     @override
+    def close(self):
+        self.__io_wrapper.close()
+
+    @override
     def get_location(self) -> Location:
         if self.__location is None:
             raise LocationException('GPS module has currently no signal')

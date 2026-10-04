@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Optional
 
+from core.closeable import Closeable
 from core.data import DeviceStatus
 
 
@@ -11,7 +12,7 @@ class Location:
     longitude: float
 
 
-class LocationProvider(ABC):
+class LocationProvider(Closeable, ABC):
     """Data provider for a geo location."""
 
     @abstractmethod

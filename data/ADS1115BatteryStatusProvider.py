@@ -20,12 +20,12 @@ class ADS1115BatteryStatusProvider(BatteryStatusProvider):
     __V_CHARGED = 4.2
     __V_DISCHARGED = 2.9
 
-    __last_levels = deque(maxlen=10)
 
     def __init__(self, port: int, address: int):
         self.__bus = smbus2.SMBus(port)
         self.__address = address
         self.__device_status = DeviceStatus.UNAVAILABLE
+        self.__last_levels: deque[float] = deque(maxlen=10)
 
     def __read_channel(self, channel=0) -> float:
         config = [
@@ -41,6 +41,10 @@ class ADS1115BatteryStatusProvider(BatteryStatusProvider):
         logger.debug(f'{raw_data=}')
         # 0x000 - 0x7FFF -> 0 ... +FSR | 0x8000 - 0xFFFF -> -FSR ... 0
         return (raw_data if raw_data < 0x8000 else raw_data - 0x10000) * self.__FSR / 0x8000
+
+    @override
+    def close(self):
+        self.__bus.close()
 
     @override
     def get_state_of_charge(self) -> float:

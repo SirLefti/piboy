@@ -13,6 +13,10 @@ class FakeEnvironmentDataProvider(EnvironmentDataProvider):
         self.__fake_humidity = fake_humidity
 
     @override
+    def close(self):
+        pass
+
+    @override
     def get_environment_data(self) -> EnvironmentData:
         return EnvironmentData(
             self.__fake_temperature + random.randint(-25, 25) / 100,
